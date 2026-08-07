@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1c1c1e">
+<title>PDF Flow Reader</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="topbar">
+  <button id="btn-library" class="iconbtn" title="Library" aria-label="Library">&#9776;</button>
+  <div id="doc-title">PDF Flow Reader</div>
+  <button id="btn-search" class="iconbtn" title="Search" aria-label="Search">&#128269;</button>
+  <button id="btn-notes" class="iconbtn" title="Highlights &amp; notes" aria-label="Highlights and notes">&#9998;</button>
+  <button id="btn-settings" class="iconbtn" title="Display settings" aria-label="Display settings">Aa</button>
+</header>
+
+<!-- Empty state / welcome -->
+<main id="welcome">
+  <div class="welcome-inner">
+    <div class="logo">&#128214;</div>
+    <h1>PDF Flow Reader</h1>
+    <p>Turn any PDF into a single, comfortable scrolling page &mdash; no pinching or zooming. Adjustable text size, highlights, notes and instant search. Works with large PDFs (1000+ pages).</p>
+    <label class="bigbtn" for="file-input">Open a PDF</label>
+    <input type="file" id="file-input" accept="application/pdf,.pdf" hidden>
+    <div id="recent-docs"></div>
+    <p class="hint">Your documents and notes are stored privately on this device.</p>
+  </div>
+</main>
+
+<!-- Reader -->
+<main id="reader" hidden></main>
+<div id="progress-pill" hidden></div>
+
+<!-- Extraction progress overlay -->
+<div id="loading" class="overlay" hidden>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div id="loading-text">Opening PDF&hellip;</div>
+    <div class="bar"><div id="loading-bar"></div></div>
+  </div>
+</div>
+
+<!-- Selection action bar -->
+<div id="selbar" hidden>
+  <button class="hl-dot yellow"  data-color="yellow"  aria-label="Highlight yellow"></button>
+  <button class="hl-dot green"   data-color="green"   aria-label="Highlight green"></button>
+  <button class="hl-dot blue"    data-color="blue"    aria-label="Highlight blue"></button>
+  <button class="hl-dot pink"    data-color="pink"    aria-label="Highlight pink"></button>
+  <button id="sel-note" class="selbtn">&#43; Note</button>
+  <button id="sel-cancel" class="selbtn dim">Cancel</button>
+</div>
+
+<!-- Note editor -->
+<div id="note-editor" class="overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-head">
+      <span id="note-title">Note</span>
+      <button class="iconbtn close" data-close="note-editor">&#10005;</button>
+    </div>
+    <blockquote id="note-quote"></blockquote>
+    <textarea id="note-text" rows="5" placeholder="Write a note&hellip;"></textarea>
+    <div class="row">
+      <div id="note-colors">
+        <button class="hl-dot yellow" data-color="yellow"></button>
+        <button class="hl-dot green"  data-color="green"></button>
+        <button class="hl-dot blue"   data-color="blue"></button>
+        <button class="hl-dot pink"   data-color="pink"></button>
+      </div>
+      <button id="note-delete" class="selbtn danger">Delete</button>
+      <button id="note-save" class="selbtn primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Search panel -->
+<div id="search-panel" class="panel" hidden>
+  <div class="panel-head">
+    <input type="search" id="search-input" placeholder="Search in document&hellip;" autocomplete="off">
+    <button class="iconbtn close" data-close="search-panel">&#10005;</button>
+  </div>
+  <div id="search-count"></div>
+  <div id="search-results" class="panel-list"></div>
+</div>
+
+<!-- Notes / highlights panel -->
+<div id="notes-panel" class="panel" hidden>
+  <div class="panel-head">
+    <span class="panel-title">Highlights &amp; Notes</span>
+    <button id="notes-export" class="selbtn">Export</button>
+    <button class="iconbtn close" data-close="notes-panel">&#10005;</button>
+  </div>
+  <div id="notes-list" class="panel-list"></div>
+</div>
+
+<!-- Library panel -->
+<div id="library-panel" class="panel" hidden>
+  <div class="panel-head">
+    <span class="panel-title">Library</span>
+    <label class="selbtn primary" for="file-input2">&#43; Open PDF</label>
+    <input type="file" id="file-input2" accept="application/pdf,.pdf" hidden>
+    <button class="iconbtn close" data-close="library-panel">&#10005;</button>
+  </div>
+  <div id="library-list" class="panel-list"></div>
+</div>
+
+<!-- Display settings -->
+<div id="settings-panel" class="panel bottom" hidden>
+  <div class="panel-head">
+    <span class="panel-title">Display</span>
+    <button class="iconbtn close" data-close="settings-panel">&#10005;</button>
+  </div>
+  <div class="setting">
+    <span>Text size</span>
+    <div class="stepper">
+      <button id="font-dec" aria-label="Smaller text">A&minus;</button>
+      <span id="font-size-label">18</span>
+      <button id="font-inc" aria-label="Larger text">A&#43;</button>
+    </div>
+  </div>
+  <div class="setting">
+    <span>Line spacing</span>
+    <div class="stepper">
+      <button id="lh-dec" aria-label="Tighter lines">&minus;</button>
+      <span id="lh-label">1.6</span>
+      <button id="lh-inc" aria-label="Looser lines">&#43;</button>
+    </div>
+  </div>
+  <div class="setting">
+    <span>Font</span>
+    <div class="seg" id="font-family-seg">
+      <button data-font="system">System</button>
+      <button data-font="serif">Serif</button>
+      <button data-font="sans">Sans</button>
+    </div>
+  </div>
+  <div class="setting">
+    <span>Theme</span>
+    <div class="seg" id="theme-seg">
+      <button data-theme="light">Light</button>
+      <button data-theme="sepia">Sepia</button>
+      <button data-theme="dark">Dark</button>
+    </div>
+  </div>
+</div>
+
+<div id="scrim" hidden></div>
+
+<script src="js/vendor/pdf.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
