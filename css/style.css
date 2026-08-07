@@ -179,6 +179,30 @@ html, body {
   100% { background: transparent; }
 }
 
+/* OCR banner */
+#ocr-banner {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 28;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(680px, calc(100vw - 20px));
+  background: var(--chrome-bg);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+#ocr-banner-text { flex: 1; font-size: 13.5px; font-weight: 500; }
+#ocr-banner .iconbtn { min-width: 32px; min-height: 32px; font-size: 14px; }
+
+.ocr-page-btn { font-style: normal; margin-left: 4px; }
+
 /* progress pill */
 #progress-pill {
   position: fixed;

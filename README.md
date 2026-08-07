@@ -18,6 +18,12 @@ as **one continuous scrolling page** — like a book in an e-reader.
   per-document, and can be exported as Markdown from the notes panel.
 - **Quick search** — the 🔍 button searches the entire document as you type;
   tap a result to jump straight to it (with a brief flash on the match).
+- **OCR for scanned pages** — pages with no text layer are detected
+  automatically, and a banner offers to recognize them with
+  [Tesseract.js](https://tesseract.projectnaptha.com/) (English, on-device,
+  nothing uploaded). Each scanned page also gets its own *Recognize text*
+  button. Recognized text becomes regular reader text: searchable,
+  highlightable, and cached like everything else.
 - **Remembers where you were** — reading position is saved per document and
   restored when you reopen it from the Library (☰).
 - **Installable / offline** — a service worker caches the app, and it can be
@@ -56,11 +62,18 @@ is also what enables the offline service worker.)
   so they survive any font-size / theme / layout change.
 - Documents, extracted text, highlights and notes live in IndexedDB;
   display preferences live in localStorage.
+- When a document contains scanned pages, the original PDF bytes are kept in
+  IndexedDB so OCR can re-render those pages later. OCR runs in a Tesseract.js
+  web worker (vendored in `js/vendor/tesseract/`, including the English model),
+  page by page, with progress and cancel — you can keep reading while it runs.
 
 ## Limitations
 
-- Scanned/image-only PDFs have no text layer to extract (pages will say so).
-  OCR is out of scope for now.
+- OCR ships with the English model only (other languages can be added by
+  dropping additional `.traineddata.gz` files into `js/vendor/tesseract/` and
+  passing the language code to `createWorker`). OCR speed is roughly a few
+  seconds per page on a modern iPhone, so a fully scanned 1000-page book is a
+  long-running job — it saves as it goes and can be cancelled and resumed.
 - Complex layouts (multi-column academic papers, tables) are linearized with
   heuristics — reading order is usually right, but tables flatten into text.
 - Images and figures in the PDF are not shown (text-focused by design).

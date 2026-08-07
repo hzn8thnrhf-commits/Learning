@@ -1,5 +1,5 @@
 /* Simple offline cache for the app shell + PDF.js library. */
-const CACHE = "pdf-flow-reader-v1";
+const CACHE = "pdf-flow-reader-v2";
 const ASSETS = [
   "./",
   "index.html",

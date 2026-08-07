@@ -225,7 +225,21 @@ function extractParagraphs(textContent) {
   return paragraphs;
 }
 
-async function extractDocument(arrayBuffer, name, size) {
+/** A page counts as "scanned" when text extraction found (almost) nothing. */
+function isScannedPage(paras) {
+  return !paras || paras.join("").length < 30;
+}
+
+/** Page numbers that still need OCR. */
+function scannedPages(doc) {
+  const out = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    if (isScannedPage(doc.pages[p - 1]) && !(doc.ocrDone && doc.ocrDone[p])) out.push(p);
+  }
+  return out;
+}
+
+async function extractDocument(arrayBuffer, name, size, fileBlob) {
   showLoading("Opening PDF…", 0);
   const task = pdfjsLib.getDocument({ data: arrayBuffer });
   const pdf = await task.promise;
@@ -237,6 +251,10 @@ async function extractDocument(arrayBuffer, name, size) {
   const existing = await DocStore.get(id);
   if (existing && existing.pages && existing.pages.length === numPages) {
     pdf.destroy();
+    // Older records may lack the original bytes needed for OCR — attach them.
+    if (!existing.pdfBlob && fileBlob && scannedPages(existing).length) {
+      existing.pdfBlob = fileBlob;
+    }
     existing.lastOpened = Date.now();
     await DocStore.put(existing);
     return existing;
@@ -270,10 +288,13 @@ async function extractDocument(arrayBuffer, name, size) {
     size,
     numPages,
     pages,
+    ocrDone: {},
     lastPage: 1,
     added: Date.now(),
     lastOpened: Date.now(),
   };
+  // Keep the original PDF only when OCR might need to re-render its pages.
+  if (fileBlob && scannedPages(doc).length) doc.pdfBlob = fileBlob;
   await DocStore.put(doc);
   return doc;
 }
@@ -288,36 +309,70 @@ function renderDocument() {
   els.reader.textContent = "";
 
   const frag = document.createDocumentFragment();
-  for (let p = 0; p < doc.numPages; p++) {
-    const pageEl = document.createElement("section");
-    pageEl.className = "page";
-    pageEl.dataset.page = String(p + 1);
-
-    const marker = document.createElement("div");
-    marker.className = "page-marker";
-    marker.textContent = "Page " + (p + 1);
-    pageEl.appendChild(marker);
-
-    const paras = doc.pages[p];
-    if (!paras || !paras.length) {
-      const el = document.createElement("p");
-      el.className = "no-text";
-      el.textContent = "(No selectable text on this page — it may be a scanned image.)";
-      pageEl.appendChild(el);
-    } else {
-      for (let j = 0; j < paras.length; j++) {
-        const el = document.createElement("p");
-        el.dataset.para = String(j);
-        el.textContent = paras[j];
-        pageEl.appendChild(el);
-      }
-    }
-    frag.appendChild(pageEl);
+  for (let p = 1; p <= doc.numPages; p++) {
+    const pageSection = document.createElement("section");
+    pageSection.className = "page";
+    pageSection.dataset.page = String(p);
+    buildPageContent(pageSection);
+    frag.appendChild(pageSection);
   }
   els.reader.appendChild(frag);
   applyAllHighlights();
   els.progressPill.hidden = false;
   updateProgressPill();
+  updateOcrBanner();
+}
+
+/** (Re)build the inner content of one page section from state.doc. */
+function buildPageContent(pageSection) {
+  const doc = state.doc;
+  const p = Number(pageSection.dataset.page);
+  const paras = doc.pages[p - 1];
+  const ocrDone = doc.ocrDone && doc.ocrDone[p];
+  pageSection.textContent = "";
+
+  const marker = document.createElement("div");
+  marker.className = "page-marker";
+  marker.textContent = "Page " + p + (ocrDone ? " · OCR" : "");
+  pageSection.appendChild(marker);
+
+  if (paras && paras.length) {
+    for (let j = 0; j < paras.length; j++) {
+      const el = document.createElement("p");
+      el.dataset.para = String(j);
+      el.textContent = paras[j];
+      pageSection.appendChild(el);
+    }
+  }
+
+  if (isScannedPage(paras) && !ocrDone) {
+    const el = document.createElement("p");
+    el.className = "no-text";
+    el.textContent = "(No selectable text on this page — it looks like a scanned image.) ";
+    const btn = document.createElement("button");
+    btn.className = "selbtn ocr-page-btn";
+    btn.dataset.ocrPage = String(p);
+    btn.textContent = "Recognize text (OCR)";
+    el.appendChild(btn);
+    pageSection.appendChild(el);
+  } else if (ocrDone && (!paras || !paras.length)) {
+    const el = document.createElement("p");
+    el.className = "no-text";
+    el.textContent = "(OCR found no readable text on this page.)";
+    pageSection.appendChild(el);
+  }
+}
+
+/** Rebuild a page's DOM (after OCR) and restore its highlights. */
+function rebuildPage(p) {
+  const el = pageEl(p);
+  if (!el) return;
+  buildPageContent(el);
+  for (const a of state.annots) {
+    for (const s of a.segments) {
+      if (s.page === p) renderParagraph(s.page, s.para);
+    }
+  }
 }
 
 function pageEl(page) {
@@ -861,6 +916,179 @@ $("theme-seg").addEventListener("click", (e) => {
   if (e.target.dataset.theme) { prefs.theme = e.target.dataset.theme; applyPrefs(); }
 });
 
+/* ================= OCR (Tesseract.js, fully on-device) ================= */
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("Failed to load " + src));
+    document.head.appendChild(s);
+  });
+}
+
+/** Turn Tesseract's plain-text output into paragraph strings. */
+function ocrTextToParagraphs(text) {
+  const paras = [];
+  for (const block of text.split(/\n\s*\n/)) {
+    let para = "";
+    for (const rawLine of block.split("\n")) {
+      const line = rawLine.replace(/\s+/g, " ").trim();
+      if (!line) continue;
+      if (para.endsWith("-") && /^[a-z]/.test(line)) para = para.slice(0, -1) + line;
+      else para += (para ? " " : "") + line;
+    }
+    if (para) paras.push(para);
+  }
+  return paras;
+}
+
+const OCR = {
+  worker: null,
+  pdf: null,
+  running: false,
+  cancelRequested: false,
+
+  async ensureWorker() {
+    if (this.worker) return this.worker;
+    if (!window.Tesseract) await loadScript("js/vendor/tesseract/tesseract.min.js");
+    this.worker = await Tesseract.createWorker("eng", 1, {
+      workerPath: "js/vendor/tesseract/worker.min.js",
+      corePath: "js/vendor/tesseract/",
+      langPath: "js/vendor/tesseract/",
+    });
+    return this.worker;
+  },
+
+  async ensurePdf() {
+    if (this.pdf) return this.pdf;
+    if (!state.doc || !state.doc.pdfBlob) {
+      throw new Error(
+        "The original PDF file isn't stored for this document. " +
+          "Open the PDF file once more (Library → Open PDF) to enable OCR."
+      );
+    }
+    const buf = await state.doc.pdfBlob.arrayBuffer();
+    this.pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    return this.pdf;
+  },
+
+  /** Render page n to a canvas and recognize it. Returns paragraph strings. */
+  async recognizePage(n) {
+    const worker = await this.ensureWorker();
+    const pdf = await this.ensurePdf();
+    const page = await pdf.getPage(n);
+    const base = page.getViewport({ scale: 1 });
+    const scale = Math.min(3, Math.max(1.5, 1600 / base.width));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    page.cleanup();
+    const { data } = await worker.recognize(canvas);
+    canvas.width = canvas.height = 0; // release bitmap memory eagerly
+    return ocrTextToParagraphs(data.text || "");
+  },
+
+  release() {
+    if (this.pdf) {
+      this.pdf.destroy();
+      this.pdf = null;
+    }
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+  },
+};
+
+let ocrBannerDismissed = false;
+
+function showOcrBanner(text, running) {
+  $("ocr-banner").hidden = false;
+  $("ocr-banner-text").textContent = text;
+  $("ocr-run").hidden = running;
+  $("ocr-cancel").hidden = !running;
+  $("ocr-dismiss").hidden = running;
+}
+
+function updateOcrBanner() {
+  if (OCR.running) return;
+  const banner = $("ocr-banner");
+  if (!state.doc || ocrBannerDismissed) {
+    banner.hidden = true;
+    return;
+  }
+  const remaining = scannedPages(state.doc).length;
+  if (!remaining) {
+    banner.hidden = true;
+    return;
+  }
+  showOcrBanner(
+    remaining === 1
+      ? "1 page looks scanned and has no text."
+      : `${remaining} pages look scanned and have no text.`,
+    false
+  );
+}
+
+async function runOcrBatch(pages) {
+  if (OCR.running || !pages.length) return;
+  OCR.running = true;
+  OCR.cancelRequested = false;
+  showOcrBanner("Loading OCR engine…", true);
+
+  let done = 0;
+  let unsaved = 0;
+  try {
+    for (const n of pages) {
+      if (OCR.cancelRequested) break;
+      showOcrBanner(`Recognizing page ${n}… (${done} of ${pages.length} done)`, true);
+      const paras = await OCR.recognizePage(n);
+      state.doc.pages[n - 1] = paras;
+      if (!state.doc.ocrDone) state.doc.ocrDone = {};
+      state.doc.ocrDone[n] = true;
+      rebuildPage(n);
+      done++;
+      if (++unsaved >= 5) {
+        unsaved = 0;
+        await DocStore.put(state.doc);
+      }
+    }
+    await DocStore.put(state.doc);
+  } catch (err) {
+    console.error(err);
+    alert("OCR failed: " + (err && err.message ? err.message : err));
+  } finally {
+    OCR.running = false;
+    OCR.release();
+    updateOcrBanner();
+  }
+}
+
+$("ocr-run").addEventListener("click", () => {
+  if (!state.doc) return;
+  runOcrBatch(scannedPages(state.doc));
+});
+$("ocr-cancel").addEventListener("click", () => {
+  OCR.cancelRequested = true;
+  $("ocr-banner-text").textContent = "Finishing current page…";
+});
+$("ocr-dismiss").addEventListener("click", () => {
+  ocrBannerDismissed = true;
+  $("ocr-banner").hidden = true;
+});
+
+/* per-page OCR buttons inside the reader */
+els.reader.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-ocr-page]");
+  if (!btn) return;
+  e.stopPropagation();
+  runOcrBatch([Number(btn.dataset.ocrPage)]);
+});
+
 /* ================= loading / open flow ================= */
 
 function showLoading(text, frac) {
@@ -878,7 +1106,7 @@ async function handleFile(file) {
   try {
     showLoading("Reading file…", 0);
     const buf = await file.arrayBuffer();
-    const doc = await extractDocument(buf, file.name, file.size);
+    const doc = await extractDocument(buf, file.name, file.size, file);
     await openDocument(doc);
   } catch (err) {
     hideLoading();
@@ -892,6 +1120,7 @@ async function openDocument(doc) {
   state.doc = doc;
   state.annots = await AnnotStore.forDoc(doc.id);
   currentPage = doc.lastPage || 1;
+  ocrBannerDismissed = false;
 
   // Let the loading overlay paint before the (potentially large) DOM build.
   await new Promise((r) => setTimeout(r, 30));
