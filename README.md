@@ -77,3 +77,7 @@ is also what enables the offline service worker.)
 - Complex layouts (multi-column academic papers, tables) are linearized with
   heuristics — reading order is usually right, but tables flatten into text.
 - Images and figures in the PDF are not shown (text-focused by design).
+
+## LM Academy: The Slip
+
+The [`lm-academy/`](lm-academy/) folder holds **The Slip**, a separate installable web app that teaches London Market insurance: 15 modules and 85 lessons, quizzes, flashcards, figures, mind maps and interactive tools, designed for the iPhone Duo. It has its own offline cache and home-screen icon. Open `/lm-academy/` on the same host and use **Share → Add to Home Screen**. Its source lives in [hzn8thnrhf-commits/london-market-insurance](https://github.com/hzn8thnrhf-commits/london-market-insurance).
