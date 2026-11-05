@@ -1202,3 +1202,35 @@ h1, h2, h3 { text-wrap: balance; }
 .textsize span { font-weight: 650; line-height: 1; }
 .ts-s { font-size: 15px; } .ts-m { font-size: 18px; } .ts-l { font-size: 21px; } .ts-xl { font-size: 24px; }
 .search-snip mark { background: color-mix(in srgb, var(--c2) 28%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+/* ---------- back button within thumb reach ---------- */
+.mast-back { display: none; }
+.mast-top { min-height: 8px; }
+.backfab {
+  position: fixed;
+  z-index: 32;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 14px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 62vw;
+  min-height: 50px;
+  padding: 0 18px 0 12px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(5, 11, 23, 0.28);
+}
+.backfab svg { width: 22px; height: 22px; flex: none; }
+.backfab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.backfab:active { transform: scale(0.96); }
+body.has-back #app { padding-bottom: calc(var(--tabbar-h) + 100px); }
+@media (min-width: 760px) and (min-aspect-ratio: 5/4), (horizontal-viewport-segments: 2) {
+  /* unfolded: bottom right of the right page, where the right thumb rests */
+  .backfab { bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); max-width: 40vw; }
+  body.has-back .page-r, body.has-back .mapview { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
+}
