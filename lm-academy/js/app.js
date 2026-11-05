@@ -140,7 +140,9 @@
   const app = document.getElementById("app");
   const TABS = ["home", "learn", "practice", "glossary", "lab"];
 
+  let backTarget = null;
   function mast({ back, backLabel, kicker, title, sub, tall, extra }) {
+    if (back) backTarget = { href: back, label: backLabel };
     return `<header class="mast${tall ? " tall" : ""}"><div class="wrap">
       <div class="mast-top">${back ? `<a class="mast-back" href="#${back}">${icon("chevL")}<span>${esc(backLabel)}</span></a>` : ""}</div>
       ${kicker ? `<p class="kicker">${kicker}</p>` : ""}
@@ -185,7 +187,9 @@
     }
     current = h;
     const v = resolve(h);
+    backTarget = null;
     app.innerHTML = v.html();
+    updateBack();
     document.querySelectorAll(".tab").forEach((t) => {
       if (t.dataset.tab === v.tab) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
@@ -198,11 +202,41 @@
 
   function rerender(keepScroll = true) {
     const y = window.scrollY;
+    backTarget = null;
     app.innerHTML = resolve(current).html();
+    updateBack();
     window.scrollTo(0, keepScroll ? y : 0);
     updateReadbar();
     drawFigures();
   }
+
+  /* Back sits at the bottom right, within thumb reach on the phone, the cover
+     screen and the unfolded Duo. A swipe in from the left edge also goes back,
+     since installed web apps do not get Safari's own back gesture. */
+  const backBtn = document.getElementById("backfab");
+  function updateBack() {
+    if (!backBtn) return;
+    if (backTarget) {
+      backBtn.hidden = false;
+      backBtn.setAttribute("href", `#${backTarget.href}`);
+      backBtn.setAttribute("aria-label", `Back to ${backTarget.label}`);
+      backBtn.querySelector("span").textContent = backTarget.label;
+    } else {
+      backBtn.hidden = true;
+    }
+    document.body.classList.toggle("has-back", !!backTarget);
+  }
+  let swipe = null;
+  document.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    swipe = backTarget && e.touches.length === 1 && t.clientX < 28 ? { x: t.clientX, y: t.clientY } : null;
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!swipe) return;
+    const t = e.changedTouches[0];
+    if (t.clientX - swipe.x > 70 && Math.abs(t.clientY - swipe.y) < 60 && backTarget) location.hash = backTarget.href;
+    swipe = null;
+  }, { passive: true });
 
   /* ---------------------------------------------------------------- home */
   function slotHTML(m) {
