@@ -29,19 +29,19 @@
     });
   });
 
-  const plainBlock = (b) => {
-    if (typeof b === "string") return b;
-    if (b.h) return b.h;
-    if (b.ul || b.ol) return (b.ul || b.ol).join(" ");
-    if (b.terms) return b.terms.map((t) => t.join(" ")).join(" ");
-    if (b.example) return `${b.example.title || ""} ${b.example.text}`;
-    if (b.think) return `${b.think.q} ${b.think.a}`;
-    if (b.table) return b.table.rows.map((r) => r.join(" ")).join(" ");
-    if (b.timeline || b.chain) return (b.timeline || b.chain).map((t) => t.join(" ")).join(" ");
-    return b.analogy || b.note || b.aware || b.text || "";
+  /* plain text of a lesson, for search */
+  const lessonText = (l) => {
+    const ds = [].concat(l.diagram || []);
+    const parts = ds.flatMap((d) => [
+      d.intro || "",
+      ...d.nodes.map((n) => `${n.label}. ${n.sub ? `${n.sub}. ` : ""}${n.teach || ""} ${n.like || ""}`),
+      ...(d.edges || []).map((e) => e.teach || "")
+    ]);
+    const think = l.think ? `${l.think.q} ${l.think.a}` : "";
+    return `${l.title}. ${l.intro || ""} ${parts.join(" ")} ${think} ${l.takeaways.join(" ")}`;
   };
   LESSONS.forEach((l) => {
-    l.text = `${l.title}. ${l.body.map(plainBlock).join(" ")} ${l.takeaways.join(" ")}`.replace(/\*\*/g, "").replace(/\s+/g, " ");
+    l.text = lessonText(l).replace(/\*\*/g, "").replace(/(^|[^\w])\*([^*]+)\*/g, "$1$2").replace(/\s+/g, " ");
   });
 
   const slug = (s) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -92,6 +92,9 @@
     ratio: '<path d="M4 20h16"/><path d="M7 20v-8M12 20V6M17 20v-5"/>',
     cards: '<rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M8 3.5h10a2 2 0 0 1 2 2V17"/>',
     bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
+    diagram: '<rect x="3" y="3.5" width="8" height="6" rx="1.6"/><rect x="13" y="14.5" width="8" height="6" rx="1.6"/><path d="M7 9.5v3a2 2 0 0 0 2 2h4"/><path d="M11.5 12.5l2 2-2 2"/>',
+    sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>',
+    close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     map: '<circle cx="12" cy="12" r="2.6"/><circle cx="4.8" cy="6" r="2"/><circle cx="19.2" cy="6" r="2"/><circle cx="4.8" cy="18" r="2"/><circle cx="19.2" cy="18" r="2"/><path d="M9.8 10.6 6.5 7.4M14.2 10.6l3.3-3.2M9.8 13.4l-3.3 3.2M14.2 13.4l3.3 3.2"/>'
   };
   const icon = (name, cls = "") =>
@@ -100,7 +103,7 @@
 
   /* ---------------------------------------------------------------- state */
   const KEY = "the-slip/v1";
-  const blank = () => ({ done: {}, quiz: {}, cards: {}, days: [], qa: { n: 0, c: 0 }, final: null, missed: {}, text: "m" });
+  const blank = () => ({ done: {}, quiz: {}, cards: {}, days: [], qa: { n: 0, c: 0 }, final: null, missed: {}, text: "m", seen: {} });
   const load = () => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -172,6 +175,7 @@
     if (h === "lab-slip") return { tab: "lab", html: viewSlipTool };
     if (h === "lab-tower") return { tab: "lab", html: viewTowerTool };
     if (h === "lab-ratio") return { tab: "lab", html: viewRatioTool };
+    if ((m = h.match(/^try-([a-z0-9-]+)$/)) && XS[m[1]]) return { tab: "lab", html: () => viewTry(m[1]), top: true };
     return { tab: "home", html: viewHome };
   }
 
@@ -188,6 +192,8 @@
     current = h;
     const v = resolve(h);
     backTarget = null;
+    LX = null;
+    document.body.classList.remove("sheet-open");
     app.innerHTML = v.html();
     updateBack();
     document.querySelectorAll(".tab").forEach((t) => {
@@ -196,7 +202,7 @@
     });
     const y = !v.lesson && !v.top && scrollMem[h] ? scrollMem[h] : 0;
     window.scrollTo(0, y);
-    updateReadbar();
+    placeX();
     drawFigures();
   }
 
@@ -206,7 +212,7 @@
     app.innerHTML = resolve(current).html();
     updateBack();
     window.scrollTo(0, keepScroll ? y : 0);
-    updateReadbar();
+    placeX();
     drawFigures();
   }
 
@@ -275,7 +281,7 @@
       nextHTML = `<div class="panel">
         <p class="row-meta">Module ${m.code} · ${esc(m.title)} · Lesson ${next.num} of ${m.lessons.length}</p>
         <h3>${esc(next.title)}</h3>
-        <p>${next.minutes} minute read${done === 0 ? ". Start here: the course runs in order, but you can jump to any module." : "."}</p>
+        <p>${lessonMeta(next)}${done === 0 ? ". Start here: the course runs in order, but you can jump to any module." : "."}</p>
         <a class="btn block" href="#${next.id}">${done === 0 ? "Start the first lesson" : "Continue"}</a>
       </div>`;
     } else {
@@ -383,7 +389,7 @@
       const done = !!S.done[l.id];
       return `<a class="row" href="#${l.id}" style="--sep:56px">
         <span class="check${done ? " done" : ""}">${done ? icon("check") : l.num}</span>
-        <span class="row-main"><span class="row-title">${esc(l.title)}</span><span class="row-meta">${l.minutes} min read${done ? " · learned" : ""}</span></span>${chev}
+        <span class="row-main"><span class="row-title">${esc(l.title)}</span><span class="row-meta">${lessonMeta(l)}${done ? " · learned" : ""}</span></span>${chev}
       </a>`;
     }).join("");
     return spread(`${mast({
@@ -408,49 +414,10 @@
   }
 
   /* ---------------------------------------------------------------- lesson */
-  function block(b) {
-    if (typeof b === "string") return `<p>${fmt(b)}</p>`;
-    if (b.fig) return `<div class="fig-inline">${figureHTML(b.fig)}</div>`;
-    if (b.h) return `<h2>${fmt(b.h)}</h2>`;
-    if (b.ul) return `<ul>${b.ul.map((x) => `<li>${fmt(x)}</li>`).join("")}</ul>`;
-    if (b.ol) return `<ol>${b.ol.map((x) => `<li><span>${fmt(x)}</span></li>`).join("")}</ol>`;
-    if (b.terms) return `<dl class="terms">${b.terms.map(([t, d]) => `<div><dt>${fmt(t)}</dt><dd>${fmt(d)}</dd></div>`).join("")}</dl>`;
-    if (b.analogy) return `<aside class="callout analogy"><div class="callout-label"><span class="glyph" aria-hidden="true">≈</span>Think of it like this</div><p>${fmt(b.analogy)}</p></aside>`;
-    if (b.example) return `<aside class="callout example"><div class="callout-label">${esc(b.example.title || "Worked example")}</div><p>${fmt(b.example.text)}</p></aside>`;
-    if (b.note) return `<aside class="callout note"><div class="callout-label">In practice</div><p>${fmt(b.note)}</p></aside>`;
-    if (b.aware) return `<aside class="callout aware"><div class="callout-label">Be aware</div><p>${fmt(b.aware)}</p></aside>`;
-    if (b.think) {
-      return `<details class="callout think"><summary><span class="callout-label">Consider this</span><span class="think-q">${fmt(b.think.q)}</span><span class="think-cta">Show the answer</span></summary><p>${fmt(b.think.a)}</p></details>`;
-    }
-    if (b.table) {
-      const { head, rows } = b.table;
-      return `<div class="table-wrap"><table><thead><tr>${head.map((h) => `<th scope="col">${fmt(h)}</th>`).join("")}</tr></thead><tbody>${rows
-        .map((r) => `<tr>${r.map((c) => `<td>${fmt(c)}</td>`).join("")}</tr>`)
-        .join("")}</tbody></table></div>`;
-    }
-    if (b.timeline) return `<ul class="timeline">${b.timeline.map(([y, t]) => `<li><b>${esc(y)}</b><span>${fmt(t)}</span></li>`).join("")}</ul>`;
-    if (b.chain) {
-      return `<div class="chain" role="list">${b.chain
-        .map(([t, d], i) => `${i ? '<span class="chain-joint" aria-hidden="true"></span>' : ""}<div class="chain-link" role="listitem"><span class="n">${i + 1}</span><div><h4>${fmt(t)}</h4><p>${fmt(d)}</p></div></div>`)
-        .join("")}</div>`;
-    }
-    if (b.lab) {
-      const ico = { slip: "slip", tower: "tower", ratio: "ratio" }[b.lab];
-      return `<a class="lab-link" href="#lab-${b.lab}"><span class="ico">${icon(ico)}</span><span>${fmt(b.text)}</span>${chev}</a>`;
-    }
-    return "";
-  }
 
 
   /* ---------------------------------------------------------------- figures */
   const FIGS = DATA.figures || {};
-  const FIGNUM = {};
-  MODULES.forEach((m) => {
-    let n = 0;
-    m.lessons.forEach((l) => l.body.forEach((b) => {
-      if (b && b.fig && FIGS[b.fig]) FIGNUM[b.fig] = `${parseInt(m.code, 10)}.${++n}`;
-    }));
-  });
 
   const legendHTML = (items) =>
     items ? `<div class="fig-legend">${items.map(([tone, t]) => `<span><i class="sw s-${tone}"></i>${esc(t)}</span>`).join("")}</div>` : "";
@@ -460,12 +427,19 @@
     const s = n.span || 1;
     const [rn, cn] = n.atN || n.at;
     const sn = n.spanN || s;
-    return `<div class="node tone-${n.tone || "plain"}" data-id="${n.id}" style="--r:${r};--c:${c};--s:${s};--rn:${rn};--cn:${cn};--sn:${sn}">${spec.steps ? `<span class="step">${i + 1}</span>` : ""}<b>${esc(n.label)}</b>${n.sub ? `<span>${esc(n.sub)}</span>` : ""}</div>`;
+    const style = `--r:${r};--c:${c};--s:${s};--rn:${rn};--cn:${cn};--sn:${sn}`;
+    const inner = `${spec.steps ? `<span class="step">${i + 1}</span>` : ""}<b>${esc(n.label)}</b>${n.sub ? `<span>${esc(n.sub)}</span>` : ""}`;
+    if (spec.live) {
+      const seen = seenOf(spec.lesson).includes(`${spec.scene}:${n.id}`);
+      return `<button type="button" class="node tone-${n.tone || "plain"}${seen ? " seen" : ""}" data-id="${n.id}" data-act="pick" data-fig="${spec.key}" aria-pressed="false" style="${style}">${inner}</button>`;
+    }
+    return `<div class="node tone-${n.tone || "plain"}" data-id="${n.id}" style="${style}">${inner}</div>`;
   }
 
   function figBody(id, spec) {
     if (spec.type === "graph") {
-      return `<div class="fig" data-fig="${id}"><svg class="edges" aria-hidden="true"></svg><div class="graph" style="--cols:${spec.cols};--cols-n:${spec.colsN || spec.cols}${spec.gap ? `;--gy:${spec.gap}px` : ""}">${spec.nodes.map((n, i) => nodeHTML(n, i, spec)).join("")}</div><div class="edge-labels" aria-hidden="true"></div></div>`;
+      const narrow = (spec.colsN || spec.cols) / Math.min(...spec.nodes.map((n) => n.spanN || n.span || 1)) >= 3;
+      return `<div class="fig${spec.live ? " live" : ""}" data-fig="${id}"><svg class="edges" aria-hidden="true"></svg><div class="graph${narrow ? " g3" : ""}" style="--cols:${spec.cols};--cols-n:${spec.colsN || spec.cols}${spec.gap ? `;--gy:${spec.gap}px` : ""}${spec.gapX ? `;--gx:${spec.gapX}px` : ""}">${spec.nodes.map((n, i) => nodeHTML(n, i, spec)).join("")}</div><div class="edge-labels"${spec.live ? "" : ' aria-hidden="true"'}></div></div>`;
     }
     if (spec.type === "bars") {
       const last = spec.rows.length - 1;
@@ -617,11 +591,6 @@
     return `<div class="fig chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(spec.title)}">${g}</svg></div>`;
   }
 
-  function figureHTML(id) {
-    const spec = FIGS[id];
-    if (!spec) return "";
-    return `<figure class="figure"><div class="fig-head"><span>Figure ${FIGNUM[id] || ""}</span>${esc(spec.title)}</div>${figBody(id, spec)}<figcaption class="fig-caption">${esc(spec.caption)}</figcaption></figure>`;
-  }
 
   /* arrows between boxes, measured after layout */
   const NORM = { t: [0, -1], b: [0, 1], l: [-1, 0], r: [1, 0] };
@@ -660,7 +629,7 @@
       return el ? relBox(base, el) : null;
     };
     let lines = "", heads = "", labs = "";
-    (spec.edges || []).forEach((e) => {
+    (spec.edges || []).forEach((e, i) => {
       const a = box(e.from), b = box(e.to);
       if (!a || !b) return;
       const auto = autoSides(a, b);
@@ -693,11 +662,14 @@
       const ux = tx / tl, uy = ty / tl;
       const end = [p3[0] - ux * 7, p3[1] - uy * 7];
       const cls = `${e.tone ? `t-${e.tone}` : ""}${e.dash ? " dash" : ""}`;
-      lines += `<path class="${cls}" d="M${f1(p0[0])} ${f1(p0[1])}C${f1(c1[0])} ${f1(c1[1])} ${f1(c2[0])} ${f1(c2[1])} ${f1(end[0])} ${f1(end[1])}"/>`;
-      heads += `<polygon class="${e.tone ? `t-${e.tone}` : ""}" points="${f1(p3[0])},${f1(p3[1])} ${f1(end[0] - uy * 4.5)},${f1(end[1] + ux * 4.5)} ${f1(end[0] + uy * 4.5)},${f1(end[1] - ux * 4.5)}"/>`;
+      lines += `<path class="${cls}" data-e="${i}" d="M${f1(p0[0])} ${f1(p0[1])}C${f1(c1[0])} ${f1(c1[1])} ${f1(c2[0])} ${f1(c2[1])} ${f1(end[0])} ${f1(end[1])}"/>`;
+      heads += `<polygon class="${e.tone ? `t-${e.tone}` : ""}" data-e="${i}" points="${f1(p3[0])},${f1(p3[1])} ${f1(end[0] - uy * 4.5)},${f1(end[1] + ux * 4.5)} ${f1(end[0] + uy * 4.5)},${f1(end[1] - ux * 4.5)}"/>`;
       if (e.label) {
-        const m = bezPoint(p0, c1, c2, p3, 0.5);
-        labs += `<span class="edge-label${e.tone ? ` t-${e.tone}` : ""}" style="left:${f1(m[0])}px;top:${f1(m[1])}px">${esc(e.label)}</span>`;
+        const m = bezPoint(p0, c1, c2, p3, e.at === undefined ? 0.5 : e.at);
+        const pos = `left:${f1(m[0])}px;top:${f1(m[1])}px`;
+        labs += spec.live && e.teach
+          ? `<button type="button" class="edge-label${e.tone ? ` t-${e.tone}` : ""}" data-act="pick-edge" data-fig="${spec.key}" data-e="${i}" style="${pos}">${esc(e.label)}</button>`
+          : `<span class="edge-label${e.tone ? ` t-${e.tone}` : ""}" data-e="${i}" style="${pos}">${esc(e.label)}</span>`;
       }
     });
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -710,21 +682,7 @@
   /* ---------------------------------------------------------------- mind maps */
   const HUES = ["var(--tint)", "var(--brass)", "var(--stamp)", "var(--good)"];
 
-  function keyTerms(l) {
-    if (l.keys) return l.keys;
-    const out = [];
-    const add = (raw) => {
-      const t = raw.replace(/[.:,]$/, "").trim();
-      if (t.length > 2 && t.length <= 30 && !out.some((o) => o.toLowerCase() === t.toLowerCase())) out.push(t);
-    };
-    const scan = (str) => (str.match(/\*\*(.+?)\*\*/g) || []).forEach((m) => add(m.slice(2, -2)));
-    l.body.forEach((b) => {
-      if (typeof b === "string") scan(b);
-      else if (b.terms) b.terms.forEach(([t]) => add(t));
-      else if (b.ul) b.ul.forEach(scan);
-    });
-    return out.slice(0, 4);
-  }
+  const keyTerms = (l) => l.keys || [];
 
   function mindmapHTML(root, items) {
     return `<div class="fig mm" data-kind="mm">
@@ -820,7 +778,10 @@
   /* draw (and redraw on fold, rotation or resize) every figure on screen */
   function drawFig(fig) {
     if (fig.dataset.kind === "mm") drawMindmap(fig);
-    else if (FIGS[fig.dataset.fig]) drawEdges(fig, FIGS[fig.dataset.fig]);
+    else if (FIGS[fig.dataset.fig]) {
+      drawEdges(fig, FIGS[fig.dataset.fig]);
+      if (FIGS[fig.dataset.fig].live) paintSel(fig);
+    }
   }
   const figObserver = "ResizeObserver" in window
     ? new ResizeObserver((entries) => entries.forEach((en) => drawFig(en.target)))
@@ -837,6 +798,11 @@
   function completeHTML(l, animate) {
     const t = S.done[l.id];
     const m = l.module;
+    if (!t && l.parts) {
+      const got = explored(l);
+      return `<p>${got} of ${l.parts.length} ideas explored. Open every box to stamp this lesson on your slip, or mark it learned now.</p>
+        <button class="btn block quiet" type="button" data-act="complete" data-id="${l.id}">Mark as learned</button>`;
+    }
     if (!t) {
       return `<p>Finished reading? Mark it learned to stamp it on your slip.</p>
         <button class="btn block" type="button" data-act="complete" data-id="${l.id}">Mark as learned</button>`;
@@ -850,50 +816,438 @@
     return `<div class="stamp-slot"><span class="stamp big${animate ? " animate" : ""}"><strong>Learned</strong><span>${m.code}.${l.num} · ${fmtDate(t)}</span></span></div>${action}`;
   }
 
-  function viewLesson(l) {
+  const viewLesson = (l) => viewLessonDiagram(l);
+
+  /* ---------------------------------------------------------------- diagram lessons
+     A lesson is a set of scenes: one or more diagrams whose boxes and arrows open an
+     explanation when tapped, and optional "Try it" models driven by sliders. Unfolded,
+     the picture sits on the left page and the explanation on the right; on a phone the
+     explanation rises from the bottom as a sheet. */
+  const SPREAD_MQ = matchMedia("(min-width: 760px) and (min-aspect-ratio: 5/4), (horizontal-viewport-segments: 2)");
+  const motion = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+  const insetTop = () => parseFloat(getComputedStyle(document.documentElement).paddingTop) || 0;
+  const seenOf = (l) => (l && S.seen[l.id]) || [];
+  const explored = (l) => { const s = seenOf(l); return l.parts.filter((p) => s.includes(p)).length; };
+  const paras = (t) => (t ? String(t).split(/\n\n+/).map((p) => `<p>${fmt(p)}</p>`).join("") : "");
+
+  const XS = DATA.explore || {};
+  LESSONS.forEach((l) => {
+    if (!l.diagram) return;
+    l.diagrams = [].concat(l.diagram).map((d, i) => {
+      const spec = Object.assign({ type: "graph" }, d, { live: true, key: `${l.id}-d${i}`, scene: `d${i}`, lesson: l, byId: {} });
+      spec.nodes.forEach((n) => { spec.byId[n.id] = n; });
+      spec.order = (d.tour || spec.nodes.map((n) => n.id)).filter((id) => spec.byId[id]);
+      FIGS[spec.key] = spec;
+      return spec;
+    });
+    l.tries = [].concat(l.explore || []).filter((id) => XS[id]);
+    l.parts = l.diagrams.flatMap((d) => d.order.map((id) => `${d.scene}:${id}`));
+  });
+  /* the lesson that teaches each model, for the Lab */
+  const X_HOME = {};
+  LESSONS.forEach((l) => (l.tries || []).forEach((id) => { if (!X_HOME[id]) X_HOME[id] = l; }));
+
+  function lessonMeta(l) {
+    if (!l.diagrams) return `${l.minutes} min read`;
+    const models = l.tries.length ? ` · ${l.tries.length > 1 ? `${l.tries.length} models` : "a model to try"}` : "";
+    return `${l.parts.length} ideas${models} · ${l.minutes} min`;
+  }
+
+  function scenesOf(l) {
+    const many = l.diagrams.length > 1;
+    return [
+      ...l.diagrams.map((d, i) => ({ key: d.scene, name: d.name || (many ? `Diagram ${i + 1}` : "Diagram"), d })),
+      ...l.tries.map((id, i) => ({ key: `x${i}`, name: XS[id].tab || "Try it", x: id }))
+    ];
+  }
+
+  let LX = null;
+  let learnedNow = false;
+  const uiOf = (l) => (LX && LX.id === l.id ? LX : (LX = { id: l.id, scene: scenesOf(l)[0].key, sel: null, edge: null }));
+  const diagramOf = (l, scene) => l.diagrams.find((d) => d.scene === scene) || null;
+  const progLabel = (l, d) => {
+    const seen = seenOf(l);
+    const got = d.order.filter((id) => seen.includes(`${d.scene}:${id}`)).length;
+    return got === d.order.length ? "All explored" : `${got} of ${d.order.length} explored`;
+  };
+
+  function markSeen(l, part) {
+    const arr = S.seen[l.id] || (S.seen[l.id] = []);
+    if (arr.includes(part)) return;
+    arr.push(part);
+    touch();
+    if (!S.done[l.id] && l.parts.every((p) => arr.includes(p))) {
+      S.done[l.id] = Date.now();
+      learnedNow = true;
+    }
+    save();
+  }
+
+  /* highlight the chosen box, its arrows and its neighbours; fade the rest */
+  function paintSel(fig) {
+    const d = FIGS[fig.dataset.fig];
+    if (!d || !d.live) return;
+    const u = LX && LX.id === d.lesson.id && LX.scene === d.scene ? LX : null;
+    const sel = u && u.sel ? u.sel.slice(d.scene.length + 1) : null;
+    const edge = u && u.edge !== null ? +u.edge.slice(d.scene.length + 1) : null;
+    const active = sel !== null || edge !== null;
+    const onE = new Set(), near = new Set();
+    (d.edges || []).forEach((e, i) => {
+      if ((sel !== null && (e.from === sel || e.to === sel)) || edge === i) { onE.add(i); near.add(e.from); near.add(e.to); }
+    });
+    const seen = seenOf(d.lesson);
+    fig.querySelectorAll(".node[data-id]").forEach((el) => {
+      const id = el.dataset.id, me = id === sel;
+      el.classList.toggle("is-sel", me);
+      el.classList.toggle("is-near", active && !me && near.has(id));
+      el.classList.toggle("is-dim", active && !me && !near.has(id));
+      el.classList.toggle("seen", seen.includes(`${d.scene}:${id}`));
+      el.setAttribute("aria-pressed", String(me));
+    });
+    fig.querySelectorAll("[data-e]").forEach((el) => {
+      const i = +el.dataset.e;
+      el.classList.toggle("is-on", onE.has(i));
+      el.classList.toggle("is-dim", active && !onE.has(i));
+    });
+  }
+
+  const analogyHTML = (t) => `<aside class="callout analogy"><div class="callout-label"><span class="glyph" aria-hidden="true">≈</span>Think of it like this</div><p>${fmt(t)}</p></aside>`;
+
+  function partRow(d, id, k, seen) {
+    const n = d.byId[id];
+    const done = seen.includes(`${d.scene}:${id}`);
+    return `<button type="button" class="row part-row" data-act="pick" data-fig="${d.key}" data-id="${id}" style="--sep:56px"><span class="check${done ? " done" : ""}">${done ? icon("check") : k + 1}</span><span class="row-main"><span class="row-title">${esc(n.label)}</span>${n.sub ? `<span class="row-meta">${esc(n.sub)}</span>` : ""}</span>${chev}</button>`;
+  }
+
+  function navBtn(d, id, dir, word) {
+    const n = d.byId[id];
+    return `<button type="button" class="tnav ${dir}" data-act="pick" data-fig="${d.key}" data-id="${id}">${dir === "prev" ? icon("chevL") : ""}<span><small>${word || (dir === "prev" ? "Back" : "Next")}</small>${esc(n.label)}</span>${dir === "next" ? icon("chevR") : ""}</button>`;
+  }
+
+  /* what follows the last box of a diagram: the next diagram, the model, or the end */
+  function afterBtn(l, d) {
+    const sc = scenesOf(l);
+    const nxt = sc[sc.findIndex((s) => s.key === d.scene) + 1];
+    if (nxt) return `<button type="button" class="tnav next" data-act="scene" data-s="${nxt.key}" data-walk="1"><span><small>Next</small>${esc(nxt.d ? nxt.name : `${nxt.name}: ${XS[nxt.x].title}`)}</span>${icon("chevR")}</button>`;
+    return `<button type="button" class="tnav next" data-act="unpick"><span><small>Finished</small>Close</span>${icon("check")}</button>`;
+  }
+
+  function teachHTML(l, d) {
+    const u = uiOf(l);
+    const seen = seenOf(l);
+    const mine = u.scene === d.scene;
+    const sel = mine && u.sel ? u.sel.slice(d.scene.length + 1) : null;
+    const edge = mine && u.edge !== null ? +u.edge.slice(d.scene.length + 1) : null;
+    const intro = l.diagrams[0] === d ? l.intro || d.intro : d.intro || "";
+    const close = `<button type="button" class="teach-x" data-act="unpick" aria-label="Close the explanation">${icon("close")}</button>`;
+    const done = learnedNow ? `<div class="teach-done"><span class="stamp">Learned</span><p>That’s every idea in this lesson, and it’s now stamped on your slip.</p></div>` : "";
+
+    if (sel === null && edge === null) {
+      const got = d.order.filter((id) => seen.includes(`${d.scene}:${id}`)).length;
+      const all = got === d.order.length;
+      return `<div class="teach-card teach-start">
+        <p class="teach-step" data-prog="${d.scene}">${progLabel(l, d)}</p>
+        <div class="teach-body">${paras(intro)}</div>
+        <button type="button" class="btn block" data-act="walk" data-s="${d.scene}">${icon("diagram")}${all ? "Walk through it again" : got ? "Carry on the walk-through" : "Walk me through it"}</button>
+        <p class="teach-hint">Or tap any box in the diagram. A gold dot marks an idea you haven’t opened yet.</p>
+        <div class="group parts">${d.order.map((id, k) => partRow(d, id, k, seen)).join("")}</div>
+      </div>`;
+    }
+
+    if (sel !== null) {
+      const n = d.byId[sel];
+      const k = d.order.indexOf(sel);
+      const links = (d.edges || []).map((e, i) => ({ e, i })).filter(({ e }) => e.from === sel || e.to === sel);
+      const link = ({ e }) => {
+        const out = e.from === sel;
+        const other = d.byId[out ? e.to : e.from];
+        return `<button type="button" class="link" data-act="pick" data-fig="${d.key}" data-id="${other.id}">
+          <span class="link-head"><span class="link-dir" aria-hidden="true">${out ? "→" : "←"}</span><b>${esc(other.label)}</b>${e.label ? `<em>${esc(e.label)}</em>` : ""}${chev}</span>
+          ${e.teach ? `<span class="link-text">${fmt(e.teach)}</span>` : ""}
+        </button>`;
+      };
+      const prev = k > 0 ? navBtn(d, d.order[k - 1], "prev") : "<span></span>";
+      const next = k > -1 && k < d.order.length - 1 ? navBtn(d, d.order[k + 1], "next") : afterBtn(l, d);
+      return `<div class="teach-card">${done}
+        <div class="teach-top"><span class="teach-step">${k + 1} of ${d.order.length}</span>${close}</div>
+        <h2 class="teach-title">${esc(n.label)}</h2>
+        ${n.sub ? `<p class="teach-sub">${esc(n.sub)}</p>` : ""}
+        <div class="teach-body">${paras(n.teach)}</div>
+        ${n.like ? analogyHTML(n.like) : ""}
+        ${links.length ? `<h3 class="teach-h">How it connects</h3><div class="links">${links.map(link).join("")}</div>` : ""}
+        <nav class="teach-nav" aria-label="Walk-through">${prev}${next}</nav>
+      </div>`;
+    }
+
+    const e = d.edges[edge];
+    return `<div class="teach-card">
+      <div class="teach-top"><span class="teach-step">How they connect</span>${close}</div>
+      <h2 class="teach-title">${esc(d.byId[e.from].label)} <span class="teach-arrow">→</span> ${esc(d.byId[e.to].label)}</h2>
+      ${e.label ? `<p class="teach-sub">${esc(e.label)}</p>` : ""}
+      <div class="teach-body">${paras(e.teach)}</div>
+      ${e.like ? analogyHTML(e.like) : ""}
+      <nav class="teach-nav" aria-label="Either end">${navBtn(d, e.from, "prev", "From")}${navBtn(d, e.to, "next", "To")}</nav>
+    </div>`;
+  }
+
+  function phoneIntro(l, d) {
+    const intro = l.diagrams[0] === d ? l.intro || d.intro : d.intro || "";
+    return `<div class="intro-card phone-only">${paras(intro)}
+      <div class="intro-row"><button type="button" class="btn" data-act="walk" data-s="${d.scene}">${icon("diagram")}Walk me through it</button><span class="intro-prog" data-prog="${d.scene}">${progLabel(l, d)}</span></div>
+    </div>`;
+  }
+
+  function viewLessonDiagram(l) {
     const m = l.module;
+    const u = uiOf(l);
     const prev = LESSONS[l.order - 1];
     const next = LESSONS[l.order + 1];
-    const figIds = l.body.filter((b) => b && b.fig && FIGS[b.fig]).map((b) => b.fig);
-    const sideFigs = figIds.length ? `<div class="wrap side-figs spread-only">${figIds.map(figureHTML).join("")}</div>` : "";
-    const outline = `<nav class="wrap outline spread-only" aria-label="Lessons in this module">
-      <h2 class="section-title">In this module</h2>
-      <div class="group">${m.lessons.map((x) => `<a class="row" href="#${x.id}" style="--sep:56px"${x === l ? ' aria-current="page"' : ""}><span class="check${S.done[x.id] ? " done" : ""}">${S.done[x.id] ? icon("check") : x.num}</span><span class="row-main"><span class="row-title">${esc(x.title)}</span><span class="row-meta">${x.minutes} min</span></span></a>`).join("")}<a class="row" href="#quiz-${m.id}" style="--sep:56px"><span class="check">Q</span><span class="row-main"><span class="row-title">Module quiz</span><span class="row-meta">${m.quiz.length} questions</span></span></a></div>
-    </nav>`;
-    return `<div class="readbar" id="readbar" aria-hidden="true"></div>
-    ${spread(`${mast({
+    const sc = scenesOf(l);
+    const hide = (s) => (s.key === u.scene ? "" : " hidden");
+    const tabs = (where) => (sc.length > 1
+      ? `<div class="scene-tabs ${where}${sc.length > 3 ? " many" : ""}" role="tablist" aria-label="Parts of this lesson">${sc.map((s) => `<button type="button" role="tab" data-act="scene" data-s="${s.key}" aria-selected="${s.key === u.scene}">${icon(s.d ? "diagram" : "sliders")}<span>${esc(s.name)}</span></button>`).join("")}</div>`
+      : "");
+    const stage = sc.map((s) => `<section class="scene" data-scene-of="${s.key}"${hide(s)}>${s.d
+      ? `${phoneIntro(l, s.d)}<figure class="figure diagram">${s.d.title ? `<div class="fig-head">${esc(s.d.title)}</div>` : ""}${figBody(s.d.key, s.d)}</figure>`
+      : `<div class="x-slot" data-slot="stage" data-x="${s.x}">${xVisualHTML(s.x)}</div><div class="x-slot" data-slot="stage-ins" data-x="${s.x}"></div>`}</section>`).join("");
+    const right = sc.map((s) => `<section class="scene" data-scene-of="${s.key}"${hide(s)}>${s.d
+      ? `<aside class="teach" id="teach-${s.key}" aria-label="Explanation">${teachHTML(l, s.d)}</aside>`
+      : xBlockHTML(s.x)}</section>`).join("");
+    const pctDone = Math.round((explored(l) / l.parts.length) * 100);
+    return spread(`${mast({
       back: m.id,
       backLabel: `Module ${m.code}`,
-      kicker: `${esc(m.title)} · Lesson ${l.num} of ${m.lessons.length}`,
+      kicker: `Module ${m.code} · Lesson ${l.num} of ${m.lessons.length}`,
       title: esc(l.title),
-      sub: `${l.minutes} minute read`,
-      extra: `<div class="mast-progress"><span style="width:${(l.num / m.lessons.length) * 100}%"></span></div>`
-    })}${sideFigs}${outline}`, `<article class="wrap">
-      <div class="prose">${l.body.map(block).join("")}</div>
+      extra: `<div class="mast-progress" title="Ideas explored"><span id="lesson-prog" style="width:${pctDone}%"></span></div>`
+    })}<div class="wrap stage">${tabs("phone-only")}${stage}</div>`, `<article class="wrap lesson-r">${tabs("spread-only")}${right}
       <div class="stack">
-        <section class="takeaways"><h3>Key points</h3><ul>${l.takeaways.map((t) => `<li>${icon("check")}<span>${fmt(t)}</span></li>`).join("")}</ul></section>
+        <section class="takeaways"><h3>What to remember</h3><ul>${l.takeaways.map((t) => `<li>${icon("check")}<span>${fmt(t)}</span></li>`).join("")}</ul></section>
+        ${l.think ? `<details class="callout think"><summary><span class="callout-label">Check your understanding</span><span class="think-q">${fmt(l.think.q)}</span><span class="think-cta">Show the answer</span></summary><p>${fmt(l.think.a)}</p></details>` : ""}
         <div class="complete" id="complete">${completeHTML(l, false)}</div>
         <nav class="pager" aria-label="Lessons">
           ${prev ? `<a href="#${prev.id}"><small>Previous</small><span>${esc(prev.title)}</span></a>` : ""}
           ${next ? `<a class="next-link" href="#${next.id}"><small>Next lesson</small><span>${esc(next.title)}</span></a>` : ""}
         </nav>
       </div>
-    </article>`, sideFigs ? "has-figs" : false)}`;
+    </article>`, "stage-page");
   }
 
-  let readTick = false;
-  function updateReadbar() {
-    const bar = document.getElementById("readbar");
-    if (!bar) return;
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1;
-    bar.style.transform = `scaleX(${p})`;
+  function sizeSheet() {
+    const t = LX && document.getElementById(`teach-${LX.scene}`);
+    if (t) document.body.style.setProperty("--sheet-h", `${t.offsetHeight}px`);
   }
-  window.addEventListener("scroll", () => {
-    if (readTick) return;
-    readTick = true;
-    requestAnimationFrame(() => { readTick = false; updateReadbar(); });
-  }, { passive: true });
+
+  /* keep the chosen box in view: above the sheet on a phone, within the left page when unfolded */
+  function revealSel(l) {
+    const u = uiOf(l);
+    const d = diagramOf(l, u.scene);
+    const fig = d && document.querySelector(`.fig[data-fig="${d.key}"]`);
+    if (!fig) return;
+    const el = u.sel !== null
+      ? fig.querySelector(`.node[data-id="${u.sel.slice(d.scene.length + 1)}"]`)
+      : fig.querySelector(`.edge-label[data-e="${u.edge.slice(d.scene.length + 1)}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const teach = document.getElementById(`teach-${u.scene}`);
+    if (SPREAD_MQ.matches) {
+      const page = el.closest(".page-l");
+      if (page) {
+        const pr = page.getBoundingClientRect();
+        const lo = pr.top + 12;
+        const hi = pr.bottom - (parseFloat(getComputedStyle(page).paddingBottom) || 0) + 8;
+        if (r.top < lo || r.bottom > hi) page.scrollBy({ top: r.top - lo - Math.max(0, (hi - lo - r.height) / 2), behavior: motion() });
+      }
+      if (teach) {
+        const tr = teach.getBoundingClientRect();
+        if (tr.top < insetTop() || tr.top > innerHeight * 0.45) window.scrollBy({ top: tr.top - insetTop() - 12, behavior: motion() });
+      }
+      return;
+    }
+    const lo = insetTop() + 10;
+    const hi = innerHeight - (teach ? teach.offsetHeight : 0) - 22;
+    if (r.top < lo || r.bottom > hi) window.scrollBy({ top: r.top + r.height / 2 - (lo + Math.max(lo + r.height, hi)) / 2, behavior: motion() });
+  }
+
+  function refreshLesson(l, reveal) {
+    const u = uiOf(l);
+    const open = u.scene[0] === "d" && (u.sel !== null || u.edge !== null);
+    l.diagrams.forEach((d) => {
+      const t = document.getElementById(`teach-${d.scene}`);
+      if (t) {
+        t.innerHTML = teachHTML(l, d);
+        t.scrollTop = 0;
+        t.classList.toggle("open", open && u.scene === d.scene);
+      }
+      const fig = document.querySelector(`.fig[data-fig="${d.key}"]`);
+      if (fig) paintSel(fig);
+      document.querySelectorAll(`[data-prog="${d.scene}"]`).forEach((el) => { el.textContent = progLabel(l, d); });
+    });
+    const bar = document.getElementById("lesson-prog");
+    if (bar) bar.style.width = `${Math.round((explored(l) / l.parts.length) * 100)}%`;
+    document.body.classList.toggle("sheet-open", open);
+    if (learnedNow) {
+      learnedNow = false;
+      const box = document.getElementById("complete");
+      if (box) box.innerHTML = completeHTML(l, true);
+    } else {
+      const box = document.getElementById("complete");
+      if (box && !S.done[l.id]) box.innerHTML = completeHTML(l, false);
+    }
+    if (open) requestAnimationFrame(() => { sizeSheet(); if (reveal) revealSel(l); });
+  }
+
+  function pickPart(l, d, id) {
+    const u = uiOf(l);
+    u.scene = d.scene;
+    u.sel = `${d.scene}:${id}`;
+    u.edge = null;
+    markSeen(l, u.sel);
+    refreshLesson(l, true);
+  }
+
+  function showScene(l, key) {
+    const u = uiOf(l);
+    u.scene = key;
+    u.sel = null;
+    u.edge = null;
+    document.querySelectorAll("[data-scene-of]").forEach((s) => { s.hidden = s.dataset.sceneOf !== key; });
+    document.querySelectorAll('.scene-tabs [role="tab"]').forEach((b) => b.setAttribute("aria-selected", String(b.dataset.s === key)));
+    placeX();
+    refreshLesson(l, false);
+    if (SPREAD_MQ.matches) {
+      const page = document.querySelector(".page-l");
+      if (page) page.scrollTo({ top: 0, behavior: motion() });
+    } else {
+      const tabs = document.querySelector(".scene-tabs");
+      if (tabs) {
+        const r = tabs.getBoundingClientRect();
+        if (r.top < insetTop() || r.top > innerHeight * 0.5) window.scrollBy({ top: r.top - insetTop() - 10, behavior: motion() });
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------------- try-it models
+     Each model (js/explore.js) declares sliders and a compute function that returns a
+     chart, a few headline numbers and a sentence or two on cause and effect. */
+  const XV = {};
+  /* a slider can also step through a list of uneven values, such as claims from $1m to $5bn */
+  const nearest = (arr, v) => arr.reduce((b, x, i) => (Math.abs(x - v) < Math.abs(arr[b] - v) ? i : b), 0);
+  const slotOf = (inp, v) => (inp.values ? nearest(inp.values, v) : v);
+  const xVals = (id) => XV[id] || (XV[id] = Object.fromEntries(XS[id].inputs.map((i) => [i.k, slotOf(i, i.value)])));
+  const xReal = (id) => {
+    const v = xVals(id);
+    return Object.fromEntries(XS[id].inputs.map((i) => [i.k, i.values ? i.values[v[i.k]] : v[i.k]]));
+  };
+  const fmtNum = (v) => (+v).toLocaleString("en-GB", { maximumFractionDigits: 2 });
+  const money = (v) => {
+    if (Math.abs(v) >= 1000) return `${v < 0 ? "−" : ""}£${fmtNum(Math.abs(v) / 1000)}bn`;
+    return fmtM(Math.abs(v) >= 100 ? Math.round(v) : v);
+  };
+  const UNIT = {
+    pct: (v) => `${fmtNum(v)}%`,
+    m: (v) => money(v),
+    bn: (v) => `£${fmtNum(v)}bn`,
+    k: (v) => `£${fmtNum(v)}k`,
+    x: (v) => `${(+v).toFixed(1)}×`,
+    yr: (v) => `${v} year${+v === 1 ? "" : "s"}`,
+    mo: (v) => `${v} month${+v === 1 ? "" : "s"}`,
+    h: (v) => `${v} hours`,
+    usd: (v) => (Math.abs(v) >= 1000 ? `US$${fmtNum(v / 1000)}bn` : `US$${fmtNum(v)}m`),
+    n: (v) => fmtNum(v)
+  };
+  const showIn = (inp, raw) => {
+    const v = inp.values ? inp.values[raw] : raw;
+    return inp.show ? inp.show(v) : (UNIT[inp.unit] || UNIT.n)(v);
+  };
+  const XH = { fmtM: money, fmtK, fmtNum, pct: (v, d = 1) => `${(+v).toFixed(d)}%`, clamp: (v, a, b) => Math.min(b, Math.max(a, v)) };
+
+  function xOut(id) {
+    try { return XS[id].compute(xReal(id), XH) || {}; }
+    catch (err) {
+      if (window.console) console.error(err);
+      return { insight: "This model couldn’t run with these values." };
+    }
+  }
+  const xChartHTML = (id, out) => (out.chart ? figBody(`x-${id}`, out.chart) : "");
+  const xReadHTML = (out) => ((out.readouts || []).length
+    ? `<dl class="x-read n${out.readouts.length}">${out.readouts.map(([k, v, tone]) => `<div${tone ? ` class="t-${tone}"` : ""}><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`
+    : "");
+
+  function xVisualHTML(id) {
+    const out = xOut(id);
+    return `<div class="x-visual" data-x="${id}"><figure class="figure x-fig"><div class="fig-head"><span>Try it</span>${esc(XS[id].title)}</div><div class="x-readwrap">${xReadHTML(out)}</div><div class="x-chart">${xChartHTML(id, out)}</div></figure></div>`;
+  }
+
+  function xBlockHTML(id) {
+    const X = XS[id];
+    const v = xVals(id);
+    const out = xOut(id);
+    const sliders = X.inputs.map((inp) => `<div class="slider">
+      <label for="x-${id}-${inp.k}"><span>${esc(inp.label)}</span><output id="x-${id}-${inp.k}-v">${esc(showIn(inp, v[inp.k]))}</output></label>
+      <input type="range" id="x-${id}-${inp.k}" data-in="x" data-x="${id}" data-k="${inp.k}" min="${inp.values ? 0 : inp.min}" max="${inp.values ? inp.values.length - 1 : inp.max}" step="${inp.values ? 1 : inp.step || 1}" value="${v[inp.k]}">
+    </div>`).join("");
+    const presets = X.presets
+      ? `<div class="presets" role="group" aria-label="Examples">${X.presets.map((p, i) => `<button type="button" data-act="x-preset" data-x="${id}" data-p="${i}">${esc(p.label)}</button>`).join("")}</div>`
+      : "";
+    return `<div class="x-block" data-x="${id}">
+      <div class="x-slot" data-slot="inline" data-x="${id}"></div>
+      <div class="x-controls">
+        <p class="x-ask">${fmt(X.ask)}</p>
+        <div class="group">${sliders}</div>${presets}
+        <div class="x-slot" data-slot="inline-ins" data-x="${id}"><section class="x-insight" data-x="${id}"><h3>What’s happening</h3><div id="x-${id}-insight" aria-live="polite">${paras(out.insight)}</div></section></div>
+      </div>
+    </div>`;
+  }
+
+  function xRefresh(id) {
+    const X = XS[id];
+    const v = xVals(id);
+    const out = xOut(id);
+    X.inputs.forEach((inp) => {
+      const o = document.getElementById(`x-${id}-${inp.k}-v`);
+      if (o) o.textContent = showIn(inp, v[inp.k]);
+      const r = document.getElementById(`x-${id}-${inp.k}`);
+      if (r && +r.value !== v[inp.k]) r.value = v[inp.k];
+    });
+    document.querySelectorAll(`.x-visual[data-x="${id}"]`).forEach((el) => {
+      el.querySelector(".x-chart").innerHTML = xChartHTML(id, out);
+      el.querySelector(".x-readwrap").innerHTML = xReadHTML(out);
+    });
+    const ins = document.getElementById(`x-${id}-insight`);
+    if (ins) ins.innerHTML = paras(out.insight);
+  }
+
+  /* the chart sits on the left page when unfolded, and just above the sliders on a phone */
+  function placeX() {
+    const wide = SPREAD_MQ.matches;
+    const move = (sel, slot) => document.querySelectorAll(sel).forEach((el) => {
+      const to = document.querySelector(`.x-slot[data-slot="${slot}"][data-x="${el.dataset.x}"]`);
+      if (to && el.parentNode !== to) to.appendChild(el);
+    });
+    move(".x-visual", wide ? "stage" : "inline");
+    move(".x-insight", wide ? "stage-ins" : "inline-ins");
+  }
+  const onSpreadChange = () => {
+    placeX();
+    if (LX && (LX.sel !== null || LX.edge !== null)) requestAnimationFrame(sizeSheet);
+  };
+  if (SPREAD_MQ.addEventListener) SPREAD_MQ.addEventListener("change", onSpreadChange);
+  else if (SPREAD_MQ.addListener) SPREAD_MQ.addListener(onSpreadChange);
+
+  function viewTry(id) {
+    const X = XS[id];
+    const home = X_HOME[id];
+    return spread(`${mast({
+      back: "lab",
+      backLabel: "The Lab",
+      kicker: `The Lab${home ? ` · Module ${home.module.code}` : ""}`,
+      title: esc(X.title)
+    })}<div class="wrap stage"><div class="x-slot" data-slot="stage" data-x="${id}">${xVisualHTML(id)}</div><div class="x-slot" data-slot="stage-ins" data-x="${id}"></div></div>`,
+    `<div class="wrap lesson-r">${xBlockHTML(id)}${home ? `<div class="stack"><a class="lab-link" href="#${home.id}"><span class="ico">${icon("diagram")}</span><span>The lesson behind it: ${esc(home.title)}</span>${chev}</a></div>` : ""}</div>`, "stage-page");
+  }
+
+
 
   /* ---------------------------------------------------------------- quizzes */
   let quizRun = null;
@@ -1177,11 +1531,15 @@
 
   /* ---------------------------------------------------------------- lab */
   function viewLab() {
-    return spread(`${mast({ kicker: "Interactive tools", title: "The Lab", sub: "Three of the market’s core calculations, to play with." })}`, `<div class="wrap stack"><div class="group">
+    const groups = MODULES
+      .map((m) => ({ m, ids: [...new Set(m.lessons.flatMap((l) => l.tries || []))] }))
+      .filter((g) => g.ids.length);
+    const models = groups.map((g) => `<section class="section"><h2 class="section-title">Module ${g.m.code} · ${esc(g.m.title)}</h2><div class="group">${g.ids.map((id) => `<a class="row" href="#try-${id}" style="--sep:70px"><span class="code-badge">${icon("sliders")}</span><span class="row-main"><span class="row-title">${esc(XS[id].title)}</span>${XS[id].blurb ? `<span class="row-sub">${esc(XS[id].blurb)}</span>` : ""}</span>${chev}</a>`).join("")}</div></section>`).join("");
+    return spread(`${mast({ kicker: "Interactive tools", title: "The Lab", sub: "Move a slider and watch what happens. Every model from the lessons is here, with three larger tools." })}`, `<div class="wrap stack"><section class="section"><h2 class="section-title">Tools</h2><div class="group">
       <a class="row" href="#lab-slip" style="--sep:70px"><span class="code-badge">${icon("slip")}</span><span class="row-main"><span class="row-title">Slip builder</span><span class="row-sub">Collect written lines, then watch them sign down to 100%.</span></span>${chev}</a>
       <a class="row" href="#lab-tower" style="--sep:70px"><span class="code-badge">${icon("tower")}</span><span class="row-main"><span class="row-title">Layer tower</span><span class="row-sub">Send a catastrophe loss up an excess of loss programme.</span></span>${chev}</a>
       <a class="row" href="#lab-ratio" style="--sep:70px"><span class="code-badge">${icon("ratio")}</span><span class="row-main"><span class="row-title">Combined ratio</span><span class="row-sub">See whether an underwriting year made money.</span></span>${chev}</a>
-    </div></div>`, true);
+    </div></section>${models}</div>`, true);
   }
 
   /* --- slip builder --- */
@@ -1466,6 +1824,65 @@
 
   /* ---------------------------------------------------------------- events */
   const ACTIONS = {
+    pick(el) {
+      const d = FIGS[el.dataset.fig];
+      if (!d || !d.live) return;
+      const l = d.lesson;
+      const u = uiOf(l);
+      const part = `${d.scene}:${el.dataset.id}`;
+      // tapping the chosen box again puts the explanation away
+      if (el.classList.contains("node") && u.sel === part && u.edge === null) {
+        u.sel = null;
+        refreshLesson(l, false);
+        return;
+      }
+      pickPart(l, d, el.dataset.id);
+    },
+    "pick-edge"(el) {
+      const d = FIGS[el.dataset.fig];
+      if (!d || !d.live) return;
+      const l = d.lesson;
+      const u = uiOf(l);
+      const key = `${d.scene}:${el.dataset.e}`;
+      u.scene = d.scene;
+      u.sel = null;
+      u.edge = u.edge === key ? null : key;
+      refreshLesson(l, true);
+    },
+    unpick() {
+      const l = LESSON[current];
+      if (!l || !l.diagrams) return;
+      const u = uiOf(l);
+      u.sel = null;
+      u.edge = null;
+      refreshLesson(l, false);
+    },
+    walk(el) {
+      const l = LESSON[current];
+      if (!l || !l.diagrams) return;
+      const d = diagramOf(l, el.dataset.s || uiOf(l).scene) || l.diagrams[0];
+      const seen = seenOf(l);
+      const id = d.order.find((x) => !seen.includes(`${d.scene}:${x}`)) || d.order[0];
+      pickPart(l, d, id);
+    },
+    scene(el) {
+      const l = LESSON[current];
+      if (!l || !l.diagrams) return;
+      showScene(l, el.dataset.s);
+      const d = diagramOf(l, el.dataset.s);
+      if (el.dataset.walk && d) {
+        const seen = seenOf(l);
+        pickPart(l, d, d.order.find((x) => !seen.includes(`${d.scene}:${x}`)) || d.order[0]);
+      }
+    },
+    "x-preset"(el) {
+      const X = XS[el.dataset.x];
+      const p = X && X.presets && X.presets[+el.dataset.p];
+      if (!p) return;
+      const v = xVals(el.dataset.x);
+      X.inputs.forEach((inp) => { if (p.v[inp.k] !== undefined) v[inp.k] = slotOf(inp, p.v[inp.k]); });
+      xRefresh(el.dataset.x);
+    },
     complete(el) {
       const l = LESSON[el.dataset.id];
       if (!l) return;
@@ -1590,6 +2007,11 @@
     ratio(el) {
       ratio[el.dataset.k] = +el.value;
       refreshRatio();
+    },
+    x(el) {
+      if (!XS[el.dataset.x]) return;
+      xVals(el.dataset.x)[el.dataset.k] = +el.value;
+      xRefresh(el.dataset.x);
     }
   };
 
@@ -1613,6 +2035,10 @@
     if (t.type === "checkbox" && t.dataset && INPUTS[t.dataset.in]) INPUTS[t.dataset.in](t);
   });
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && LX && (LX.sel !== null || LX.edge !== null)) {
+      ACTIONS.unpick();
+      return;
+    }
     if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("flash")) {
       e.preventDefault();
       flipCard();

@@ -4,36 +4,65 @@ window.SLIP_DATA = window.SLIP_DATA || {};
   id: "m14",
   title: "Portfolio management",
   short: "Portfolio",
-  blurb: "Managing a book as a whole: rate adequacy, accumulation, diversification, mix and the tools for steering them.",
+  blurb: "Managing the book as a whole: data, technical price, accumulation, diversification, steering the mix, reinsurance and governance.",
   outcomes: [
-    "Explain the difference between underwriting individual risks and managing a portfolio.",
-    "Describe the measures used to understand a portfolio, including exposure, rate change and results by segment.",
-    "Explain how a technical price is built and how the actual-to-technical ratio is used.",
-    "Describe how catastrophe accumulations are measured and controlled.",
-    "Explain diversification and why it reduces the capital a portfolio needs.",
-    "Use portfolio information to decide where to grow, hold or shrink, and how to use reinsurance.",
-    "Describe the governance, controls and management information that support portfolio management."
+    "Explain how portfolio management differs from underwriting individual risks.",
+    "Measure a book through exposure, rate indices, results by segment and technical price adequacy.",
+    "Explain accumulation, catastrophe modelling and diversification.",
+    "Describe how the mix is steered, how reinsurance shapes the net portfolio and how governance supports decisions."
   ],
   lessons: [
     {
       title: "From risks to portfolios",
-      minutes: 5,
+      minutes: 6,
       keys: ["The book as a whole", "Profit and volatility", "Capital efficiency", "Concentration"],
-      body: [
-        "An underwriter’s training begins with individual risks: reading a submission, assessing the hazard, setting terms and agreeing a price. Yet an insurer’s results depend on how all of its risks behave together. **Portfolio management** is the discipline of managing the book as a whole: deciding what mix of business to write, how much exposure to accept in each area, and how to balance profit against volatility and capital.",
-        "The two views complement each other. Good risk selection is necessary but not sufficient, because a book of individually well-priced risks can still be dangerous if they are concentrated in one hurricane zone, or uneconomic if they all need heavy capital. Equally, a well-balanced portfolio cannot compensate for consistently poor underwriting of individual risks.",
-        { h: "What portfolio management aims to achieve" },
-        {
-          ul: [
-            "**Profitability:** writing business whose price covers its expected cost, including the cost of capital.",
-            "**Stability:** keeping the volatility of results within the business’s risk appetite.",
-            "**Capital efficiency:** earning the best return on the capital the business holds.",
-            "**Resilience:** avoiding concentrations that a single event, client, broker or legal change could damage."
-          ]
-        },
-        { analogy: "Portfolio management is to underwriting what menu planning is to cooking. Each dish must be good, but the menu as a whole must also balance its costs, play to the kitchen’s strengths, avoid relying on a single supplier and still make money on a quiet night." },
-        { think: { q: "An underwriter has written fifty well-priced commercial property risks, all within a mile of the same stretch of coast. Why might the portfolio manager be concerned?", a: "Each risk may be sound on its own, but together they form an accumulation. A single hurricane or storm surge could damage many of them at once, producing a loss far larger than the premiums anticipate and possibly breaching the business’s risk appetite." } }
-      ],
+      intro: "An underwriter’s training starts with single risks. But an insurer’s results depend on how all its risks behave together. Compare the two columns: what good underwriting of each risk gives you, and what only managing the whole book can give you.",
+      diagram: {
+        cols: 2,
+        gapX: 66,
+        nodes: [
+          {
+            id: "risk", at: [1, 1], tone: "ink", label: "Each risk", sub: "Selected and priced well",
+            teach: "Underwriting is about the individual risk: reading the submission, assessing the hazard, setting terms and agreeing a price. Good risk selection is **necessary**, but as the rest of the diagram shows, it isn’t **sufficient**."
+          },
+          {
+            id: "book", at: [1, 2], tone: "ink", label: "The book", sub: "How they behave together",
+            teach: "**Portfolio management** is the discipline of managing the book as a whole: what mix to write, how much exposure to accept in each area, and how to balance profit against volatility and capital.\n\nFifty well-priced properties within a mile of the same coast are fifty good risks and one dangerous portfolio.",
+            like: "Portfolio management is to underwriting what menu planning is to cooking. Each dish must be good, but the menu must also balance its costs, play to the kitchen’s strengths, avoid relying on one supplier and still make money on a quiet night."
+          },
+          {
+            id: "profit", at: [2, 1], label: "Profitability", sub: "Price covers the full cost",
+            teach: "**Profitability**: writing business whose price covers its expected cost, including the cost of the capital it ties up."
+          },
+          {
+            id: "stable", at: [2, 2], label: "Stability", sub: "Volatility within appetite",
+            teach: "**Stability**: keeping the volatility of results within the risk appetite. Volatility falls as a book grows, but only if its risks are genuinely independent. The model shows how."
+          },
+          {
+            id: "capital", at: [3, 1], label: "Capital efficiency", sub: "The best return on capital",
+            teach: "**Capital efficiency**: earning the best return on the capital held, which means knowing how much capital each part of the book consumes."
+          },
+          {
+            id: "resilient", at: [3, 2], tone: "bad", label: "Resilience", sub: "No fatal concentrations",
+            teach: "**Resilience**: avoiding concentrations that a single event, client, broker or legal change could damage. This is where a book of individually sound risks most often fails."
+          },
+          {
+            id: "pm", at: [4, 1], span: 2, tone: "tint", label: "Portfolio management", sub: "Both views, together",
+            teach: "The two views complement each other. A book of individually well-priced risks can still be dangerous if concentrated, or uneconomic if it needs heavy capital; and a well-balanced portfolio can’t compensate for consistently poor underwriting of individual risks."
+          }
+        ],
+        edges: [
+          { from: "risk", to: "book", label: "add up to", teach: "Individual risks combine into a book with properties of its own." },
+          { from: "risk", to: "profit", label: "needs", teach: "Profitability starts with pricing each risk properly." },
+          { from: "book", to: "stable", label: "needs", teach: "Stability is a property of the book, not of any one risk." },
+          { from: "profit", to: "capital", label: "on capital", teach: "Profit only counts relative to the capital it needs." },
+          { from: "stable", to: "resilient", label: "and", teach: "Stable in ordinary years isn’t enough; the book must survive the extraordinary one." },
+          { from: "capital", to: "pm", teach: "Capital efficiency is one of the portfolio manager’s jobs..." },
+          { from: "resilient", to: "pm", teach: "...and so is resilience against concentration." }
+        ]
+      },
+      explore: "large-numbers",
+      think: { q: "An underwriter has written fifty well-priced commercial property risks, all within a mile of the same stretch of coast. Why might the portfolio manager be concerned?", a: "Each risk may be sound on its own, but together they form an accumulation. A single hurricane or storm surge could damage many of them at once, producing a loss far larger than the premiums anticipate and possibly breaching the risk appetite." },
       takeaways: [
         "Portfolio management manages the book as a whole, alongside the underwriting of each risk.",
         "Its aims are profitability, stability, capital efficiency and resilience.",
@@ -42,185 +71,393 @@ window.SLIP_DATA = window.SLIP_DATA || {};
     },
     {
       title: "Knowing the book",
-      minutes: 7,
+      minutes: 6,
       keys: ["Exposure data", "Rate index", "Results by segment", "Data quality"],
-      body: [
-        "Portfolio management begins with measurement. The portfolio manager needs to know what has been written, where, at what price and with what results, broken down in ways that reveal how the book behaves.",
-        { h: "Exposure" },
-        "**Exposure** data describe what the business stands to lose: sums insured and limits, locations, construction and occupancy for property, vessels and voyages for marine, turnover and activities for liability. Exposure can be summarised by territory, peril, industry, broker, coverholder or any other dimension that matters. Without accurate exposure data, neither catastrophe modelling nor pricing can be relied upon.",
-        { h: "Premium and rate" },
-        "Premium is tracked by class, segment and channel, together with the **rate change** achieved on renewals and the share of new business. Because rate changes compound, the portfolio manager also follows a cumulative **rate index**, which shows how prices have moved since a chosen base year.",
-        { fig: "rate-index" },
-        { example: { title: "Compounding rate change", text: "If rates rise by 10% in the first year, rise by 8% in the second and fall by 5% in the third, the cumulative change is 1.10 × 1.08 × 0.95 = 1.129, an increase of about 12.9%. Simply adding the three changes would suggest 13%; over longer periods the difference becomes significant." } },
-        { h: "Results" },
-        "Loss ratios are analysed by underwriting year and developed to ultimate, with attritional, large and catastrophe losses shown separately, so that a single large claim does not hide a deteriorating attritional trend, nor a benign year hide an emerging problem. Results are also split by segment, because an acceptable overall loss ratio can conceal one excellent segment subsidising a poor one.",
-        { aware: "Averages can mislead. A class with an average loss ratio of 60% may contain one segment at 40% and another at 90%. Portfolio decisions should be made at the level of detail at which the business can actually act." }
-      ],
+      intro: "Portfolio management begins with measurement: what has been written, where, at what price and with what results. Follow the data down the page, and notice the trap waiting at the bottom right.",
+      diagram: {
+        cols: 2,
+        gapX: 66,
+        nodes: [
+          {
+            id: "data", at: [1, 1], span: 2, tone: "ink", label: "The data", sub: "What, where, at what price, with what result",
+            teach: "Everything depends on data quality. Without accurate exposure data, neither catastrophe modelling nor pricing can be relied on, which is why the market cares so much about data standards."
+          },
+          {
+            id: "exp", at: [2, 1], label: "Exposure", sub: "What could be lost",
+            teach: "**Exposure** data describe what the business stands to lose: sums insured and limits, locations, construction and occupancy for property, vessels and voyages for marine, turnover and activities for liability. It can be summarised by territory, peril, industry, broker or coverholder."
+          },
+          {
+            id: "prem", at: [2, 2], label: "Premium and rate", sub: "And a rate index",
+            teach: "Premium is tracked by class, segment and channel, with the **rate change** on renewals and the share of new business. Because rate changes compound, the portfolio manager follows a cumulative **rate index**: +10%, +8% and −5% give 1.10 × 1.08 × 0.95 = +12.9%, not +13%. Over longer periods the difference grows, and the model sets the index against claims inflation."
+          },
+          {
+            id: "results", at: [3, 1], span: 2, tone: "tint", label: "Results", sub: "By year, and by type of loss",
+            teach: "Loss ratios are analysed by underwriting year, developed to ultimate, with attritional, large and catastrophe losses shown separately. That way a single large claim doesn’t hide a deteriorating attritional trend, and a benign year doesn’t hide an emerging problem."
+          },
+          {
+            id: "seg", at: [4, 1], label: "By segment", sub: "Where the business can act",
+            teach: "Results are also split by segment: territory, broker, industry, size band. Portfolio decisions should be made at the level of detail at which the business can actually act."
+          },
+          {
+            id: "avg", at: [4, 2], tone: "bad", label: "Averages mislead", sub: "60% = 40% and 90%",
+            teach: "Be aware: a class with an average loss ratio of 60% may contain one segment at 40% and another at 90%. An acceptable overall figure can conceal one excellent segment subsidising a poor one."
+          }
+        ],
+        edges: [
+          { from: "data", to: "exp", label: "measures", teach: "One half of the data: what could be lost." },
+          { from: "data", to: "prem", label: "measures", teach: "The other: what is being charged for it." },
+          { from: "exp", to: "results", label: "explains", teach: "Exposure explains where losses came from." },
+          { from: "prem", to: "results", label: "÷ into", teach: "Premium is the denominator of every loss ratio." },
+          { from: "results", to: "seg", label: "split", teach: "Totals are split into segments the business can act on." },
+          { from: "seg", to: "avg", label: "reveals", teach: "Splitting reveals what the average hides." }
+        ]
+      },
+      explore: "rate-index",
       takeaways: [
         "Portfolio management starts with accurate data on exposure, premium, rate and results.",
-        "Rate changes compound, so a cumulative rate index is more informative than a sum of changes.",
-        "Results should be split by underwriting year, by type of loss and by segment.",
-        "Averages can conceal segments that are subsidising one another."
+        "Rate changes compound, so a cumulative rate index beats a sum of changes, and must be set against claims inflation.",
+        "Results should be split by underwriting year, type of loss and segment, because averages conceal subsidies."
       ]
     },
     {
       title: "Technical price and rate adequacy",
-      minutes: 8,
+      minutes: 6,
       keys: ["Technical price", "Expected loss", "Cost of capital", "Actual-to-technical"],
-      body: [
-        "Rate change tells the portfolio manager how prices have moved; it does not say whether they are adequate. A 10% rate increase on a risk that was 30% underpriced still leaves it underpriced. To judge adequacy, the business needs a **technical price**: the premium that would cover the risk’s expected cost and provide the required return.",
-        { h: "Building a technical price" },
-        {
-          ol: [
-            "**Expected loss.** The expected cost of claims, estimated from experience, exposure or catastrophe models.",
-            "**Expenses.** Acquisition costs and a share of operating expenses.",
-            "**Cost of capital.** A charge for the capital the risk consumes, reflecting its volatility and its contribution to catastrophe exposure.",
-            "**Profit margin.** Any further margin the business requires."
-          ]
-        },
-        { fig: "technical-price" },
-        { h: "The actual-to-technical ratio" },
-        "Comparing the premium actually charged with the technical price gives the **actual-to-technical ratio**, often described as price adequacy. A ratio of 100% means the risk is priced exactly as the model requires; 90% means it is 10% below technical; 110% means it is 10% above. Aggregated across a portfolio, the ratio shows where the book is adequately priced and where it is not.",
-        { example: { title: "Two segments compared", text: "Segment A has written £20m of premium against a technical price of £18m, an actual-to-technical ratio of 111%. Segment B has written £20m against a technical price of £25m, a ratio of 80%. Both may have achieved a 5% rate increase this year, but only Segment A is adequately priced." } },
-        { h: "Using technical price well" },
-        "Technical prices are only as good as the models and data behind them, and an underwriter may have sound reasons to depart from them on an individual risk. Their value lies in the pattern. A portfolio that is consistently priced below technical, or a segment whose ratio is drifting downwards, is a signal to act before the losses arrive.",
-        { analogy: "The technical price is like the costing of a dish in a restaurant. The menu price can be higher or lower than the cost of the ingredients, labour and overheads for good reasons, but a restaurant that sells most of its dishes below cost will not last, however popular it is." },
-        { think: { q: "A segment’s actual-to-technical ratio has fallen from 105% to 92% over three years, yet the rate change reported each year was small but positive. How can both be true?", a: "Technical prices have risen faster than actual prices, for example because claims inflation, higher catastrophe model estimates or a higher cost of capital have increased the expected cost. Small rate increases have not kept pace, so adequacy has fallen even though prices have gone up." } }
-      ],
+      intro: "Rate change tells you how prices have moved; it doesn’t say whether they are adequate. A 10% increase on a risk that was 30% underpriced still leaves it underpriced. Build a technical price from the four blocks at the top, then compare it with what was actually charged.",
+      diagram: {
+        cols: 4,
+        nodes: [
+          {
+            id: "el", at: [1, 1], label: "Loss", sub: "Expected claims",
+            teach: "The **expected loss**: the expected cost of claims, from experience, exposure rating or catastrophe models."
+          },
+          {
+            id: "ex", at: [1, 2], label: "Costs", sub: "Expenses",
+            teach: "**Expenses**: acquisition costs and a share of operating expenses."
+          },
+          {
+            id: "coc", at: [1, 3], label: "Capital", sub: "Its cost",
+            teach: "The **cost of capital**: a charge for the capital the risk consumes, reflecting its volatility and its contribution to catastrophe exposure. Two risks with the same expected loss can need very different capital."
+          },
+          {
+            id: "pm", at: [1, 4], label: "Margin", sub: "Extra profit",
+            teach: "A **profit margin**: any further margin the business requires on top."
+          },
+          {
+            id: "tp", at: [2, 1], span: 4, tone: "tint", label: "Technical price", sub: "What the risk should cost",
+            teach: "Add them up and you have the **technical price**: the premium that would cover the risk’s expected cost and provide the required return.",
+            like: "The technical price is like costing a dish in a restaurant. The menu price can sit above or below the cost of ingredients, labour and overheads for good reasons, but a restaurant selling most dishes below cost won’t last, however popular it is."
+          },
+          {
+            id: "actual", at: [3, 1], span: 2, label: "Actual premium", sub: "What was charged",
+            teach: "The premium actually agreed with the client, after negotiation, competition and the underwriter’s judgement."
+          },
+          {
+            id: "at", at: [3, 3], span: 2, label: "Actual ÷ technical", sub: "e.g. 111% or 80%",
+            teach: "The **actual-to-technical ratio**, often called price adequacy: 100% means priced exactly as the model requires; 90% means 10% below technical. Segment A writing £20m against a technical £18m is at 111%; Segment B writing £20m against £25m is at 80%. Both may have had a 5% rate increase this year, but only A is adequately priced."
+          },
+          {
+            id: "pattern", at: [4, 1], span: 4, tone: "brass", label: "Read the pattern", sub: "Drifting below technical? Act before the losses arrive",
+            teach: "Technical prices are only as good as their models and data, and an underwriter may have good reasons to depart from them on one risk. Their value is in the pattern. A segment whose ratio is drifting down, even while reported rate changes stay positive, is a signal to act before the losses arrive. How can both be true? Because technical prices can rise faster than actual ones, as inflation and model changes push up expected costs."
+          }
+        ],
+        edges: [
+          { from: "el", to: "tp", teach: "Expected claims are the biggest building block." },
+          { from: "ex", to: "tp", teach: "Expenses are added." },
+          { from: "coc", to: "tp", teach: "So is the cost of the capital the risk consumes." },
+          { from: "pm", to: "tp", teach: "And any further margin." },
+          { from: "tp", to: "at", label: "divides", teach: "The technical price is the denominator of price adequacy." },
+          { from: "actual", to: "at", teach: "The actual premium is the numerator." },
+          { from: "at", to: "pattern", label: "across the book", teach: "Aggregated across segments, the ratio shows where the book is adequately priced and where it isn’t." }
+        ]
+      },
+      explore: "technical",
       takeaways: [
         "Rate change shows how prices move; the technical price shows whether they are adequate.",
         "A technical price covers expected loss, expenses, the cost of capital and a profit margin.",
-        "The actual-to-technical ratio compares the premium charged with the technical price.",
-        "The pattern across a portfolio matters more than any single risk."
+        "The actual-to-technical ratio compares the premium charged with the technical price; the pattern matters most."
       ]
     },
     {
       title: "Accumulation and catastrophe",
-      minutes: 8,
+      minutes: 7,
       keys: ["Accumulation", "EP curves", "Return periods", "Realistic Disaster Scenarios"],
-      body: [
-        "Some losses arrive one risk at a time. Others strike many risks together: a hurricane, an earthquake, a flood, a cyber attack on a widely used system, or a legal change affecting a whole industry. An **accumulation** is the total exposure that a single event could affect, and controlling accumulations is one of the most important tasks in portfolio management.",
-        { h: "Measuring catastrophe exposure" },
-        "Insurers use **catastrophe models** to simulate many thousands of possible events and to estimate the loss each would cause to their portfolio. The output is an **exceedance probability (EP) curve**, which shows the probability that losses will exceed any given amount in a year. Points on the curve are usually described by their **return period**: a 1-in-100-year loss has a 1% chance of being exceeded in any one year, and a 1-in-200-year loss a 0.5% chance.",
-        { fig: "ep-curve" },
-        {
-          terms: [
-            ["Average annual loss (AAL)", "The average catastrophe loss per year across all the simulated years. It is the expected cost used in pricing and planning."],
-            ["Occurrence exceedance probability (OEP)", "The probability that the largest single event in a year exceeds a given loss."],
-            ["Aggregate exceedance probability (AEP)", "The probability that the total of all events in a year exceeds a given loss."],
-            ["Probable maximum loss (PML)", "A loss at a chosen return period, used to set and monitor limits."]
-          ]
-        },
-        { h: "Controlling accumulations" },
-        "Risk appetite is turned into limits on modelled losses, such as a maximum 1-in-200-year loss for each peril and region, and on simpler measures such as the total sum insured in each zone. Lloyd’s also requires syndicates to report their losses from a set of standard **Realistic Disaster Scenarios**, so that exposures can be compared across the market. Portfolio managers monitor these measures as business is written, and may stop writing in a zone that is close to its limit.",
-        { h: "Beyond the models" },
-        "Models do not cover everything. Some perils are poorly modelled, some territories have little data, and some accumulations, such as those in cyber, casualty or political risks, do not follow geography at all. Good practice combines models with realistic scenarios, expert judgement and simple exposure limits.",
-        { analogy: "Managing accumulation is like a fruit grower spreading orchards across several valleys. A late frost in one valley is painful but survivable; if every orchard is in the same valley, one cold night can destroy the whole crop." },
-        { aware: "A catastrophe model’s output is an estimate, not a fact. Different models can produce very different figures for the same portfolio, and each new version of a model can move the numbers. Decisions should not rest on a single figure from a single model." },
-        { think: { q: "A portfolio’s modelled 1-in-200-year hurricane loss is £180m, and its limit is £200m. The underwriters want to add an account whose own 1-in-200-year loss is £40m. Why can the effect not be found by simple addition?", a: "Return period losses do not simply add up. The new account’s largest losses may come from the same storms as the existing portfolio’s or from different ones. The portfolio must be modelled again with the new account included to see whether the combined 1-in-200-year loss stays within the £200m limit." } }
-      ],
+      intro: "Some losses arrive one risk at a time; others strike many risks together. Controlling these accumulations is one of the most important jobs in portfolio management. Follow one event from the model down to the limits that keep it survivable.",
+      diagram: {
+        cols: 2,
+        gapX: 60,
+        nodes: [
+          {
+            id: "event", at: [1, 1], span: 2, tone: "bad", label: "One event, many risks", sub: "Hurricane, quake, cyber, a legal change",
+            teach: "An **accumulation** is the total exposure that a single event could affect: a hurricane, an earthquake, a flood, a cyber attack on a widely used system, or a legal change hitting a whole industry.",
+            like: "Managing accumulation is like a fruit grower spreading orchards across several valleys. A late frost in one valley is painful but survivable; if every orchard is in the same valley, one cold night can destroy the whole crop."
+          },
+          {
+            id: "model", at: [2, 1], label: "Catastrophe model", sub: "Thousands of simulated years",
+            teach: "**Catastrophe models** simulate many thousands of possible events and estimate the loss each would cause to the portfolio.\n\nBe aware: a model’s output is an estimate, not a fact. Different models can give very different figures for the same portfolio, and each new version can move the numbers."
+          },
+          {
+            id: "ep", at: [2, 2], label: "EP curve", sub: "The chance of each loss",
+            teach: "The output is an **exceedance probability (EP) curve**: the probability that losses exceed any given amount in a year. **OEP** looks at the largest single event in a year; **AEP** at the total of all events."
+          },
+          {
+            id: "aal", at: [3, 1], label: "Average annual loss", sub: "For pricing and planning",
+            teach: "The **average annual loss** (AAL) is the average catastrophe loss per year across all simulated years: the expected cost used in pricing and planning."
+          },
+          {
+            id: "rp", at: [3, 2], label: "Return period losses", sub: "1-in-100 = 1% a year",
+            teach: "Points on the curve are described by **return period**: a 1-in-100-year loss has a 1% chance of being exceeded in any one year; a 1-in-200 a 0.5% chance. A loss at a chosen return period, used to set limits, is often called a **probable maximum loss** (PML).\n\nCareful: return period losses don’t add up. Two accounts’ 1-in-200 losses may come from the same storms or different ones, so the combined portfolio must be modelled again."
+          },
+          {
+            id: "limits", at: [4, 1], span: 2, tone: "tint", label: "Limits", sub: "Modelled losses and sums insured by zone",
+            teach: "Risk appetite becomes limits on modelled losses, such as a maximum 1-in-200 loss for each peril and region, and on simpler measures such as the total sum insured in each zone. Managers monitor them as business is written, and stop writing in a zone close to its limit. The model shows a zone filling up."
+          },
+          {
+            id: "rds", at: [5, 1], label: "Realistic Disaster Scenarios", sub: "Lloyd’s standard events",
+            teach: "Lloyd’s requires syndicates to report their losses from a set of standard **Realistic Disaster Scenarios**, so that exposures can be compared across the market and the whole market’s exposure to one event can be seen."
+          },
+          {
+            id: "beyond", at: [5, 2], tone: "brass", label: "Beyond the models", sub: "Judgement, and risks without a map",
+            teach: "Models don’t cover everything. Some perils are poorly modelled, some territories have little data, and some accumulations, in cyber, casualty or political risk, don’t follow geography at all. Good practice combines models with scenarios, expert judgement and simple exposure limits."
+          }
+        ],
+        edges: [
+          { from: "event", to: "model", label: "simulated by", teach: "The model simulates the events that could hit the portfolio." },
+          { from: "model", to: "ep", label: "produces", teach: "Its output is the EP curve." },
+          { from: "model", to: "aal", label: "averages to", teach: "Averaging over all simulated years gives the AAL." },
+          { from: "ep", to: "rp", label: "read off", teach: "Return period losses are read off the curve." },
+          { from: "rp", to: "limits", label: "set", teach: "Return period losses are what the limits are set against." },
+          { from: "limits", to: "rds", label: "checked with", teach: "Standard scenarios test the limits against specific disasters." },
+          { from: "limits", to: "beyond", label: "plus", teach: "And judgement covers what the models miss." }
+        ]
+      },
+      explore: "accumulation",
       takeaways: [
         "An accumulation is the total exposure that a single event could affect.",
-        "Catastrophe models produce EP curves, average annual losses and return period losses.",
-        "Risk appetite is turned into limits on modelled losses and on exposure in each zone.",
-        "Models are estimates, and should be combined with scenarios and judgement."
+        "Catastrophe models produce EP curves, average annual losses and return period losses, which don’t simply add up.",
+        "Risk appetite becomes limits on modelled losses and on exposure in each zone; models are combined with scenarios and judgement."
       ]
     },
     {
       title: "Diversification",
       minutes: 6,
       keys: ["Diversification benefit", "Correlation", "Extreme events", "Capital"],
-      body: [
-        "**Diversification** is the reduction in overall risk that comes from combining exposures that do not all go wrong at the same time. It is the reason an insurer can write many classes and territories with less capital than those classes would need if each were a separate business.",
-        { h: "How it works" },
-        "Suppose a business writes two books, each of which would need £50m of capital on its own to survive a 1-in-200-year year. If the books’ results were perfectly correlated, so that both suffered their worst year together, the combined business would need £100m. In practice a marine cargo book and a professional indemnity book rarely have their worst years at the same time, so the combined capital requirement might be nearer £75m. The £25m saved is the **diversification benefit**.",
-        { fig: "diversification" },
-        { h: "Where diversification fails" },
-        "Diversification is weakest when it is needed most. Some events affect many classes at once. A major hurricane damages property, energy, marine and motor risks together; a financial crisis affects credit insurance, directors’ and officers’ liability and investment values at the same time; and the COVID-19 pandemic produced claims in contingency, travel and business interruption insurance simultaneously. Correlations that look low in ordinary years can rise sharply in extreme ones.",
-        { analogy: "Diversification is like a household with several earners working in different industries. If one employer closes, the household survives. But a deep recession can hit every employer at once, and a family that assumed its jobs were unrelated discovers that they were not." },
-        { think: { q: "Why might a reinsurer with a global property catastrophe portfolio still be very exposed to a single event?", a: "If its largest exposures are concentrated in one peril and region, such as US hurricane, that peril will dominate its tail risk however many other territories it writes. Diversification helps most when no single peril dominates the portfolio." } }
-      ],
+      intro: "Why can an insurer write many classes with less capital than they’d need as separate businesses? Because they don’t all go wrong at once. Follow two books down into one, and then see where the benefit disappears.",
+      diagram: {
+        cols: 2,
+        gapX: 60,
+        nodes: [
+          {
+            id: "a", at: [1, 1], label: "Marine cargo", sub: "Needs £50m alone",
+            teach: "On its own, a marine cargo book would need £50m of capital to survive a 1-in-200-year year."
+          },
+          {
+            id: "b", at: [1, 2], label: "Professional indemnity", sub: "Needs £50m alone",
+            teach: "A professional indemnity book would also need £50m on its own."
+          },
+          {
+            id: "sum", at: [2, 1], span: 2, tone: "q", label: "If they went wrong together", sub: "£100m",
+            teach: "If the two books were perfectly correlated, so both suffered their worst year at the same time, the combined business would need the full £100m."
+          },
+          {
+            id: "together", at: [3, 1], span: 2, tone: "tint", label: "Rarely bad together", sub: "Combined, about £75m",
+            teach: "In practice a cargo book and a PI book rarely have their worst years together: a bad shipping year has little to do with a wave of negligence claims. So the combined requirement might be nearer £75m.",
+            like: "Diversification is like a household with earners in different industries. If one employer closes, the household survives. But a deep recession can hit every employer at once, and a family that assumed its jobs were unrelated discovers they weren’t."
+          },
+          {
+            id: "benefit", at: [4, 1], tone: "good", label: "Diversification benefit", sub: "£25m of capital saved",
+            teach: "The **diversification benefit** is the capital saved against the sum of the standalone requirements: £100m − £75m = £25m. It is why a multi-line insurer can be capital-efficient, and why a reinsurer seeks business that doesn’t share its peak exposures."
+          },
+          {
+            id: "fails", at: [4, 2], tone: "bad", label: "Fails in extremes", sub: "Hurricane, crisis, pandemic",
+            teach: "Diversification is weakest when it’s needed most. A major hurricane damages property, energy, marine and motor together; a financial crisis hits credit insurance, D&O and investments at once; the pandemic produced claims in contingency, travel and business interruption simultaneously. Correlations that look low in ordinary years can rise sharply in extreme ones."
+          }
+        ],
+        edges: [
+          { from: "a", to: "sum", teach: "Add the standalone needs together..." },
+          { from: "b", to: "sum", teach: "...as if the two books always failed together." },
+          { from: "sum", to: "together", label: "but in practice", teach: "Because they rarely do, the combined need is lower." },
+          { from: "together", to: "benefit", label: "saves", teach: "The gap is the diversification benefit." },
+          { from: "together", to: "fails", label: "unless", teach: "In extreme events, the books start failing together again." }
+        ]
+      },
+      explore: "diversification",
+      think: { q: "Why might a reinsurer with a global property catastrophe portfolio still be very exposed to a single event?", a: "If its largest exposures are concentrated in one peril and region, such as US hurricane, that peril will dominate its tail risk however many other territories it writes. Diversification helps most when no single peril dominates." },
       takeaways: [
-        "Diversification reduces total risk by combining exposures that do not all go wrong together.",
-        "The diversification benefit is the capital saved compared with the sum of standalone requirements.",
+        "Diversification reduces total risk by combining exposures that don’t all go wrong together.",
+        "The diversification benefit is the capital saved against the sum of standalone requirements.",
         "Correlations rise in extreme events, so diversification is weakest when it is most needed."
       ]
     },
     {
       title: "Steering the mix",
-      minutes: 7,
+      minutes: 6,
       keys: ["Portfolio matrix", "Appetite guides", "Line size", "The cycle"],
-      body: [
-        "With measures of profitability, price adequacy, volatility and capital in place, the portfolio manager can decide where to grow, where to hold and where to shrink. These decisions turn the business plan into a direction for each segment.",
-        { h: "A portfolio matrix" },
-        "A common approach plots each segment by its price adequacy and its recent growth. Segments that are well priced and growing are doing what the business wants. Segments that are well priced but shrinking may deserve more effort to win business. Segments that are poorly priced but growing are the most dangerous, because their growth is probably coming from underpricing. Segments that are poorly priced and shrinking are candidates for remediation or exit.",
-        { fig: "portfolio-matrix" },
-        { h: "Levers for steering" },
-        {
-          terms: [
-            ["Appetite guides", "Statements to underwriters and brokers setting out which risks are welcome, acceptable or unwanted."],
-            ["Pricing", "Adjusting technical price loadings or minimum rates to attract or deter particular segments."],
-            ["Line size", "Changing the share taken on each risk: larger lines where pricing is strong, smaller ones where it is weak."],
-            ["Lead or follow", "Leading in segments where the business has expertise and influence, and following where it wants diversification at lower cost."],
-            ["Distribution", "Investing in brokers, coverholders or MGAs that produce good business, and reducing reliance on those that do not."]
-          ]
-        },
-        { h: "Timing and the cycle" },
-        "The right mix changes with the market. When rates are high, the business may grow classes with strong margins; when rates fall, it may hold back and accept a smaller share. The discipline of shrinking in a soft market is easy to describe and hard to practise, because brokers, staff and the expense base all push for volume.",
-        { analogy: "Steering the mix is like managing a farm’s fields. Fields with rich soil and good prices are planted more heavily, poor fields are rested or turned over to something else, and the farmer adjusts each year to the prices at market rather than planting the same crop out of habit." },
-        { think: { q: "A segment’s actual-to-technical ratio is 85% and its premium grew by 25% last year. Where does it sit on the matrix, and what would you do?", a: "It is poorly priced and growing fast, which is the most dangerous quadrant. Its growth is probably coming from underpricing, so the business should raise rates or tighten terms, reduce line sizes and review the sources of new business before results deteriorate." } }
-      ],
+      intro: "With measures of price adequacy, growth and capital in place, the portfolio manager decides where to grow, hold and shrink. The middle of the diagram is a 2 × 2 matrix. Notice the arrow that runs from the best quadrant to the most dangerous one.",
+      diagram: {
+        cols: 2,
+        gapX: 60,
+        nodes: [
+          {
+            id: "matrix", at: [1, 1], span: 2, tone: "ink", label: "The portfolio matrix", sub: "Price adequacy against growth",
+            teach: "A common approach plots each segment by its price adequacy (actual-to-technical) and its recent growth. Each quadrant calls for a different response."
+          },
+          {
+            id: "good", at: [2, 1], tone: "good", label: "Well priced, growing", sub: "Doing what we want",
+            teach: "Well priced and growing: exactly what the business wants. Keep going, and keep checking that the growth isn’t being bought with price."
+          },
+          {
+            id: "win", at: [2, 2], label: "Well priced, shrinking", sub: "Worth winning more",
+            teach: "Well priced but shrinking: good business that is slipping away. It may deserve more effort to win: broker attention, larger lines, faster service."
+          },
+          {
+            id: "danger", at: [3, 1], tone: "bad", label: "Poorly priced, growing", sub: "The most dangerous",
+            teach: "Poorly priced and growing fast: the most dangerous quadrant, because its growth is probably coming from underpricing. A segment at 85% of technical that grew 25% last year needs higher rates or tighter terms, smaller lines, and a hard look at where the new business comes from, before results deteriorate."
+          },
+          {
+            id: "fix", at: [3, 2], tone: "brass", label: "Poorly priced, shrinking", sub: "Remediate or exit",
+            teach: "Poorly priced and shrinking: candidates for remediation or exit, as in Module 12."
+          },
+          {
+            id: "levers", at: [4, 1], span: 2, tone: "tint", label: "The levers", sub: "Appetite, price, line size, lead or follow, distribution",
+            teach: "The levers: **appetite guides** telling underwriters and brokers which risks are welcome, acceptable or unwanted; **pricing** loadings and minimum rates; **line size**, bigger where pricing is strong; **leading or following**; and **distribution**, investing in brokers, coverholders or MGAs that produce good business.",
+            like: "Steering the mix is like managing a farm’s fields. Rich fields with good prices are planted more heavily; poor fields are rested or turned to something else; and the farmer adjusts each year to market prices rather than planting out of habit."
+          },
+          {
+            id: "timing", at: [5, 1], span: 2, label: "Timing and the cycle", sub: "Shrinking in a soft market takes discipline",
+            teach: "The right mix changes with the market. When rates are high, grow the classes with strong margins; when rates fall, hold back and accept a smaller share. Shrinking in a soft market is easy to describe and hard to do, because brokers, staff and the expense base all push for volume."
+          }
+        ],
+        edges: [
+          { from: "matrix", to: "good", teach: "Top left: the goal." },
+          { from: "matrix", to: "win", teach: "Top right: good business to win back." },
+          { from: "good", to: "danger", label: "if growth is bought", teach: "A good segment slides into the danger quadrant if its growth comes from cutting price." },
+          { from: "win", to: "fix", label: "if neglected", teach: "Good business that drifts away and is repriced cheaply can end up needing remediation." },
+          { from: "danger", to: "levers", label: "urgently", teach: "The danger quadrant needs the levers first." },
+          { from: "fix", to: "levers", label: "or exit", teach: "The weak, shrinking quadrant needs remediation or a decision to leave." },
+          { from: "levers", to: "timing", label: "through", teach: "How hard to pull each lever depends on where the market is in the cycle." }
+        ]
+      },
+      explore: "matrix",
       takeaways: [
         "Plotting segments by price adequacy and growth shows where to grow, hold or shrink.",
         "Poorly priced segments that are growing fast are the most dangerous.",
-        "The levers include appetite guides, pricing, line size, leading or following, and distribution.",
-        "The right mix changes with the cycle, and shrinking in a soft market takes discipline."
+        "The levers include appetite guides, pricing, line size, leading or following, and distribution; the right mix changes with the cycle."
       ]
     },
     {
       title: "Reinsurance as a portfolio tool",
-      minutes: 7,
+      minutes: 6,
       keys: ["The net portfolio", "Value against capital", "Retention", "Credit risk"],
-      body: [
-        "Reinsurance is one of the most powerful tools available to a portfolio manager. It changes the shape of the net portfolio, the part the business keeps, without changing what the business offers its clients. The question is not whether reinsurance is cheap, but whether it is good value for the risk and capital it removes.",
-        { h: "Shaping the net portfolio" },
-        "Excess of loss reinsurance cuts off the largest losses, reducing volatility and the capital needed for large and catastrophe risks. Proportional reinsurance reduces the size of the whole account, which can support growth, or reduce capital in a class where the business wants to keep its client relationships but carry less risk. Catastrophe cover reduces the tail of the EP curve, bringing the net 1-in-200-year loss within appetite.",
-        { fig: "gross-net" },
-        { h: "Is it good value?" },
-        "Reinsurance costs money, because the reinsurer expects a margin over the losses it pays. That margin can be compared with the cost of the capital the business would otherwise need. If a catastrophe programme costs £10m a year more than its expected recoveries, but reduces the capital requirement by £80m, and the business’s cost of capital is 15%, the capital released is worth £12m a year. The reinsurance is then cheaper than holding the capital.",
-        { h: "Retention and limit" },
-        "Setting the retention is a balance. A low retention gives a stable net result but costs more, because the reinsurer pays more frequent losses; a high retention is cheaper but leaves more volatility with the business. The limit decision asks how far up the EP curve protection should extend, and is usually guided by risk appetite and by regulatory and rating agency capital models.",
-        { aware: "Reinsurance replaces insurance risk with credit risk. A recovery is worth something only if the reinsurer pays, so portfolio managers monitor the financial strength of their reinsurers and limit the share that any one of them takes." },
-        { think: { q: "A business can buy a quota share ceding 30% of a growing class, with a ceding commission that covers its acquisition costs and expenses. Why might it do so, even though it gives away 30% of the expected profit?", a: "The quota share reduces the capital the class needs and its volatility, which may allow the business to support its clients and grow without raising new capital. If the capital released can earn a better return elsewhere, the profit given away is worth it." } }
-      ],
+      intro: "Reinsurance changes the shape of the net portfolio, the part the business keeps, without changing what it offers clients. The question isn’t whether reinsurance is cheap, but whether it’s good value for the risk and capital it removes. Weigh the two boxes at the bottom against each other.",
+      diagram: {
+        cols: 2,
+        gapX: 60,
+        nodes: [
+          {
+            id: "gross", at: [1, 1], span: 2, tone: "ink", label: "The gross portfolio", sub: "What clients are offered",
+            teach: "The gross portfolio is what the business writes for its clients. Reinsurance lets it keep offering the same cover while choosing how much of the risk to keep."
+          },
+          {
+            id: "xl", at: [2, 1], label: "Excess of loss", sub: "Cuts the largest losses",
+            teach: "Excess of loss cuts off the largest losses, reducing volatility and the capital needed for large and catastrophe risks. Catastrophe cover trims the tail of the EP curve, bringing the net 1-in-200 loss within appetite."
+          },
+          {
+            id: "qs", at: [2, 2], label: "Quota share", sub: "Shrinks the whole account",
+            teach: "Proportional reinsurance reduces the whole account. It can support growth, or cut capital in a class where the business wants to keep its client relationships but carry less risk. A 30% quota share gives away 30% of the expected profit, but may release capital that earns more elsewhere."
+          },
+          {
+            id: "net", at: [3, 1], span: 2, tone: "tint", label: "The net portfolio", sub: "What the business keeps",
+            teach: "Setting the retention is a balance. A low retention gives a stable net result but costs more, because the reinsurer pays more frequent losses; a high retention is cheaper but leaves more volatility with the business. The limit decides how far up the EP curve protection goes, guided by appetite and capital models."
+          },
+          {
+            id: "cost", at: [4, 1], tone: "bad", label: "The reinsurer’s margin", sub: "e.g. £10m a year",
+            teach: "Reinsurance costs money, because the reinsurer expects a margin over the losses it pays: say a catastrophe programme costs £10m a year more than its expected recoveries."
+          },
+          {
+            id: "cap", at: [4, 2], tone: "good", label: "Capital released", sub: "£80m × 15% = £12m a year",
+            teach: "But it cuts the capital requirement, say by £80m. If the business’s cost of capital is 15%, that capital is worth £12m a year."
+          },
+          {
+            id: "value", at: [5, 1], span: 2, tone: "brass", label: "Good value?", sub: "£12m of capital value for £10m of margin: yes",
+            teach: "Here the reinsurance is cheaper than holding the capital: £12m of value for £10m of cost. The model lets you test other cases.\n\nBe aware that reinsurance replaces insurance risk with **credit risk**: a recovery is only worth something if the reinsurer pays. So portfolio managers watch their reinsurers’ financial strength and limit any one reinsurer’s share."
+          }
+        ],
+        edges: [
+          { from: "gross", to: "xl", label: "trimmed by", teach: "Excess of loss trims the top off the gross losses." },
+          { from: "gross", to: "qs", label: "shared by", teach: "A quota share shares the whole account." },
+          { from: "xl", to: "net", teach: "What’s left after the excess of loss..." },
+          { from: "qs", to: "net", teach: "...and the quota share is the net portfolio." },
+          { from: "net", to: "cost", label: "costs", teach: "Shaping the net portfolio costs the reinsurer’s margin." },
+          { from: "net", to: "cap", label: "frees", teach: "But a less risky net portfolio needs less capital." },
+          { from: "cost", to: "value", teach: "Weigh the cost..." },
+          { from: "cap", to: "value", teach: "...against the value of the capital released." }
+        ]
+      },
+      explore: "reinsurance-value",
       takeaways: [
         "Reinsurance changes the net portfolio without changing what is offered to clients.",
         "Its value is judged against the capital and volatility it removes, not just its price.",
-        "Retention and limit decisions balance cost against stability and appetite.",
-        "Recoveries depend on reinsurers paying, so their security must be monitored."
+        "Retention and limit decisions balance cost against stability; recoveries depend on reinsurers paying."
       ]
     },
     {
       title: "Governance and information",
-      minutes: 6,
+      minutes: 5,
       keys: ["Authorities", "Peer review", "Management information", "Fair value"],
-      body: [
-        "Portfolio management depends on people making good decisions, with good information, within clear rules. Governance provides the rules; management information provides the evidence.",
-        { h: "Underwriting governance" },
-        {
-          terms: [
-            ["Underwriting authorities", "Each underwriter has written limits on the classes, line sizes and risks they may accept, with referral to a more senior underwriter above those limits."],
-            ["Peer review", "A second underwriter reviews a sample of risks, or every risk above a threshold, before or shortly after binding."],
-            ["Underwriting audits", "Periodic independent reviews of files to test compliance with guidelines, pricing and documentation standards."],
-            ["Committees", "An underwriting committee reviews performance, appetite and major decisions; a reserving committee reviews claims reserves."]
-          ]
-        },
-        { h: "Management information" },
-        "Good management information is timely, accurate and focused on decisions. A typical portfolio pack shows premium against plan, rate change and price adequacy by segment, retention and new business, loss ratios by underwriting year with attritional, large and catastrophe losses shown separately, exposure against limits, and the main movements since the last report. It should lead the reader to the questions that matter rather than bury them in detail.",
-        { h: "Conduct and customers" },
-        "Portfolio management is not only about financial results. Where products reach consumers or small businesses, insurers must show that their products offer fair value and meet customers’ needs, under the FCA’s product governance rules and the Consumer Duty. Portfolio reviews therefore increasingly include claims acceptance rates, complaints and the value delivered to customers.",
-        { analogy: "Governance and information are a ship’s charts and instruments. A skilled captain can sail without them for a while, but no owner would trust a valuable cargo to a ship whose instruments are broken or whose charts are years out of date." }
-      ],
+      intro: "Portfolio management depends on people making good decisions with good information within clear rules. Follow the rules down the left and the evidence down the right, and see that both are needed.",
+      diagram: {
+        cols: 2,
+        nodes: [
+          {
+            id: "gov", at: [1, 1], tone: "ink", label: "Governance", sub: "The rules",
+            teach: "Governance provides the rules within which underwriters exercise judgement.",
+            like: "Governance and information are a ship’s charts and instruments. A skilled captain can sail without them for a while, but no owner would trust a valuable cargo to a ship whose instruments are broken or whose charts are years out of date."
+          },
+          {
+            id: "mi", at: [1, 2], tone: "ink", label: "Management information", sub: "The evidence",
+            teach: "Management information provides the evidence on which decisions are made. Good MI is timely, accurate and focused on decisions."
+          },
+          {
+            id: "auth", at: [2, 1], label: "Authorities", sub: "Limits and referral",
+            teach: "Each underwriter has written **authorities**: limits on the classes, line sizes and risks they may accept, with referral to a more senior underwriter above them."
+          },
+          {
+            id: "pack", at: [2, 2], label: "The portfolio pack", sub: "Premium, rate, adequacy, losses",
+            teach: "A typical portfolio pack shows premium against plan, rate change and price adequacy by segment, retention and new business, loss ratios by underwriting year with attritional, large and catastrophe losses separated, exposure against limits, and the main movements since last time."
+          },
+          {
+            id: "peer", at: [3, 1], label: "Peer review", sub: "A second pair of eyes",
+            teach: "In **peer review**, a second underwriter reviews a sample of risks, or every risk above a threshold, before or shortly after binding."
+          },
+          {
+            id: "q", at: [3, 2], label: "Leads to questions", sub: "Not buried in detail",
+            teach: "Good MI should lead the reader to the questions that matter, not bury them in detail. A hundred pages of tables that nobody acts on is not information."
+          },
+          {
+            id: "audit", at: [4, 1], label: "Audits and committees", sub: "Independent checks",
+            teach: "**Underwriting audits** periodically test files for compliance with guidelines, pricing and documentation. An **underwriting committee** reviews performance, appetite and major decisions; a **reserving committee** reviews claims reserves."
+          },
+          {
+            id: "conduct", at: [4, 2], label: "Customer outcomes", sub: "Fair value, Consumer Duty",
+            teach: "Portfolio management isn’t only about financial results. Where products reach consumers or small businesses, insurers must show they offer **fair value** and meet customers’ needs, under the FCA’s product governance rules and the **Consumer Duty**. Reviews increasingly include claims acceptance rates, complaints and value delivered."
+          },
+          {
+            id: "dec", at: [5, 1], span: 2, tone: "good", label: "Good decisions", sub: "Rules and evidence together",
+            teach: "Rules without evidence are blind; evidence without rules is ignored. Portfolio management needs both, applied by people with the judgement to use them."
+          }
+        ],
+        edges: [
+          { from: "gov", to: "auth", label: "sets", teach: "Governance starts with clear authorities." },
+          { from: "auth", to: "peer", label: "checked by", teach: "Peer review checks risks are written within authority and appetite." },
+          { from: "peer", to: "audit", label: "and", teach: "Audits and committees provide independent oversight." },
+          { from: "mi", to: "pack", label: "packaged as", teach: "Information reaches decision-makers as a regular pack." },
+          { from: "pack", to: "q", label: "should raise", teach: "Its job is to raise the right questions." },
+          { from: "q", to: "conduct", label: "including", teach: "Including whether customers are getting fair value." },
+          { from: "audit", to: "dec", teach: "Rules feed good decisions..." },
+          { from: "conduct", to: "dec", teach: "...and so does evidence." }
+        ]
+      },
       takeaways: [
         "Governance sets the rules: authorities, referrals, peer review, audits and committees.",
         "Management information should be timely, accurate and focused on decisions.",
