@@ -1,5 +1,5 @@
 /* The Slip — offline support. Bump VERSION whenever app files change. */
-const VERSION = "the-slip-v6";
+const VERSION = "the-slip-v7";
 const SHELL = [
   "./",
   "index.html",
@@ -21,7 +21,7 @@ const SHELL = [
   "js/modules/m14.js",
   "js/modules/m15.js",
   "js/glossary.js",
-  "js/figures.js",
+  "js/explore.js",
   "js/app.js",
   "manifest.webmanifest",
   "icons/icon.svg",

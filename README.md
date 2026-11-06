@@ -80,4 +80,4 @@ is also what enables the offline service worker.)
 
 ## LM Academy: The Slip
 
-The [`lm-academy/`](lm-academy/) folder holds **The Slip**, a separate installable web app that teaches London Market insurance: 15 modules and 85 lessons, quizzes, flashcards, figures, mind maps and interactive tools, designed for the iPhone Duo. It has its own offline cache and home-screen icon. Open `/lm-academy/` on the same host and use **Share → Add to Home Screen**. Its source lives in [hzn8thnrhf-commits/london-market-insurance](https://github.com/hzn8thnrhf-commits/london-market-insurance).
+The [`lm-academy/`](lm-academy/) folder holds **The Slip**, a separate installable web app that teaches London Market insurance through tappable diagrams: 15 modules and 85 lessons in which every box and arrow explains itself, 57 slider models showing cause and effect, quizzes, flashcards and mind maps, designed for the iPhone Duo. It has its own offline cache and home-screen icon. Open `/lm-academy/` on the same host and use **Share → Add to Home Screen**. Its source lives in [hzn8thnrhf-commits/london-market-insurance](https://github.com/hzn8thnrhf-commits/london-market-insurance).
