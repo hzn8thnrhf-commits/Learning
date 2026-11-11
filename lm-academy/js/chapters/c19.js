@@ -1,19 +1,23 @@
-/* LM3 · 3 — Business planning */
+/* LM3 · 3 — Risk appetite and capital */
 (() => {
-  const { bars, flow, stats, recap, wfall, plot, money, pct, num } = window.SLIP.kit;
+  const { bars, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
   const RP = [10, 25, 50, 100, 200, 500];
-  const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const KIND = [
+    ["Motor", 30, "Many small, predictable claims. Little capital is needed for each £1 of premium, so a thin margin still pays."],
+    ["Commercial property", 60, "Mostly steady, with the occasional large fire or storm. A middling amount of capital."],
+    ["Catastrophe reinsurance", 120, "Quiet for years, then a loss many times the premium. The capital needed can exceed the premium itself, so only a wide margin justifies it."]
+  ];
 
   window.SLIP.chapters.push({
-    id: "planning", part: "LM3",
-    title: "Business planning",
-    blurb: "Risk appetite, return periods, the business plan and how to read an insurer’s accounts.",
+    id: "appetite", part: "LM3",
+    title: "Risk appetite and capital",
+    blurb: "How much an insurer is prepared to lose, how that becomes limits on an underwriter’s desk, and what capital costs.",
     minutes: 10,
-    init: { rp: 4, yrs: 30, cat: 0, m: 6, loss: 60, exp: 35, inv: 3 },
+    init: { rp: 4, yrs: 30, rho: 20, cr: 92, kind: 1 },
     steps: [
       {
         h: "Appetite comes first",
-        say: "Investors decide how much they are prepared to lose in pursuit of a return: their **risk appetite**. The plan must fit inside it.\n\nAnd the risks aren’t only insurance ones. **Enterprise risk management** looks at everything together: underwriting, reserving, investments, counterparties, operations, reputation.",
+        say: "Investors decide how much they are prepared to lose in pursuit of a return: their **risk appetite**. The board writes it down and approves it. Everything else, the strategy, the business plan and the capital, must fit inside it.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -27,6 +31,43 @@
           opts: ["Nothing, if the rates are good.", "The strategy doesn’t match the investor’s appetite."],
           a: 1,
           why: "Catastrophe business pays well in quiet years and can lose much of the capital in one. A plan can be perfectly sound and still be the wrong plan for its backers."
+        }
+      },
+      {
+        h: "Every kind of risk",
+        say: "The risks aren’t only the ones underwriters take. **Enterprise risk management** looks at all of them together, because they interact.\n\n**Insurance risk** has two halves: *underwriting* (this year’s business costs more than priced) and *reserving* (past years cost more than set aside). Then **market**, **credit**, **liquidity** and **operational** risk, and around them all, **strategic** and **reputational** risk.",
+        scene: () => flow({
+          h: 190,
+          nodes: [
+            { id: "u", x: 4, y: 4, w: 150, label: "Underwriting", sub: "This year’s business", tone: "c1" }, { id: "r", x: 186, y: 4, w: 150, label: "Reserving", sub: "Past years’ claims", tone: "c1" },
+            { id: "m", x: 4, y: 72, w: 104, label: "Market" }, { id: "cr", x: 118, y: 72, w: 104, label: "Credit" }, { id: "l", x: 232, y: 72, w: 104, label: "Liquidity" },
+            { id: "o", x: 4, y: 130, w: 150, label: "Operational", sub: "People, systems, fraud" }, { id: "s", x: 186, y: 130, w: 150, label: "Strategic", sub: "Wrong plan, lost trust" }
+          ]
+        }),
+        ask: {
+          q: "A syndicate discovers its 2019 liability claims will cost £30m more than it set aside. Nothing new was written. Which risk is this?",
+          opts: ["Underwriting risk.", "Reserving risk.", "Market risk."],
+          a: 1,
+          why: "The business was written years ago; what has moved is the estimate of its cost. For long-tail insurers, reserving risk can be larger than the risk in the current year’s underwriting."
+        }
+      },
+      {
+        h: "From a sentence to a desk",
+        say: "An appetite statement is useless until it reaches the person holding the pen. It is translated in three stages.\n\n**Appetite:** “We will not lose more than 15% of capital in a 1-in-200 year.”\n\n**Tolerance:** “So our net loss from a Florida windstorm at 1-in-200 must stay under £60m.”\n\n**Limit:** “So no line above £5m on any Florida risk, and no more than £150m of Florida limits in total.”",
+        scene: () => flow({
+          h: 230,
+          nodes: [
+            { id: "a", x: 95, y: 4, label: "Appetite", sub: "The board’s sentence", tone: "ink" },
+            { id: "t", x: 95, y: 74, label: "Tolerance", sub: "A number per risk type" },
+            { id: "l", x: 95, y: 144, label: "Limit", sub: "On the underwriter’s desk", tone: "c1" }
+          ],
+          edges: [["a", "t"], ["t", "l"]]
+        }),
+        ask: {
+          q: "Every Florida risk written is within the £5m line limit. Yet the £150m total is breached. Who slipped?",
+          opts: ["Nobody: each risk was within authority.", "Whoever should have been watching the total."],
+          a: 1,
+          why: "A line limit controls one risk; only an **aggregate** limit, monitored across the book, controls a portfolio. Forty perfectly authorised £5m lines make a £200m accumulation."
         }
       },
       {
@@ -46,74 +87,57 @@
         }
       },
       {
-        h: "The plan and its stress test",
-        say: "A business plan sets out what the insurer will write: classes, premium, expected claims, reinsurance, expenses. Lloyd’s must approve every syndicate’s plan, and its Principles expect plans to be realistic.\n\nA plan is a forecast, so it is **stress tested**: what if a catastrophe hits, or rates fall?",
-        scene: (v) => wfall([{ label: "Premium", v: 200 }, { label: "Expected claims", v: -110 }, { label: v.cat ? "Catastrophe, net" : "Catastrophe", v: v.cat ? -40 : 0 }, { label: "Expenses", v: -70 }, { label: "Result", total: true }], { fmt: (x) => `£${num(x, 0)}m` }),
-        ctl: [{ k: "cat", label: "Scenario", opts: ["As planned", "Major catastrophe"] }],
-        live: (v) => (v.cat ? "One event turns a £20m profit into a £20m loss. The board’s question isn’t “will this happen?” but “**could we absorb it** and carry on?”" : "The plan as written: a 90% combined ratio and a £20m profit. Every number in it is an assumption.")
-      },
-      {
-        h: "Monitor, and change course",
-        say: "A plan isn’t filed and forgotten. Actual figures are compared with plan through the year and reported to the board, to regulators, and at Lloyd’s to the Corporation.\n\nPlans **can and should be changed mid-year** when the facts change.",
-        scene: () => bars([
-          { label: "Property, to June", right: "on plan", segs: [[50, "c1", "Actual"]] },
-          { label: "Cyber, to June", right: "90% of the year’s plan already", segs: [[90, "bad", "Actual"]] }
-        ], { max: 100, marks: [[50, "Half-year plan"]] }),
-        ask: {
-          q: "By June the cyber team has written 90% of its annual planned premium. What should happen?",
-          opts: ["Celebrate: they are ahead.", "Ask why, and either stop or get a revised plan approved."],
-          a: 1,
-          why: "Writing far ahead of plan can mean prices are too cheap, and it means more exposure than the capital was set for. At Lloyd’s, exceeding an approved plan without agreement is a serious breach."
-        }
-      },
-      {
-        h: "Three statements",
-        say: "**Financial accounts** face outwards: investors, regulators, rating agencies. **Management accounts** face inwards and are more detailed and frequent.\n\nThe financial accounts hold three statements. The **income statement**: profit or loss over a period. The **cash flow statement**: actual cash in and out. The **balance sheet**: what is owned and owed on one day.",
-        scene: () => bars([
-          { label: "Assets", right: "£500m", segs: [[500, "c1", "Investments, cash, amounts due"]] },
-          { label: "Liabilities + equity", right: "£500m", segs: [[380, "c2", "Liabilities: mostly claims reserves"], [120, "c3", "Equity"]] }
-        ], { max: 500 }),
-        ask: {
-          q: "An insurer made a large profit last year but can’t pay a big claim this month. Which measure failed?",
-          opts: ["Profitability.", "Liquidity.", "Solvency."],
-          a: 1,
-          why: "**Profitability:** did it make money? **Solvency:** do assets exceed liabilities? **Liquidity:** can it find cash when needed? An insurer can be profitable and solvent, yet stuck if its assets are tied up in property."
-        }
-      },
-      {
-        h: "Written is not earned",
-        say: "A £1.2m annual premium isn’t income on day one. It is **earned** evenly as the cover is provided. At the year end, the part relating to cover still to come is **unearned** and held back.",
+        h: "How much capital?",
+        say: "Regulatory capital is set at about a 1-in-200 standard: enough to survive the worst year in two hundred.\n\nAn insurer writes two classes. Alone, property needs £80m of capital and casualty £60m. Together they need less than £140m, because their bad years rarely coincide. That saving is the **diversification benefit**, and it depends on how closely the two move together.",
         scene: (v) => {
-          const earned = (12 - v.m) / 12 * 1.2;
-          return stats([["Written", "£1.2m"], ["Earned by 31 Dec", money(earned), "c1"], ["Unearned", money(1.2 - earned), "c2"]]) +
-            bars([{ label: `Policy starting 1 ${MON[v.m]}`, segs: [[v.m, "none"], [12 - v.m, "c1", "Earned"], [v.m, "c2", "Unearned"]] }], { max: 24, marks: [[12, "Year end"]] });
+          const r = v.rho / 100, tot = Math.sqrt(80 * 80 + 60 * 60 + 2 * r * 80 * 60), ben = 140 - tot;
+          return stats([["Standalone", "£140m"], ["Together", money(tot), "c1"], ["Benefit", money(ben), ben < 8 ? "bad" : "good"]]) +
+            bars([
+              { label: "Each class alone", right: "£140m", segs: [[80, "c1", "Property"], [60, "c2", "Casualty"]] },
+              { label: "Combined", right: money(tot), segs: [[tot, "c3", "Capital needed"], [ben, "idle", "Saved"]] }
+            ], { max: 140 });
         },
-        ctl: [{ k: "m", label: "Policy starts", min: 0, max: 11, step: 1, fmt: (i) => `1 ${MON[i]}` }],
-        live: (v) => (v.m === 0 ? "A January policy is fully earned by December." : `Only ${12 - v.m} of 12 months of cover have been given. The rest is a liability: if the policy were cancelled, that premium would go back. A fast-growing insurer always looks less profitable on an earned basis than on a written one.`)
+        ctl: [{ k: "rho", label: "How closely the classes move together", min: 0, max: 100, step: 10, fmt: (x) => (x === 0 ? "independent" : x === 100 ? "in lockstep" : `${x}%`) }],
+        live: (v) => (v.rho >= 70 ? "When the classes move together there is almost nothing to save. And correlations **rise in a crisis**: a hurricane hits property, then liability, then investments. Diversification is weakest exactly when it is needed." : v.rho <= 20 ? "Nearly independent classes save a great deal of capital. This is the financial argument for a mixed book, and why a plan’s capital changes when its mix changes." : "A partial benefit. Capital models spend much of their effort on this one assumption.")
       },
       {
-        h: "The combined ratio",
-        say: "The headline measure of underwriting performance. **Claims ratio** (claims ÷ earned premium) plus **expense ratio** (expenses ÷ premium). Under 100% is an underwriting profit.\n\nInvestment income on the premiums held comes on top.",
+        h: "What capital costs",
+        say: "Capital isn’t free: investors want a return on it, the **hurdle rate**, here 10%. Classes need very different amounts of capital for the same premium, so the same combined ratio can be excellent in one class and inadequate in another.\n\n£100m of premium. Choose the class and the result.",
         scene: (v) => {
-          const cr = v.loss + v.exp, res = 100 - cr + v.inv;
-          return stats([["Combined ratio", pct(cr), cr > 100 ? "bad" : "good"], ["Underwriting", `${100 - cr >= 0 ? "+" : "−"}£${Math.abs(100 - cr)}`, cr > 100 ? "bad" : ""], ["With investments", `${res >= 0 ? "+" : "−"}£${Math.abs(res)}`, res < 0 ? "bad" : "good"]]) +
-            bars([{ label: "Per £100 of earned premium", segs: [[v.loss, "c1", "Claims"], [v.exp, "c2", "Expenses"]] }], { max: 125, marks: [[100, "Break-even"]] });
+          const cap = KIND[v.kind][1], profit = 100 - v.cr + 3, roc = (profit / cap) * 100;
+          return stats([["Profit", money(profit), profit < 0 ? "bad" : ""], ["Capital needed", money(cap)], ["Return on capital", pct(roc, 1), roc < 10 ? "bad" : "good"]]) +
+            bars([{ label: "Return on capital", right: pct(roc, 1), segs: [[Math.max(roc, 0), roc < 10 ? "bad" : "c1"]] }], { max: 40, marks: [[10, "Hurdle 10%"]] });
         },
-        ctl: [{ k: "loss", label: "Claims ratio", min: 40, max: 85, step: 1, fmt: pct }, { k: "exp", label: "Expense ratio", min: 25, max: 45, step: 1, fmt: pct }, { k: "inv", label: "Investment return on premium", min: 0, max: 10, step: 1, fmt: pct }],
-        live: (v) => {
-          const cr = v.loss + v.exp;
-          return cr <= 100 ? "An underwriting profit before any investment income. This is the discipline Lloyd’s asks for." : cr - v.inv <= 100 ? "An underwriting loss rescued by investment income. This is **cash-flow underwriting**: it works until interest rates fall or claims arrive early." : "A loss even after investment income. Capital is being consumed.";
+        ctl: [{ k: "kind", label: "Class", opts: ["Motor", "Property", "Cat"] }, { k: "cr", label: "Combined ratio", min: 80, max: 104, step: 1, fmt: pct }],
+        live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][2]} Profit here includes £3m of investment income.`
+      },
+      {
+        h: "The firm’s own assessment",
+        say: "Regulators don’t want capital to be a number the actuaries produce and nobody else reads. The **Own Risk and Solvency Assessment** (ORSA) is the firm’s own, forward-looking view of its risks and the capital it needs over the plan period, owned by the board.\n\nIt came from Solvency II; the UK regulators now set their own requirements, on the same idea.",
+        scene: () => flow({
+          h: 150,
+          nodes: [
+            { id: "r", x: 4, y: 4, w: 104, label: "Risks" }, { id: "p", x: 118, y: 4, w: 104, label: "The plan" }, { id: "c", x: 232, y: 4, w: 104, label: "Capital" },
+            { id: "o", x: 95, y: 100, label: "ORSA", sub: "The board’s own view", tone: "c1" }
+          ],
+          edges: [["r", "o"], ["p", "o"], ["c", "o"]]
+        }),
+        ask: {
+          q: "A board approves a plan to double premium. Its ORSA still shows last year’s capital need. What has gone wrong?",
+          opts: ["Nothing. The ORSA is an annual document.", "The ORSA should move whenever the plan or the risks do."],
+          a: 1,
+          why: "The point of the ORSA is to connect decisions to capital. A plan that doubles exposure without revisiting capital is precisely the failure it exists to prevent."
         }
       },
       {
         h: "In five lines",
-        say: "Next: where the plan’s numbers come from.",
+        say: "Next: turning the appetite into a plan.",
         scene: () => recap([
-          "The plan must sit inside the investors’ risk appetite.",
+          "Risk appetite is set by the board; strategy, plan and capital must fit inside it.",
+          "Appetite becomes tolerances, and tolerances become limits on line size and aggregates.",
           "A 1-in-200 event has a 0.5% chance every year, and adds up over time.",
-          "Plans are stress tested, monitored, and changed when the facts change.",
-          "Profitability, liquidity and solvency are three different questions.",
-          "Combined ratio = claims ratio + expense ratio; premium counts only as it is earned."
+          "Mixing classes saves capital, but less in a crisis.",
+          "A class is good only if its profit beats the cost of the capital it uses."
         ])
       }
     ]

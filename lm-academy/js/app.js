@@ -36,7 +36,7 @@
     const up = nextUp();
     const started = Object.keys(S.at).length > 0 || Object.keys(S.done).length > 0;
     const doneN = CH.filter((c) => S.done[c.id]).length;
-    const PARTS = { LM1: "London Market insurance essentials", LM2: "Principles and practices", LM3: "Underwriting principles" };
+    const PARTS = { LM1: "London Market insurance essentials", LM2: "Principles and practices", LM3: "Underwriting principles", MGA: "Portfolio management for an MGA" };
     const row = (c) => {
       const at = S.at[c.id] || 0, done = !!S.done[c.id];
       const p = done ? 100 : Math.round((at / (c.steps.length - 1)) * 100);
@@ -58,7 +58,7 @@
       <header class="page cover"><div class="cover-in">
         <p class="eyebrow">London Market insurance</p>
         <h1>The Slip</h1>
-        <p class="lede">The LM1, LM2 and LM3 syllabuses, one idea per screen. You predict, then you see why.</p>
+        <p class="lede">The LM1, LM2 and LM3 syllabuses, then an MGA’s portfolio. One idea per screen: you predict, then you see why.</p>
         <a class="btn" href="#${up.id}">${started ? `Continue: ${esc(up.title)}` : "Start with LM1"}${icon("next")}</a>
         <p class="cover-foot">${doneN} of ${CH.length} chapters done</p>
       </div></header>

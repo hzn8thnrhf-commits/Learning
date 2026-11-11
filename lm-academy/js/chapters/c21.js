@@ -1,120 +1,120 @@
-/* LM3 · 5 — Writing and distributing business */
+/* LM3 · 5 — Reading the accounts */
 (() => {
-  const { bars, flow, stats, recap, money, pct, num } = window.SLIP.kit;
-  const ROUTE = [
-    ["Overseas office", "The insurer opens its own office near the clients, for example on Lloyd’s platforms in **Singapore** or **Dubai**. Local knowledge and relationships, at the cost of premises and staff."],
-    ["Affinity", "Cover is offered to members of a group with something in common: a profession, a club, customers of a retailer. One relationship reaches thousands of similar risks."],
-    ["Partnering", "The insurer shares risks with another insurer that already has the access: by co-insuring, or by reinsuring a local company that fronts the business."],
-    ["Delegation", "Authority to accept risks is given to a coverholder or MGA who already has the clients."]
-  ];
+  const { bars, flow, stats, recap, wfall, money, pct, num } = window.SLIP.kit;
+  const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   window.SLIP.chapters.push({
-    id: "distribution", part: "LM3",
-    title: "Writing and distributing business",
-    blurb: "The ways an insurer can write a risk, how its underwriters are controlled, and the bargain behind delegated authority.",
-    minutes: 8,
-    init: { att: 0, route: 0, comm: 27, n: 2000 },
+    id: "accounts", part: "LM3",
+    title: "Reading the accounts",
+    blurb: "Three statements, why written premium isn’t income, how old claims move this year’s profit, and the ratios that matter.",
+    minutes: 9,
+    init: { m: 6, pyd: 0, loss: 60, exp: 35, inv: 3, hit: 0 },
     steps: [
       {
-        h: "Three ways in",
-        say: "An insurer can meet the same risk in three ways. As a **subscription** insurer, taking a share directly. As a **reinsurer**, where local law keeps the direct policy with a domestic insurer. Or through **delegated authority**, where someone else binds it.\n\nThe business plan should say which routes are used, for what, and with what line sizes.",
+        h: "Two sets of books",
+        say: "**Financial accounts** face outwards: investors, regulators, rating agencies, brokers judging security. They follow accounting standards and are audited.\n\n**Management accounts** face inwards: more detailed, more frequent, cut by class and team, in whatever form helps the business decide.",
         scene: () => flow({
-          h: 170,
+          h: 150,
           nodes: [
-            { id: "r", x: 95, y: 4, label: "The risk", tone: "ink" },
-            { id: "s", x: 4, y: 100, w: 104, label: "Subscribe", sub: "A direct line" }, { id: "re", x: 118, y: 100, w: 104, label: "Reinsure", sub: "A local insurer" }, { id: "d", x: 232, y: 100, w: 104, label: "Delegate", sub: "A coverholder binds" }
+            { id: "d", x: 95, y: 4, label: "The same transactions", tone: "ink" },
+            { id: "f", x: 4, y: 100, w: 150, label: "Financial accounts", sub: "Outward, audited, annual" },
+            { id: "m", x: 186, y: 100, w: 150, label: "Management accounts", sub: "Inward, monthly, by class", tone: "c1" }
           ],
-          edges: [["r", "s"], ["r", "re"], ["r", "d"]]
+          edges: [["d", "f"], ["d", "m"]]
         }),
         ask: {
-          q: "A country requires all local risks to be insured by locally licensed insurers. How can London take part?",
-          opts: ["It can’t.", "By reinsuring the local insurer."],
+          q: "A class underwriter wants her loss ratio by broker for the last three months. Where does she look?",
+          opts: ["The financial accounts.", "The management accounts."],
           a: 1,
-          why: "The local company issues the policy, often keeping very little, and passes most of the risk to London. This is **fronting**. London carries the risk, plus the credit risk of the front."
+          why: "Published accounts show the whole company once or twice a year. Running a class needs figures that are current and cut the way decisions are made."
         }
       },
       {
-        h: "Where on the programme?",
-        say: "Large risks are placed in **layers**. Appetite includes *where* an insurer likes to sit. Low layers are hit often: more premium, more claims handling. High layers are hit rarely but then in full.\n\nA £100m programme. Move your £25m layer.",
-        scene: (v) => {
-          const rol = [8, 3, 1.2, 0.5][v.att], hit = ["about 1 year in 12", "about 1 year in 35", "about 1 year in 85", "about 1 year in 200"][v.att];
-          return stats([["Your layer", `£25m xs £${v.att * 25}m`], ["Rate on line", pct(rol, 1), "c1"], ["Premium", money(25 * rol / 100)]]) +
-            bars([3, 2, 1, 0].map((i) => ({ label: `£25m xs £${i * 25}m`, right: i === v.att ? hit : "", segs: [[100, i === v.att ? "c1" : "idle", i === v.att ? "Your line" : ""]] })), { max: 100 });
-        },
-        ctl: [{ k: "att", label: "Attachment point", min: 0, max: 3, step: 1, fmt: (i) => (i ? `excess of £${i * 25}m` : "primary") }],
-        live: (v) => (v.att === 0 ? "The **primary** layer: you pay on almost every loss. High premium, and you need a strong claims team because you are first to every claim." : v.att === 3 ? "The top layer: tiny premium for a full £25m limit. It looks like free money for years. Then it isn’t." : "A middle layer: fewer claims than the primary, more premium than the top. **Rate on line** is premium as a percentage of the limit.")
-      },
-      {
-        h: "Controlling the pen",
-        say: "Each underwriter has a written **authority**: classes, territories, maximum line, what must be referred upward. Outside it, they must ask.\n\n**Peer review** has a second underwriter examine a risk after it is written: was it within authority, priced on the agreed basis, properly recorded?",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "a", x: 4, y: 40, w: 104, label: "Authority", sub: "Before" },
-            { id: "w", x: 118, y: 40, w: 104, label: "Risk written", tone: "c1" },
-            { id: "p", x: 232, y: 40, w: 104, label: "Peer review", sub: "After" }
-          ],
-          edges: [["a", "w"], ["w", "p"]]
-        }),
+        h: "The balance sheet",
+        say: "A snapshot on one day: what the insurer **owns**, what it **owes**, and the difference, which belongs to its owners.\n\nAssets must at least equal liabilities plus equity. For an insurer the biggest liability by far is **claims reserves**: money it expects to pay on business already written.",
+        scene: () => bars([
+          { label: "Assets", right: "£500m", segs: [[380, "c1", "Investments and cash"], [120, "soft1", "Owed by others"]] },
+          { label: "Liabilities and equity", right: "£500m", segs: [[300, "c2", "Claims reserves"], [80, "soft2", "Unearned"], [120, "c3", "Equity"]] }
+        ], { max: 500 }),
         ask: {
-          q: "An underwriter with a £5m line limit is offered an excellent risk needing £8m, with an hour to decide. What should she do?",
-          opts: ["Write £8m. It is a good risk.", "Write £5m, or get approval for more first."],
+          q: "“Owed by others” includes £60m due from reinsurers on claims already paid. Why would an analyst look hard at it?",
+          opts: ["It is too small to matter.", "It is only an asset if the reinsurers pay."],
           a: 1,
-          why: "The quality of the risk is beside the point. Limits exist because the firm’s reinsurance, aggregates and capital are all built around them. Exceeding authority is a disciplinary matter even when the risk runs clean."
+          why: "Reinsurance recoverables are credit risk sitting on the balance sheet. If a reinsurer fails or disputes the claim, the asset shrinks and equity shrinks with it."
         }
       },
       {
-        h: "Reaching the client",
-        say: "Planning what to write is half the job. The other half is **distribution**: how the business will reach you.",
-        scene: (v) => `<ol class="k-recap">${ROUTE.map((m, i) => `<li${i === v.route ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
-        ctl: [{ k: "route", label: "Route", opts: ["Office", "Affinity", "Partner", "Delegate"] }],
-        live: (v) => `**${ROUTE[v.route][0]}.** ${ROUTE[v.route][1]}`
+        h: "Profit is not cash",
+        say: "The **income statement** shows profit or loss over a period. The **cash flow statement** shows money actually arriving and leaving. In insurance they can tell opposite stories, because premium comes in at the start and claims go out years later.",
+        scene: () => bars([
+          { label: "Cash this year", right: "+£40m", segs: [[100, "c1", "Premium received"], [0.1, "none"]] },
+          { label: "", right: "", segs: [[60, "c2", "Claims and costs paid so far"]] },
+          { label: "Profit this year", right: "−£10m", segs: [[100, "c1", "Premium earned"]] },
+          { label: "", right: "", segs: [[110, "bad", "Claims and costs incurred"]] }
+        ], { max: 115 }),
+        ask: {
+          q: "A fast-growing liability insurer has cash pouring in. Is that evidence it is profitable?",
+          opts: ["Yes. Cash is fact.", "No. Its claims simply haven’t been paid yet."],
+          a: 1,
+          why: "Growth and a long tail make any insurer cash-rich for years, however badly it has priced. Insurers have collapsed with full bank accounts. Profit depends on what the claims will eventually cost."
+        }
       },
       {
-        h: "The delegated bargain",
-        say: "Delegation swaps one cost for another. The insurer’s own **operating cost** falls: no underwriter sees each risk. Its **acquisition cost** rises: the coverholder is paid commission for doing the work.\n\nA book of small risks at £1,500 premium each.",
+        h: "Written is not earned",
+        say: "A £1.2m annual premium isn’t income on day one. It is **earned** evenly as the cover is provided. At the year end, the part relating to cover still to come is **unearned** and sits on the balance sheet as a liability.",
         scene: (v) => {
-          const prem = v.n * 1.5, own = v.n * 0.6 + 150, da = prem * v.comm / 100 + 60;
-          return stats([["Premium", `£${num(prem / 1000, 1)}m`], ["Write it yourself", `£${num(own, 0)}k`, own > da ? "bad" : "good"], ["Delegate", `£${num(da, 0)}k`, da > own ? "bad" : "good"]]) +
-            bars([
-              { label: "In-house", right: pct(own / prem * 100), segs: [[150, "c1", "Team"], [v.n * 0.6, "c1", "Per-risk handling"]] },
-              { label: "Delegated", right: pct(da / prem * 100), segs: [[60, "c1", "Oversight"], [prem * v.comm / 100, "c2", "Commission"]] }
-            ], { max: Math.max(own, da) * 1.05 });
+          const earned = (12 - v.m) / 12 * 1.2;
+          return stats([["Written", "£1.2m"], ["Earned by 31 Dec", money(earned), "c1"], ["Unearned", money(1.2 - earned), "c2"]]) +
+            bars([{ label: `Policy starting 1 ${MON[v.m]}`, segs: [[v.m, "none"], [12 - v.m, "c1", "Earned"], [v.m, "c2", "Unearned"]] }], { max: 24, marks: [[12, "Year end"]] });
         },
-        ctl: [{ k: "n", label: "Number of risks", min: 200, max: 6000, step: 200, fmt: (x) => num(x, 0) }, { k: "comm", label: "Coverholder’s commission", min: 15, max: 40, step: 1, fmt: pct }],
+        ctl: [{ k: "m", label: "Policy starts", min: 0, max: 11, step: 1, fmt: (i) => `1 ${MON[i]}` }],
+        live: (v) => (v.m === 0 ? "A January policy is fully earned by December." : `Only ${12 - v.m} of 12 months of cover have been given. The rest is a liability: if the policy were cancelled, that premium would go back. A fast-growing insurer always looks less profitable on an earned basis than on a written one.`)
+      },
+      {
+        h: "Old years in this year’s profit",
+        say: "Claims **incurred** in a year aren’t the claims paid. They are claims paid **plus the change in reserves**. And that change includes revisions to *earlier* years.\n\nThis year’s own business made £10m. Now revise the reserves held for past years.",
+        scene: (v) => {
+          const res = 10 - v.pyd;
+          return stats([["This year’s business", "£10m"], ["Prior years", money(-v.pyd), v.pyd > 0 ? "bad" : v.pyd < 0 ? "good" : ""], ["Reported profit", money(res), res < 0 ? "bad" : ""]]) +
+            wfall([{ label: "This year", v: 10 }, { label: v.pyd > 0 ? "Strengthened" : "Released", v: -v.pyd }, { label: "Reported profit", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
+        },
+        ctl: [{ k: "pyd", label: "Past years’ reserves", min: -20, max: 20, step: 5, fmt: (x) => (x === 0 ? "unchanged" : x > 0 ? `£${x}m short` : `£${-x}m too high`) }],
+        live: (v) => (v.pyd < 0 ? "A **release**: past years were over-reserved, and the surplus flows into this year’s profit. Pleasant, but it says nothing about current underwriting. A company living on releases is spending its savings." : v.pyd > 0 ? "**Strengthening**: past years were under-reserved, and today’s shareholders pay for yesterday’s optimism. A reader should always separate the current year’s result from prior-year movement." : "No movement: the reported profit is the current year’s own.")
+      },
+      {
+        h: "The combined ratio",
+        say: "The headline measure of underwriting performance. **Claims ratio** (claims incurred ÷ earned premium) plus **expense ratio** (expenses ÷ premium). Under 100% is an underwriting profit.\n\nInvestment income on the premiums held comes on top.",
+        scene: (v) => {
+          const cr = v.loss + v.exp, res = 100 - cr + v.inv;
+          return stats([["Combined ratio", pct(cr), cr > 100 ? "bad" : "good"], ["Underwriting", `${100 - cr >= 0 ? "+" : "−"}£${Math.abs(100 - cr)}`, cr > 100 ? "bad" : ""], ["With investments", `${res >= 0 ? "+" : "−"}£${Math.abs(res)}`, res < 0 ? "bad" : "good"]]) +
+            bars([{ label: "Per £100 of earned premium", segs: [[v.loss, "c1", "Claims"], [v.exp, "c2", "Expenses"]] }], { max: 125, marks: [[100, "Break-even"]] });
+        },
+        ctl: [{ k: "loss", label: "Claims ratio", min: 40, max: 85, step: 1, fmt: pct }, { k: "exp", label: "Expense ratio", min: 25, max: 45, step: 1, fmt: pct }, { k: "inv", label: "Investment return on premium", min: 0, max: 10, step: 1, fmt: pct }],
         live: (v) => {
-          const prem = v.n * 1.5, own = v.n * 0.6 + 150, da = prem * v.comm / 100 + 60;
-          return da < own ? "Delegation is cheaper here. The other price is **control**: the insurer no longer chooses each risk, and must rely on the agreement, the bordereaux and audits." : "At this commission, delegating costs more than doing it yourself. That can still be worth it if the coverholder brings business the insurer could never reach.";
+          const cr = v.loss + v.exp;
+          return cr <= 100 ? "An underwriting profit before any investment income. This is the discipline Lloyd’s asks for." : cr - v.inv <= 100 ? "An underwriting loss rescued by investment income. This is **cash-flow underwriting**: it works until interest rates fall or claims arrive early." : "A loss even after investment income. Capital is being consumed.";
         }
       },
       {
-        h: "Choosing and watching a partner",
-        say: "Before delegating: **due diligence** on the partner’s people, track record, finances, systems and licences. Then a clear agreement, usually built on a **model wording**, setting out exactly what may be bound.\n\nAfter: monitoring. Bordereaux, audits, premium against limits, claims trends, complaints. The **FCA** expects the insurer to oversee the customer outcomes its delegates produce; **Lloyd’s** adds its own approval and standards.",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "c", x: 4, y: 40, w: 104, label: "Choose", sub: "Due diligence" },
-            { id: "a", x: 118, y: 40, w: 104, label: "Agree", sub: "Clear authority" },
-            { id: "m", x: 232, y: 40, w: 104, label: "Monitor", sub: "Reports, audits", tone: "c1" }
-          ],
-          edges: [["c", "a"], ["a", "m"], ["m", "c", "", { dy: 30 }]]
-        }),
-        ask: {
-          q: "A coverholder mis-sells policies to consumers. Whom will the regulator hold responsible?",
-          opts: ["Only the coverholder.", "The insurer too: it delegated the authority."],
-          a: 1,
-          why: "The same rule as before: authority can be delegated, responsibility can’t. The insurer is the product’s manufacturer and must show it had proper oversight."
-        }
+        h: "Three questions",
+        say: "Accounts answer three different questions. **Profitability:** did it make money? **Liquidity:** can it find cash when claims fall due? **Solvency:** do its assets exceed its liabilities by enough?\n\nThe solvency measure is capital held ÷ capital required. This insurer holds £150m against a requirement of £100m. Give it a bad year.",
+        scene: (v) => {
+          const own = 150 - v.hit, ratio = own;
+          return stats([["Capital held", money(own)], ["Required", "£100m"], ["Solvency ratio", pct(ratio), ratio < 100 ? "bad" : ratio < 120 ? "c2" : "good"]]) +
+            bars([{ label: "Capital held", right: pct(ratio), segs: [[Math.max(own, 0), ratio < 100 ? "bad" : "c1"]] }], { max: 160, marks: [[100, "Required"]] });
+        },
+        ctl: [{ k: "hit", label: "Loss for the year", min: 0, max: 80, step: 5, fmt: money }],
+        live: (v) => (150 - v.hit < 100 ? "Below 100%: the insurer no longer meets its capital requirement. The regulator steps in, and the firm must raise capital or cut risk, usually on poor terms because everyone knows it has to." : 150 - v.hit < 120 ? "Still compliant, but the buffer is thin. Rating agencies and brokers’ security committees start asking questions well before 100%." : "A comfortable buffer. Boards usually set their own target well above the regulatory minimum for exactly this reason.")
       },
       {
         h: "In five lines",
-        say: "That is the course: what insurance is, how London practises it, and how its underwriters think. The glossary on the home page holds every term.",
+        say: "Next: the numbers behind the price.",
         scene: () => recap([
-          "An insurer can subscribe, reinsure a local front, or delegate.",
-          "Low layers pay often; high layers pay rarely and in full.",
-          "Written authorities and peer review control the individual underwriter.",
-          "Distribution: own offices, affinity groups, partners, delegation.",
-          "Delegation trades operating cost for acquisition cost, and control for reach."
+          "Financial accounts face outwards; management accounts run the business.",
+          "An insurer can be full of cash and losing money.",
+          "Premium counts only as it is earned.",
+          "Reserve movements on old years flow through this year’s profit.",
+          "Profitability, liquidity and solvency are three separate questions."
         ])
       }
     ]
