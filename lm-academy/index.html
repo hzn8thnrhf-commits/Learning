@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>The Slip</title>
-  <meta name="description" content="A pocket course in London Market insurance: Lloyd’s, placement, reinsurance, claims and law, with quizzes, flashcards and interactive tools.">
-  <meta name="theme-color" content="#0e1b33">
+  <meta name="description" content="London Market insurance in eleven short, interactive chapters: predict, see why, and try the numbers yourself.">
+  <meta name="theme-color" content="#f4f0e6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#131210" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="The Slip">
   <meta name="format-detection" content="telephone=no">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -18,36 +19,32 @@
 </head>
 <body>
 <!-- app:start -->
-<main id="app" aria-live="polite"></main>
-<a class="backfab" id="backfab" href="#home" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></a>
-<nav class="tabbar" aria-label="Sections">
-  <div class="tabbar-inner">
-    <a class="tab" data-tab="home" href="#home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7.5L19 7.5V21H7z"/><path d="M14.5 3v4.5H19"/><path d="M10 12h6M10 15.5h6M10 19h3"/></svg><span>Slip</span></a>
-    <a class="tab" data-tab="learn" href="#learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5c2.7-1 5.7-.9 9 1 3.3-1.9 6.3-2 9-1V19c-2.7-1-5.7-.9-9 1-3.3-1.9-6.3-2-9-1z"/><path d="M12 6.5V20"/></svg><span>Learn</span></a>
-    <a class="tab" data-tab="practice" href="#practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.4l2.6 2.6 4.8-5.2"/></svg><span>Practice</span></a>
-    <a class="tab" data-tab="glossary" href="#glossary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/><path d="M9 8.5h5"/></svg><span>Glossary</span></a>
-    <a class="tab" data-tab="lab" href="#lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v16M12 4v16M18 4v16"/><circle cx="6" cy="14.5" r="2.2" fill="currentColor"/><circle cx="12" cy="8.5" r="2.2" fill="currentColor"/><circle cx="18" cy="12.5" r="2.2" fill="currentColor"/></svg><span>Lab</span></a>
-  </div>
-</nav>
+<div id="app"></div>
+<a class="backfab" id="backfab" href="#home" hidden aria-label="Back to contents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Contents</span></a>
 <!-- app:end -->
-<script src="js/course.js"></script>
-<script src="js/modules/m01.js"></script>
-<script src="js/modules/m02.js"></script>
-<script src="js/modules/m03.js"></script>
-<script src="js/modules/m04.js"></script>
-<script src="js/modules/m05.js"></script>
-<script src="js/modules/m06.js"></script>
-<script src="js/modules/m07.js"></script>
-<script src="js/modules/m08.js"></script>
-<script src="js/modules/m09.js"></script>
-<script src="js/modules/m10.js"></script>
-<script src="js/modules/m11.js"></script>
-<script src="js/modules/m12.js"></script>
-<script src="js/modules/m13.js"></script>
-<script src="js/modules/m14.js"></script>
-<script src="js/modules/m15.js"></script>
 <script src="js/glossary.js"></script>
-<script src="js/explore.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/chapters/c01.js"></script>
+<script src="js/chapters/c02.js"></script>
+<script src="js/chapters/c03.js"></script>
+<script src="js/chapters/c04.js"></script>
+<script src="js/chapters/c05.js"></script>
+<script src="js/chapters/c06.js"></script>
+<script src="js/chapters/c07.js"></script>
+<script src="js/chapters/c08.js"></script>
+<script src="js/chapters/c09.js"></script>
+<script src="js/chapters/c10.js"></script>
+<script src="js/chapters/c11.js"></script>
+<script src="js/chapters/c12.js"></script>
+<script src="js/chapters/c13.js"></script>
+<script src="js/chapters/c14.js"></script>
+<script src="js/chapters/c15.js"></script>
+<script src="js/chapters/c16.js"></script>
+<script src="js/chapters/c17.js"></script>
+<script src="js/chapters/c18.js"></script>
+<script src="js/chapters/c19.js"></script>
+<script src="js/chapters/c20.js"></script>
+<script src="js/chapters/c21.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
