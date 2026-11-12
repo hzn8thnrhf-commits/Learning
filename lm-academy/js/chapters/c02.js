@@ -5,13 +5,20 @@
   window.SLIP.chapters.push({
     id: "principles", part: "LM1",
     title: "The contract and its principles",
-    blurb: "Offer, acceptance, consideration, and the five principles every claim is tested against.",
+    blurb: "The elements of a valid contract, and the principles peculiar to insurance: insurable interest, good faith, proximate cause, indemnity, contribution and subrogation.",
     minutes: 10,
+    lead: "An insurance policy is a contract, and it is governed both by the general law of contract and by principles peculiar to insurance.",
+    aims: [
+      "State the requirements for a valid contract and identify a counter-offer.",
+      "Explain insurable interest and the duty of good faith, distinguishing the duties of consumers and businesses.",
+      "Identify the proximate cause of a loss.",
+      "Apply indemnity and its corollaries, average, contribution and subrogation, to simple figures."
+    ],
     init: { si: 30, a: 10, b: 5, loss: 6 },
     steps: [
       {
-        h: "Three ingredients",
-        say: "An insurance policy is a contract, and a contract needs three things.\n\n**Offer**: one side proposes terms. **Acceptance**: the other agrees to exactly those terms. **Consideration**: each side gives something of value. Here, the insured’s premium for the insurer’s promise to pay claims.\n\nMiss one and no contract ever existed.",
+        h: "The formation of the contract",
+        say: "For a contract to exist there must be an **offer** by one party, an **acceptance** by the other of precisely the terms offered, and **consideration**: something of value given by each side. In insurance the consideration is the premium on one side and, on the other, the insurer’s promise to pay in the events insured against.\n\nThe parties must also intend to create legal relations and have the capacity to contract. If any element is absent, there is no contract to enforce.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -21,15 +28,20 @@
           edges: [["o", "k"], ["a", "k"], ["c", "k"]]
         }),
         ask: {
-          q: "An underwriter says: “I’ll write it, but with a £50,000 excess instead of £25,000.” Is that acceptance?",
-          opts: ["Yes. They agreed to write it.", "No. It is a new offer."],
-          a: 1,
-          why: "Acceptance must match the offer exactly. Changing a term kills the original offer and replaces it with a **counter-offer**, which the other side may now accept or refuse."
+          q: "A broker offers a risk with a £25,000 excess. The underwriter replies: “I’ll write it, but with a £50,000 excess.” Where do things stand?",
+          opts: [
+          ["A contract exists at £50,000.", "The broker has not agreed to £50,000. Nobody has accepted anything yet."],
+          ["A contract exists at £25,000.", "The underwriter never agreed to £25,000."],
+          "No contract. The underwriter has made a counter-offer.",
+          ["A contract exists; the excess will be settled later.", "With a term this important still open, there is no agreement to enforce."]
+        ],
+          a: 2,
+          why: "Acceptance must match the offer exactly. Changing a term kills the original offer and replaces it with a **counter-offer**, which the broker’s client may now accept or refuse."
         }
       },
       {
         h: "Insurable interest",
-        say: "You can only insure something if you would **lose financially** when it is damaged, or when it makes you liable to others. That link is **insurable interest**.\n\nWithout it, a policy would be a bet on a stranger’s misfortune.",
+        say: "A person may insure only that in which they have an **insurable interest**: a relationship to the subject-matter, recognised by law, such that they stand to suffer financial loss if it is damaged or if it gives rise to a liability. The classic statement is in *Lucena v Craufurd* (1806), and the requirement is codified for marine insurance in the Marine Insurance Act 1906.\n\nThe rule distinguishes insurance from a wager, and removes any incentive for the insured to bring about the loss.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -39,15 +51,20 @@
           edges: [["o", "g"], ["b", "g"], ["w", "g"]]
         }),
         ask: {
-          q: "A warehouse keeper stores customers’ goods it doesn’t own. Can it insure them?",
-          opts: ["No. Only the owner can.", "Yes. It is responsible for them, so it stands to lose."],
-          a: 1,
-          why: "Insurable interest does **not** require ownership. Anyone with a legal or financial stake has one: an owner, a lender, a tenant, someone holding goods for others."
+          q: "Which of these has **no** insurable interest in a warehouse?",
+          opts: [
+          ["The bank that lent money against it.", "If it burns, the bank’s security is gone. That is a financial stake."],
+          ["A tenant obliged by its lease to repair it.", "The tenant would have to pay for repairs: a legal liability, so an interest."],
+          ["A firm storing customers’ goods inside.", "It is responsible for those goods, so it stands to lose."],
+          "A rival firm that would win customers if it burned."
+        ],
+          a: 3,
+          why: "Insurable interest means you would **lose** if the thing were damaged. It does not require ownership: lenders, tenants and bailees all have it. Someone who would *gain* from the loss has the opposite, and a policy for them would be a bet with a motive."
         }
       },
       {
         h: "Good faith",
-        say: "The buyer knows the risk far better than the insurer can. So insurance contracts demand **good faith** from both sides: honesty and openness about what matters.\n\nHow much the buyer must volunteer depends on who they are.",
+        say: "The proposer of a risk ordinarily knows far more about it than the insurer can discover. Since *Carter v Boehm* (1766) the law has therefore treated insurance as a contract of the **utmost good faith**, requiring candour that ordinary commercial contracts do not.\n\nModern statute has refined the duty and made it depend on the nature of the insured. The **Consumer Insurance (Disclosure and Representations) Act 2012** governs consumers; the **Insurance Act 2015** governs businesses.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -58,15 +75,20 @@
           edges: [["g", "c", "2012 Act"], ["g", "b", "2015 Act"]]
         }),
         ask: {
-          q: "A homeowner isn’t asked about a past subsidence claim and doesn’t mention it. Have they broken their duty?",
-          opts: ["Yes. They should have volunteered it.", "No. A consumer need only take reasonable care answering the questions asked."],
-          a: 1,
-          why: "The **Consumer Insurance (Disclosure and Representations) Act 2012** puts the burden on the insurer to ask. A business is different: under the **Insurance Act 2015** it must volunteer everything material in a *fair presentation*."
+          q: "Neither a homeowner nor a factory owner is asked about a past subsidence claim. Neither mentions it. Who has broken their duty?",
+          opts: [
+          ["Both.", "The homeowner was never asked. A consumer’s duty is to answer honestly, not to guess what matters."],
+          ["Neither.", "A business cannot wait to be asked."],
+          "Only the factory owner.",
+          ["Only the homeowner.", "It is the other way round: the law asks less of consumers, not more."]
+        ],
+          a: 2,
+          why: "A **consumer** need only take reasonable care answering the questions asked (the 2012 Act), so the burden is on the insurer to ask. A **business** must volunteer everything material in a *fair presentation* (the Insurance Act 2015)."
         }
       },
       {
         h: "Proximate cause",
-        say: "Whether a loss is covered depends on its **proximate cause**: the dominant, most powerful cause. Not necessarily the last thing to happen.\n\nA ship’s crew are fighting off an armed attack when fire breaks out and destroys the vessel. The policy **excludes war risks**.",
+        say: "An insurer is liable only for losses **proximately caused** by an insured peril. The proximate cause is the dominant or effective cause, defined in *Pawsey v Scottish Union* (1907) as the “active, efficient cause that sets in motion a train of events which brings about a result”. It need not be the first cause in time, nor the last, as the House of Lords confirmed in *Leyland Shipping v Norwich Union* (1918).\n\nA ship’s crew are resisting an armed attack when fire breaks out and destroys the vessel. The policy covers fire and **excludes war risks**.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -78,32 +100,39 @@
         }),
         ask: {
           q: "Does the policy pay?",
-          opts: ["Yes. Fire destroyed the ship, and fire is covered.", "Only if fire, not the attack, was the dominant cause."],
-          a: 1,
-          why: "Picture dominoes: the last one hits the table, but the cause is whatever pushed the first. If the attack set an unbroken chain in motion, this is a war loss and the exclusion bites."
+          opts: [
+          ["Yes. Fire destroyed the ship and fire is covered.", "The last thing to happen is not automatically the cause."],
+          ["No. The attack came first, so it is the cause.", "First in time is not the test either."],
+          "It depends which was the dominant cause.",
+          ["Half, since two causes were at work.", "Proximate cause picks one dominant cause. It does not split the difference."]
+        ],
+          a: 2,
+          why: "Picture dominoes: the cause is whatever started an **unbroken** chain. If the attackers set the fire, the attack is the proximate cause and the war exclusion bites. If a galley fire broke out by coincidence during the attack, fire is the cause and the policy pays."
         }
       },
       {
         h: "Indemnity",
-        say: "**Indemnity** means putting the insured back where they were before the loss. No better, no worse. It can be done by **cash, repair, replacement or reinstatement**.\n\nSome policies can’t indemnify, because nobody can price a lost limb. Accident and health policies pay a fixed scale instead: they are **benefit policies**.",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "i", x: 95, y: 4, label: "Indemnity", sub: "Back where you were", tone: "ink" },
-            { id: "a", x: 4, y: 84, w: 78, label: "Cash" }, { id: "b", x: 88, y: 84, w: 78, label: "Repair" }, { id: "c", x: 172, y: 84, w: 78, label: "Replace" }, { id: "d", x: 256, y: 84, w: 80, label: "Reinstate" }
-          ],
-          edges: [["i", "a"], ["i", "b"], ["i", "c"], ["i", "d"]]
-        }),
+        say: "Most insurance contracts are contracts of **indemnity**: the insured is to be restored, so far as money can do it, to the financial position they occupied immediately before the loss, and no better. The principle was stated authoritatively in *Castellain v Preston* (1883). Indemnity may be provided by **cash payment, repair, replacement or reinstatement**.\n\nWhere a loss cannot be valued, as with death or injury, indemnity is impossible. Life and personal accident policies instead pay an agreed sum and are known as **benefit policies**.",
+        scene: (v) => bars([
+  { label: "What it cost, five years ago", right: "£1,200", segs: [[1200, "idle"]] },
+  { label: "The same model, new, today", right: v.$done ? "£1,000 · betterment" : "£1,000", segs: [[1000, "idle"]] },
+  { label: "A five-year-old one, today", right: v.$done ? "£250 · the indemnity" : "£250", segs: [[250, v.$done ? "c1" : "idle"]] }
+], { max: 1200 }),
         ask: {
-          q: "A five-year-old laptop is stolen. Strict indemnity pays for…",
-          opts: ["A brand-new one.", "The value of a five-year-old laptop."],
-          a: 1,
-          why: "A new one would leave the owner better off. Policies often *modify* indemnity by agreement: “new for old” cover gives more, while an excess or a limit gives less."
+          q: "A laptop bought for £1,200 five years ago is stolen. The same model costs £1,000 new today. A five-year-old one sells for £250. What does strict indemnity pay?",
+          fix: true,
+          opts: [
+          ["£1,200", "What it cost is history. Indemnity looks at the loss on the day."],
+          ["£1,000", "A new laptop would leave the owner better off than before the theft."],
+          "£250"
+        ],
+          a: 2,
+          why: "The owner lost a five-year-old laptop, worth £250. Policies often *modify* indemnity by agreement: “new for old” cover would pay £1,000, while an excess or a limit pays less."
         }
       },
       {
-        h: "Indemnity’s sharp edge",
-        say: "A warehouse would cost **£50m** to rebuild. To save premium its owner insures it for less. A fire then does **£10m** of damage, comfortably inside the sum insured.",
+        h: "Under-insurance and average",
+        say: "Indemnity presupposes that the premium was calculated on the full value at risk. Where property is insured for less than its value, most commercial policies apply **average**: the insured is treated as their own insurer for the uninsured proportion and bears that proportion of every loss, however small.\n\nA warehouse would cost **£50m** to rebuild. Its owner insures it for less. A fire then causes **£10m** of damage, well within the sum insured.",
         scene: (v) => {
           const ratio = Math.min(1, v.si / 50), paid = 10 * ratio;
           return stats([["Insured to", pct(ratio * 100), ratio < 1 ? "bad" : "good"], ["Paid", money(paid)], ["Owner bears", money(10 - paid), ratio < 1 ? "bad" : ""]]) +
@@ -114,11 +143,16 @@
         },
         ctl: [{ k: "si", label: "Sum insured", min: 10, max: 50, step: 5, fmt: money }],
         live: (v) => (v.si >= 50 ? "Insured to full value, so the claim is paid in full."
-          : `The owner paid premium on only ${pct((v.si / 50) * 100)} of the value, so only ${pct((v.si / 50) * 100)} of **any** loss is paid. This is **average**. The pool is only fair if everyone pays in for the risk they really bring.`)
+          : `The owner paid premium on only ${pct((v.si / 50) * 100)} of the value, so only ${pct((v.si / 50) * 100)} of **any** loss is paid. This is **average**. The pool is only fair if everyone pays in for the risk they really bring.`),
+        goal: {
+          say: "The owner needs at least £8m of this £10m claim paid. Find the lowest sum insured that achieves it.",
+          test: (v) => v.si === 40,
+          done: "£40m. Insured for 80% of value, paid 80% of the loss. The saving on premium is repaid, with interest, in every claim."
+        }
       },
       {
         h: "Contribution",
-        say: "Suppose two policies cover the same thing against the same peril. The insured can’t collect twice: that would beat indemnity. The insurers **share** the loss rateably. That is **contribution**.\n\nSet each policy’s limit and the size of the loss.",
+        say: "Where two or more policies cover the same interest in the same subject-matter against the same peril, the insured may not recover more than the loss: to do so would offend the principle of indemnity. As between themselves the insurers share the loss, and one who has paid more than its share may recover the excess from the others. This right is **contribution**.\n\nThe usual method apportions the loss according to what each insurer would have paid had it been the only one: its *independent liability*.",
         scene: (v) => {
           const ia = Math.min(v.loss, v.a), ib = Math.min(v.loss, v.b), both = ia + ib;
           const sa = both >= v.loss ? (v.loss * ia) / both : ia, sb = both >= v.loss ? (v.loss * ib) / both : ib;
@@ -131,11 +165,16 @@
           return ia + ib >= v.loss
             ? `Alone, A would owe ${money(ia)} and B ${money(ib)}. They share in that ratio, and the insured receives ${money(v.loss)} once, not ${money(ia + ib)}.`
             : "Together the two limits still fall short of the loss, so each pays in full and the insured bears the rest.";
+        },
+        goal: {
+          say: "Set the loss to £12m. Then choose limits so that Insurer A pays exactly three times what Insurer B pays, and the insured is paid in full.",
+          test: (v) => { const ia = Math.min(v.loss, v.a), ib = Math.min(v.loss, v.b); return v.loss === 12 && ia + ib >= 12 && ia === 3 * ib; },
+          done: "Each insurer’s share follows what it would have paid had it been alone: £9m against £3m. Now push both limits above £12m and they share equally, because each alone would have paid everything."
         }
       },
       {
         h: "Subrogation",
-        say: "A contractor’s carelessness burns down your warehouse. Your insurer pays you. Now your insurer may step into your shoes and pursue the contractor to get its money back. That right is **subrogation**.\n\nLike contribution, it exists to protect indemnity: you can’t be paid by your insurer *and* keep damages from the wrongdoer.",
+        say: "An insurer that has indemnified its insured is entitled to be placed in the insured’s position and to exercise any rights the insured has against a third party responsible for the loss. This is **subrogation**. It was the second point decided in *Castellain v Preston*, and it follows from indemnity: the insured may not keep both the insurance payment and damages from the wrongdoer.\n\nA contractor’s negligence destroys a warehouse. The owner’s insurer pays the claim and may then pursue the contractor in the owner’s name.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -145,18 +184,23 @@
           edges: [["i", "y", "1. pays"], ["i", "r"], ["r", "c", "2. pursues"]]
         }),
         ask: {
-          q: "Can the insurer chase the contractor before it has paid the claim?",
-          opts: ["Yes, to save time.", "No. It must indemnify the insured first."],
+          q: "A £100,000 loss. The insured bears a £20,000 excess and the insurer pays £80,000. The insurer then recovers the full £100,000 from the contractor. How much may the insurer keep?",
+          fix: true,
+          opts: [
+          ["All £100,000.", "That would be a £20,000 profit on the claim. Subrogation only makes the insurer whole."],
+          "£80,000. The other £20,000 goes to the insured.",
+          ["Nothing. Recoveries belong to the insured.", "Then the insured would be paid twice for the same loss, which is exactly what subrogation prevents."]
+        ],
           a: 1,
-          why: "The right arises from having paid. Indemnify first, then subrogate. And the insurer can only recover what it paid out, not make a profit on the claim."
+          why: "The insurer can recover what it **paid**, no more. The right also only arises once it has paid: indemnify first, then subrogate."
         }
       },
       {
-        h: "In five lines",
-        say: "These five principles return in every claim you will ever see.",
+        h: "Summary",
+        say: "These principles are applied, expressly or by implication, in the handling of every claim.",
         scene: () => recap([
           "A contract needs offer, acceptance and consideration.",
-          "Insurable interest: you must stand to lose. Ownership isn’t required.",
+          "Insurable interest: you must stand to lose. Ownership is not required.",
           "Good faith runs both ways; businesses owe a fair presentation.",
           "Proximate cause decides if a loss is covered; indemnity decides how much.",
           "Contribution and subrogation stop the insured being paid twice."
