@@ -1,212 +1,259 @@
-/* LM3 · 4 — Building the business plan */
+/* LM3 · 4 — Capital */
 (() => {
-  const { bars, flow, stats, recap, wfall, money, pct, num } = window.SLIP.kit;
-  const YEAR = [["A quiet year", 3, 0], ["An average year", 10, 8], ["A catastrophe year", 16, 40]];
+  const { bars, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
+  const RP = [10, 25, 50, 100, 200, 500];
+  const CONF = [[90, 1.2816, "1 in 10"], [95, 1.6449, "1 in 20"], [99, 2.3263, "1 in 100"], [99.5, 2.5758, "1 in 200"]];
+  const VOL = [0.15, 0.25, 0.4];
+  const q = (s, z) => Math.exp(Math.log(100) - (s * s) / 2 + s * z);
+  const pdf = (s, x) => Math.exp(-Math.pow(Math.log(x) - (Math.log(100) - (s * s) / 2), 2) / (2 * s * s)) / (x * s * Math.sqrt(2 * Math.PI));
+  const KIND = [
+    ["Motor", 30, "Claims are numerous, small and predictable, so little capital is required for each £1 of premium and a narrow margin is sufficient."],
+    ["Commercial property", 60, "Results are steady in most years, with an occasional large fire or storm. The capital required is moderate."],
+    ["Catastrophe reinsurance", 120, "Years of little loss are followed by one costing several times the premium. The capital required can exceed the premium itself, so only a wide margin justifies writing it."]
+  ];
+  const MEAS = [
+    ["Regulatory capital", "The amount the supervisor requires. In the UK it is the **Solvency Capital Requirement**, calibrated so that the firm can withstand the losses of a 1-in-200 year, with a lower **Minimum Capital Requirement** beneath it."],
+    ["Economic capital", "The firm’s own estimate of what it needs to pursue its plan within its appetite. It may use a different horizon or confidence level from the regulator’s, and it is the figure the board should manage to."],
+    ["Rating agency capital", "The amount an agency’s model requires for the rating the firm wishes to hold. Since brokers set minimum ratings, this is often the constraint that binds in practice."]
+  ];
 
   window.SLIP.chapters.push({
-    id: "planning", part: "LM3",
-    title: "Building the business plan",
-    blurb: "Build a premium plan from last year’s book, plan the loss ratio, get from gross to net, then watch it meet reality.",
-    minutes: 12,
-    init: { ret: 85, rate: 5, expo: 0, nb: 15, rc: 5, inf: 6, yr: 1, ri: 1, cat: 0, cut: 0 },
+    id: "capital", part: "LM3",
+    title: "Capital",
+    blurb: "What capital is for, how much is required and by whom, what it costs, and how it is set at Lloyd’s.",
+    minutes: 14,
+    lead: "Premiums are priced to meet the claims an insurer expects. Capital exists for the claims it does not expect.",
+    aims: [
+      "Explain what capital is for, and why the amount required depends on volatility more than on expected loss.",
+      "Interpret a 1-in-200 standard and distinguish regulatory, economic and rating agency capital.",
+      "Explain diversification, and calculate a return on capital for classes with different capital needs.",
+      "Describe how capital is set for a Lloyd’s syndicate, and the purpose of stress testing and the ORSA."
+    ],
+    init: { conf: 1, vol: 1, rp: 4, yrs: 30, meas: 0, own: 150, rho: 20, cr: 92, kind: 1, lev: 1 },
     steps: [
       {
-        h: "A plan is a cycle",
-        say: "A business plan says what the insurer will write next year, at what price, with what reinsurance and capital, and with what expected result. Boards, capital providers, regulators, rating agencies and, for syndicates, Lloyd’s all rely on it.\n\nIt isn’t a document written once. It is a loop.",
-        scene: () => flow({
-          h: 190,
-          nodes: [
-            { id: "s", x: 4, y: 4, w: 104, label: "Strategy" }, { id: "p", x: 118, y: 4, w: 104, label: "Plan", tone: "c1" }, { id: "c", x: 232, y: 4, w: 104, label: "Capital" },
-            { id: "m", x: 4, y: 130, w: 104, label: "Reforecast" }, { id: "w", x: 118, y: 130, w: 104, label: "Monitor" }, { id: "u", x: 232, y: 130, w: 104, label: "Underwrite" }
-          ],
-          edges: [["s", "p"], ["p", "c"], ["c", "u"], ["u", "w"], ["w", "m"], ["m", "s"]]
-        })
-      },
-      {
-        h: "Build the premium, don’t guess it",
-        say: "A credible plan is built **bottom up** from last year’s £100m book. Four things move it: **retention** (how much renews), **rate change** (the price for the same risk), **exposure change** (clients growing or shrinking) and **new business**.",
+        h: "What capital is for",
+        say: "An insurer’s premiums and reserves are intended to meet its **expected** claims. **Capital** is the further sum, belonging to its owners, that absorbs the excess when claims are worse than expected.\n\nHow much is needed depends on two choices: how confident the firm wishes to be of surviving the year, and how variable its results are. This book expects claims of £100m. The curve shows how likely each outcome is.",
         scene: (v) => {
-          const kept = v.ret, afterRate = kept * (1 + v.rate / 100), afterExp = afterRate * (1 + v.expo / 100), total = afterExp + v.nb;
-          return stats([["Plan premium", money(total), "c1"], ["Growth", `${total >= 100 ? "+" : "−"}${num(Math.abs(total - 100), 1)}%`], ["Of which rate", `${v.rate > 0 ? "+" : ""}${v.rate}%`]]) +
-            wfall([{ label: "Expiring", v: 100 }, { label: "Not renewed", v: kept - 100 }, { label: "Rate change", v: afterRate - kept }, { label: "Exposure", v: afterExp - afterRate }, { label: "New business", v: v.nb }, { label: "Plan", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
+          const s = VOL[v.vol], z = CONF[v.conf][1], lossAt = q(s, z), cap = lossAt - 100;
+          const pts = Array.from({ length: 61 }, (_, i) => { const x = 40 + i * 4.5; return [x, pdf(s, x) * 1000]; });
+          const ymax = Math.ceil(pdf(s, 100 * Math.exp(-1.5 * s * s)) * 1000 / 5) * 5 + 5;
+          return stats([["Expected claims", "£100m"], [`Claims at ${CONF[v.conf][2]}`, money(lossAt)], ["Capital needed", money(cap), cap > 100 ? "bad" : "c1"]]) +
+            plot({ h: 160, x: { min: 40, max: 310, ticks: [50, 100, 150, 200, 250, 300], title: "Claims for the year, £m" }, y: { min: 0, max: ymax, ticks: [] },
+              series: [{ tone: "c1", pts }], refs: [{ x: 100, label: "Expected", left: true }, { x: Math.min(lossAt, 308), label: CONF[v.conf][2], left: lossAt > 220 }] });
         },
-        ctl: [
-          { k: "ret", label: "Retention", min: 60, max: 95, step: 5, fmt: pct },
-          { k: "rate", label: "Rate change", min: -15, max: 15, step: 5, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` },
-          { k: "expo", label: "Exposure change", min: -10, max: 20, step: 5, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` },
-          { k: "nb", label: "New business", min: 0, max: 40, step: 5, fmt: money }
-        ],
-        live: (v) => {
-          const total = v.ret * (1 + v.rate / 100) * (1 + v.expo / 100) + v.nb;
-          return v.rate < 0 && total > 100 ? "The book is **growing while rates fall**: more risk taken on at a lower price. This is the combination reviewers at Lloyd’s look for first." : v.nb >= 30 ? "A lot rests on new business, which is the least certain line in any plan and usually the worst-performing in its first year: you know least about it." : "Each bar is an assumption someone must be able to defend: with broker pipeline for new business, with market evidence for rate.";
-        },
+        ctl: [{ k: "conf", label: "Standard of survival", opts: ["90%", "95%", "99%", "99.5%"] }, { k: "vol", label: "How variable the book is", opts: ["Steady", "Moderate", "Volatile"] }],
         goal: {
-          say: "Rates are falling 10%. Build a plan that still reaches £100m. What did you have to assume?",
-          test: (v) => v.rate === -10 && v.ret * (1 + v.rate / 100) * (1 + v.expo / 100) + v.nb >= 100,
-          done: "You needed some mix of clients staying, clients growing and new clients arriving, all while charging them less. Every one of those is more risk for a lower price. This is the plan a reviewer at Lloyd’s reads most carefully."
-        }
-      },
-      {
-        h: "Growth is not rate",
-        say: "Premium going up tells you nothing by itself. What matters is *why*.",
-        scene: () => bars([
-          { label: "Book A: +10% premium", right: "rate +10%, same risks", segs: [[100, "c1", "Exposure"], [10, "c3", "Rate"]] },
-          { label: "Book B: +10% premium", right: "rate −5%, more risks", segs: [[116, "bad", "Exposure up 16%"]] }
-        ], { max: 120, marks: [[100, "Last year’s exposure"]] }),
-        ask: {
-          q: "Two books each grew premium by 10%. In A, rates rose 10%. In B, rates fell 5%. Which is in better shape?",
-          opts: [
-          ["The same: +10% each.", "Same premium growth, very different amounts of risk taken on to get it."],
-          "A. B is carrying about 16% more risk for 10% more money.",
-          ["B. More clients means a better spread.", "A wider spread doesn’t help if each risk is under-priced. It just loses money more smoothly."]
-        ],
-          a: 1,
-          why: "A is paid 10% more for the same risk. B had to take on roughly 16% more exposure to grow at lower prices (1.10 ÷ 0.95). Rate change must also be measured **like for like**: a “flat” renewal with a halved deductible is a rate cut."
-        }
-      },
-      {
-        h: "Planning the loss ratio",
-        say: "Start from history, then bring it up to date. Last year’s claims ratio was 60%. Two things have changed since: the **price** charged for the same risk, and the **cost** of the same claim.\n\nRestating old years at today’s prices and costs is called **on-levelling**.",
-        scene: (v) => {
-          const lr = 60 * (1 + v.inf / 100) / (1 + v.rc / 100);
-          return stats([["Last year", "60%"], ["On-levelled", pct(lr, 1), lr > 62 ? "bad" : lr < 58 ? "good" : ""]]) +
-            bars([
-              { label: "Last year, as it was", right: "60%", segs: [[60, "soft1", "Claims"]] },
-              { label: "The same book next year", right: pct(lr, 1), segs: [[lr, lr > 62 ? "bad" : "c1", "Claims"]] }
-            ], { max: 90 });
+          say: "Find the combination at which this book needs more capital than it expects to pay in claims.",
+          test: (v) => v.conf === 3 && v.vol === 2,
+          done: "A volatile book held to the 1-in-200 standard needs about £159m of capital for £100m of expected claims. The expected loss has not changed at any point; only the spread and the standard have. Capital is a charge on uncertainty, and that is why two books with the same average result can require very different amounts of it."
         },
-        ctl: [{ k: "rc", label: "Rate change since", min: -10, max: 15, step: 1, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` }, { k: "inf", label: "Claims inflation since", min: 0, max: 12, step: 1, fmt: pct }],
-        live: (v) => (v.inf > v.rc ? `Claims costs are rising faster than rates. The plan loss ratio must be **worse** than last year’s even if nothing else changes. Planning “60% again” would be optimism.` : v.inf === v.rc ? "Rate is exactly keeping pace with claims inflation: running to stand still." : "Rate is outrunning claims inflation, so the same book should produce a better ratio. Reviewers will ask for the evidence on both numbers."),
+        live: (v) => `To survive all but the worst year in ${CONF[v.conf][2].slice(5)}, the firm must be able to pay ${money(q(VOL[v.vol], CONF[v.conf][1]))}. Premiums provide the first £100m; capital must supply the remaining **${money(q(VOL[v.vol], CONF[v.conf][1]) - 100)}**.`
+      },
+      {
+        h: "Reading a return period",
+        say: "The standard is usually expressed as a **return period**. A 1-in-200-year loss is one with a probability of 0.5% in any single year. It is a statement about probability and implies nothing about timing: such a loss may occur in consecutive years, or not for centuries.\n\nThe phrase encourages complacency, because the probability accumulates over any period of interest.",
+        scene: (v) => {
+          const T = RP[v.rp], p = 1 - Math.pow(1 - 1 / T, v.yrs);
+          const pts = Array.from({ length: 41 }, (_, i) => [i, (1 - Math.pow(1 - 1 / T, i)) * 100]);
+          return stats([["Probability in one year", pct(100 / T, T > 100 ? 1 : 0)], [`Probability within ${v.yrs} years`, pct(p * 100), p > 0.25 ? "bad" : ""]]) +
+            plot({ h: 170, x: { min: 0, max: 40, ticks: [0, 10, 20, 30, 40], title: "Years" }, y: { min: 0, max: 100, ticks: [0, 50, 100], fmt: (x) => `${x}%` },
+              series: [{ tone: "c1", pts }], dots: [{ x: v.yrs, y: p * 100, tone: "bad" }], refs: [{ x: v.yrs, label: `${v.yrs} years`, left: v.yrs > 28 }] });
+        },
+        ctl: [{ k: "rp", label: "Event", min: 0, max: RP.length - 1, step: 1, fmt: (i) => `1 in ${RP[i]} years` }, { k: "yrs", label: "Period of interest", min: 1, max: 40, step: 1, fmt: (x) => `${x} years` }],
         goal: {
-          say: "Claims inflation is running at 8%. Find the rate change needed just to hold the claims ratio at 60%.",
-          test: (v) => v.inf === 8 && v.rc === 8,
-          done: "+8%, merely to stand still. A plan that assumes 60% again on rate increases of 3% is quietly assuming claims will get cheaper. Reviewers look for exactly that."
-        }
-      },
-      {
-        h: "Three kinds of loss",
-        say: "The plan loss ratio is built from three parts that behave differently.\n\n**Attritional:** the steady flow of ordinary claims. **Large:** individual big losses, a few a year. **Catastrophe:** events hitting many policies at once, planned at the model’s long-run average.\n\nThe plan says 45% + 10% + 8% = 63%. Now see some actual years.",
-        scene: (v) => {
-          const [, lg, ct] = YEAR[v.yr], tot = 45 + lg + ct;
-          return stats([["Plan", "63%"], ["This year", pct(tot), tot > 70 ? "bad" : tot < 60 ? "good" : ""]]) +
-            bars([
-              { label: "Plan", right: "63%", segs: [[45, "c1", "Attritional"], [10, "c2", "Large"], [8, "c3", "Cat"]] },
-              { label: YEAR[v.yr][0], right: pct(tot), segs: [[45, "c1", "Attritional"], [lg, "c2", "Large"], [ct, "bad", "Cat"]] }
-            ], { max: 105, legend: [["c1", "Attritional"], ["c2", "Large"], ["c3", "Catastrophe"]] });
+          say: "Assume a career of thirty years. Find the rarest event that is nonetheless more likely than not to occur during it.",
+          test: (v) => RP[v.rp] === 25 && v.yrs === 30,
+          done: "The 1-in-25-year event: a probability of 71% over thirty years. Even the 1-in-50 is close to even odds. Events described as rare are an ordinary feature of a working lifetime, and of the lifetime of any firm."
         },
-        ctl: [{ k: "yr", label: "What actually happens", opts: ["Quiet", "Average", "Cat year"] }],
-        live: (v) => ["Most years look like this: comfortably better than plan. It is tempting to call that skill and release the catastrophe load as profit. It isn’t skill; the bill simply hasn’t arrived.", "The year the plan describes. It almost never happens: the “average” catastrophe year is a blend of many quiet years and a few terrible ones.", "The year that pays for all the quiet ones. A good plan shows this range of outcomes, not just the single expected number."][v.yr]
-      },
-      {
-        h: "From gross to net",
-        say: "The plan then moves from gross premium to net result: acquisition costs, claims, expenses, and the **net cost of reinsurance** (premium ceded, less the recoveries expected back).\n\nReinsurance costs £20m here and, in an average year, returns £12m. See what it does in each kind of year.",
-        scene: (v) => {
-          const claims = v.cat ? 170 : 126, rec = v.ri ? (v.cat ? 50 : 12) : 0, cost = v.ri ? 20 : 0;
-          return (v.$done ? stats([["Ten years, unprotected", "£56m"], ["Ten years, reinsured", "£14m", "c2"]]) : "") + wfall([{ label: "Gross premium", v: 200 }, { label: "Brokerage", v: -40 }, { label: "Gross claims", v: -claims }, { label: "Expenses", v: -24 }, { label: "Reinsurance paid", v: -cost }, { label: "Recoveries", v: rec }, { label: "Net result", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
-        },
-        ctl: [{ k: "ri", label: "Reinsurance", opts: ["None", "Bought"] }, { k: "cat", label: "The year", opts: ["Average", "Catastrophe"] }],
         live: (v) => {
-          const res = 200 - 40 - (v.cat ? 170 : 126) - 24 - (v.ri ? 20 : 0) + (v.ri ? (v.cat ? 50 : 12) : 0);
-          return v.cat ? (v.ri ? `With reinsurance the catastrophe year loses **${money(-res)}**. Without it, £34m. That £30m of protection is what the premium bought.` : `Unprotected, the catastrophe year loses **${money(-res)}**.`)
-            : (v.ri ? `In an average year reinsurance **lowers** the result, to ${money(res)} from £10m. It normally costs more than it returns: you are paying to cut the bad years down, not to make money.` : `Without reinsurance the average year makes ${money(res)}. Better on paper. Switch to the catastrophe year.`);
-        },
-        ask: {
-          q: "Take ten years: nine average, one catastrophe. Which choice earns more in total?",
-          opts: [
-          ["Buying reinsurance: it saves £30m in the bad year.", "It does. It also costs £8m net in each of the nine good ones."],
-          "Not buying it.",
-          ["They come out the same.", "Reinsurers have costs and want a profit too. On average the buyer pays for both."]
-        ],
-          a: 1,
-          why: "Without reinsurance: nine years at +£10m and one at −£34m is **£56m**. With it: nine at +£2m and one at −£4m is **£14m**. Reinsurance is bought despite that, because the insurer may not survive a £34m loss to enjoy the other nine years. You pay to be certain of still being there."
+          const T = RP[v.rp], p = (1 - Math.pow(1 - 1 / T, v.yrs)) * 100;
+          return `A 1-in-${T} event has a probability of **${pct(p)}** of occurring at least once in ${v.yrs} years, on the assumption that each year is independent of the last.`;
         }
       },
       {
-        h: "Approval at Lloyd’s",
-        say: "A syndicate can’t simply adopt its plan. Each autumn the managing agent submits a **business forecast** and a **capital return** for the coming year of account. Lloyd’s reviews them against the syndicate’s record, market conditions and rate adequacy, with most attention on the syndicates and classes that worry it. The outcome sets the syndicate’s permitted premium and its capital.\n\nCompany insurers test their plans through their own boards, the ORSA and the PRA.",
-        scene: () => flow({
-          h: 190,
-          nodes: [
-            { id: "m", x: 95, y: 4, label: "Managing agent", sub: "Forecast and capital return", tone: "ink" },
-            { id: "l", x: 95, y: 74, label: "Lloyd’s reviews", sub: "Record, market, rate" },
-            { id: "a", x: 4, y: 144, w: 150, label: "Approved", sub: "Premium limit, capital set", tone: "good" }, { id: "r", x: 186, y: 144, w: 150, label: "Challenged", sub: "Cut, or more capital", tone: "bad" }
+        h: "Three measures of capital",
+        say: "“How much capital does this firm need?” has at least three answers, each given by a different party for a different purpose. A firm must satisfy all of them at once, and it is governed in practice by whichever is the most demanding.",
+        scene: (v) => `<ol class="k-recap">${MEAS.map((m, i) => `<li${i === v.meas ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
+        ctl: [{ k: "meas", label: "Measure", opts: ["Regulatory", "Economic", "Rating agency"] }],
+        live: (v) => `**${MEAS[v.meas][0]}.** ${MEAS[v.meas][1]}`,
+        ask: {
+          q: "An insurer holds 140% of its regulatory requirement. To keep the A rating its brokers insist upon, the agency’s model requires more than it holds. Which constraint binds?",
+          opts: [
+            ["The regulatory requirement: it has the force of law.", "It has, and the firm satisfies it comfortably. It is not what restricts the firm today."],
+            "The rating agency’s requirement.",
+            ["Neither: the firm is compliant.", "It is compliant and about to lose its rating, and with it much of its business."]
           ],
-          edges: [["m", "l"], ["l", "a"], ["l", "r"]]
+          a: 1,
+          why: "The binding constraint is the one that is tightest. For insurers that depend on brokers’ security committees, that is frequently the rating, and capital planning that looks only at the regulatory ratio will miss it."
+        }
+      },
+      {
+        h: "The supervisory ladder",
+        say: "The UK regime, derived from Solvency II, sets two thresholds. Capital below the **Solvency Capital Requirement** (SCR) prompts supervisory intervention: the firm must submit a plan to restore its position within a fixed period. Capital below the **Minimum Capital Requirement** (MCR) exposes it to the loss of its authorisation.\n\nIntervention is therefore graduated. The purpose is that a firm in difficulty is dealt with while it can still pay its policyholders. Here the MCR is 35% of the SCR.",
+        scene: (v) => {
+          const st = v.own < 35 ? 2 : v.own < 100 ? 1 : 0;
+          return stats([["Capital held", `${v.own}% of SCR`, st === 2 ? "bad" : st === 1 ? "c2" : "good"], ["Position", ["Compliant", "Recovery plan", "Authorisation at risk"][st], st === 2 ? "bad" : st === 1 ? "c2" : "good"]]) +
+            bars([{ label: "Eligible capital as a share of the SCR", right: pct(v.own), segs: [[Math.min(v.own, 35), st === 2 ? "bad" : "c1"], [Math.min(Math.max(v.own - 35, 0), 65), st === 1 ? "c2" : "c1"], [Math.max(v.own - 100, 0), "c3", "Surplus"]] }], { max: 200, marks: [[35, "MCR"], [100, "SCR"]] });
+        },
+        ctl: [{ k: "own", label: "Capital held", min: 20, max: 200, step: 5, fmt: (x) => `${x}% of SCR` }],
+        goal: {
+          say: "Find the highest level of capital at which the firm’s authorisation is at risk.",
+          test: (v) => v.own === 30,
+          done: "Just under the MCR. Between there and the SCR the firm is under supervision but still trading; above the SCR it is free of intervention. Most boards set their own target well above 100%, so that an ordinary bad year does not bring the supervisor to the door."
+        },
+        live: (v) => (v.own < 35 ? "Below the MCR. Unless the position is restored within a short period, the supervisor may withdraw authorisation and the firm will cease to write business." : v.own < 100 ? "Below the SCR. The firm must inform the supervisor and submit a realistic plan to restore compliance, normally within six months." : "At or above the SCR. The firm meets the regulatory standard; the surplus is the buffer it has chosen to hold.")
+      },
+      {
+        h: "Standard formula or internal model",
+        say: "The SCR may be calculated in two ways. The **standard formula** is prescribed by the regulator and applies the same factors to every firm. An **internal model** is built by the firm to reflect its own risks, and may be used only with the supervisor’s approval.\n\nApproval is demanding. The firm must show that the model is statistically sound, properly governed and, above all, actually used in running the business: the **use test**.",
+        scene: () => flow({
+          h: 150,
+          nodes: [
+            { id: "s", x: 4, y: 4, w: 150, label: "Standard formula", sub: "One calibration for all" },
+            { id: "i", x: 186, y: 4, w: 150, label: "Internal model", sub: "The firm’s own risks", tone: "c1" },
+            { id: "c", x: 95, y: 100, label: "The SCR", tone: "ink" }
+          ],
+          edges: [["s", "c"], ["i", "c", "if approved"]]
         }),
         ask: {
-          q: "A syndicate that has lost money in cyber for three years plans to grow cyber by 30%. What is the likely response?",
+          q: "A specialist catastrophe reinsurer finds that the standard formula describes its risks poorly. What is open to it?",
           opts: [
-          ["Approval: growth is good for the market.", "Lloyd’s wants profitable premium, not premium."],
-          "Challenge: show why the future differs from the past, or the growth is cut.",
-          ["Automatic rejection of the whole plan.", "Review is risk-based and negotiated. One class rarely sinks an entire plan."],
-          ["Approval, but with a higher Central Fund contribution.", "The lever Lloyd’s uses is the plan itself and the syndicate’s capital."]
-        ],
+            ["To adjust the standard formula’s factors to fit.", "The factors are prescribed. A firm cannot edit them."],
+            "To apply for approval of an internal model.",
+            ["To use its own model for the SCR at once.", "An unapproved model has no regulatory standing, however good it is."],
+            ["Nothing: the standard formula is compulsory.", "It is the default, with a prescribed alternative."]
+          ],
           a: 1,
-          why: "A plan is judged against the record of the people making it. Unexplained growth in a loss-making class is the classic sign of an unrealistic plan, and may also attract a capital loading."
+          why: "The standard formula is calibrated to an average firm. A specialist, or a large and complex group, may be badly described by it, in either direction. Every Lloyd’s syndicate’s capital is set using an internal model, reviewed by Lloyd’s."
         }
       },
       {
-        h: "Meeting reality",
-        say: "Through the year, actual premium, rate, retention, claims and exposure are compared with plan. Every **variance** needs an explanation, because the same number can mean success or trouble.",
-        scene: () => bars([
-          { label: "Property, to June", right: "on plan", segs: [[50, "c1", "Actual"]] },
-          { label: "Cyber, to June", right: "90% of the year’s plan already", segs: [[90, "bad", "Actual"]] }
-        ], { max: 100, marks: [[50, "Half-year plan"]] }),
-        ask: {
-          q: "By June the cyber team has written 90% of its annual planned premium. What should happen?",
-          opts: [
-          ["Celebrate: they are ahead.", "Ahead of plan on income means ahead of plan on exposure too."],
-          "Ask why, then either stop or get a revised plan approved.",
-          ["Nothing, as long as the loss ratio is fine.", "Six months into a cyber book, the loss ratio tells you almost nothing yet."],
-          ["Cut the team’s line sizes for the rest of the year.", "That might be the answer. But the first step is finding out why it happened."]
-        ],
-          a: 1,
-          why: "Writing far ahead of plan can mean prices are too cheap, and it means more exposure than the capital was set for. At Lloyd’s, exceeding an approved plan without agreement is a serious breach."
-        }
-      },
-      {
-        h: "Reforecast, but keep the plan",
-        say: "When the facts change, the insurer produces a **reforecast**: its updated expectation of how the year will end. Plans can and should be formally changed mid-year when the change is real.\n\nBut the original plan stays as the benchmark. Otherwise every miss is quietly erased.",
-        scene: () => bars([
-          { label: "Plan", right: "£200m", segs: [[200, "soft1", "Agreed in November"]] },
-          { label: "Reforecast, June", right: "£170m", segs: [[170, "c1", "Now expected"], [30, "hole", "Shortfall to explain"]] }
-        ], { max: 200 }),
-        ask: {
-          q: "Rates fall 15% in March. The class underwriter proposes simply lowering the plan to match. Reasonable?",
-          opts: [
-          ["Yes. The plan was wrong.", "Then every miss could be erased by rewriting the target."],
-          "Reforecast, but keep reporting against the original plan.",
-          ["No. The plan must be hit regardless.", "Chasing a premium target in a falling market means buying volume with price. That is how the worst years are written."]
-        ],
-          a: 1,
-          why: "The reforecast tells the board where the year is heading. The original plan shows how far reality has moved from what was approved, and whether expenses and capital still fit. The worst response is the third: writing more at lower rates to hit the number."
-        }
-      },
-      {
-        h: "When results fall short",
-        say: "A class is running at a 100.5% combined ratio. Diagnosis shows the worst 30% of the book runs at a 90% claims ratio; the rest at 55%. The obvious remedy is to **re-underwrite**: stop renewing the bad part.\n\nBut the team’s costs don’t leave with the premium.",
+        h: "Diversification",
+        say: "The capital a firm needs is less than the sum of the capital its classes would need separately, because their worst years seldom coincide. The saving is the **diversification benefit**, and its size depends on the **correlation** between the classes.\n\nConsidered alone, property requires £80m and casualty £60m.",
         scene: (v) => {
-          const prem = 100 - v.cut, claims = 70 * 0.55 + (30 - v.cut) * 0.9, exp = 20 + 0.15 * prem, lr = (claims / prem) * 100, er = (exp / prem) * 100;
-          return stats([["Premium", money(prem)], ["Claims ratio", pct(lr, 1), "c1"], ["Expense ratio", pct(er, 1), "c2"], ["Combined", pct(lr + er, 1), lr + er > 100 ? "bad" : "good"]]) +
-            bars([{ label: "Per £100 of premium", segs: [[lr, "c1", "Claims"], [er, "c2", "Expenses"]] }], { max: 110, marks: [[100, "Break-even"]] });
+          const r = v.rho / 100, tot = Math.sqrt(80 * 80 + 60 * 60 + 2 * r * 80 * 60), ben = 140 - tot;
+          return stats([["Standalone", "£140m"], ["Together", money(tot), "c1"], ["Benefit", money(ben), ben < 10 ? "bad" : "good"]]) +
+            bars([
+              { label: "Each class alone", right: "£140m", segs: [[80, "c1", "Property"], [60, "c2", "Casualty"]] },
+              { label: "Combined", right: money(tot), segs: [[tot, "c3", "Capital needed"], [ben, "idle", "Saved"]] }
+            ], { max: 140 });
         },
-        ctl: [{ k: "cut", label: "Poor business not renewed", min: 0, max: 30, step: 5, fmt: money }],
-        live: (v) => (v.cut === 0 ? "Before any action: the good business is subsidising the bad." : v.cut < 30 ? "The claims ratio improves, but the expense ratio **rises**: the same fixed costs are spread over less premium. Remediation shrinks the top line before it improves the bottom line." : "All the poor business has gone and the class is back in profit, by less than the claims ratio alone suggests. Unless costs come down too, most of the gain is given back. If no version of the class earns its cost of capital over the cycle, the right answer is **exit**."),
+        ctl: [{ k: "rho", label: "Correlation between the classes", min: 0, max: 100, step: 10, fmt: (x) => (x === 0 ? "independent" : x === 100 ? "perfect" : `${x}%`) }],
         goal: {
-          say: "Find the least poor business that must go to bring the combined ratio below 100%.",
-          test: (v) => v.cut === 15,
-          done: "Half of it. And look at the price: premium down 15%, the expense ratio up over two points, and a class barely in profit. Unless costs come down as well, re-underwriting gives back most of what it gains."
+          say: "Find the correlation at which combining the classes saves less than £10m of capital.",
+          test: (v) => v.rho === 80,
+          done: "At a correlation of about 80% the benefit has almost disappeared. That is where correlations tend to move in a crisis, when one event damages property, generates liability claims and depresses investment values together. The benefit is available in ordinary years and largely absent in the year for which capital is held."
+        },
+        live: (v) => (v.rho >= 70 ? "The classes move closely together, and little is saved by combining them." : v.rho <= 20 ? "The classes are nearly independent, and a large part of the standalone capital is saved. This is the financial case for a mixed book, and the reason a plan’s capital requirement changes when its mix does." : "A partial benefit. The correlation assumed is among the most consequential, and least observable, inputs to any capital model.")
+      },
+      {
+        h: "Allocating capital to classes",
+        say: "To judge a class, a firm must decide how much of its capital that class uses. This is a matter of method, since the diversification benefit belongs to the portfolio and not to any class within it.\n\nA common approach allocates the diversified total in proportion to each class’s standalone requirement.",
+        scene: (v) => bars([
+          { label: "Standalone requirements", right: "£140m", segs: [[80, "c1", "Property £80m"], [60, "c2", "Casualty £60m"]] },
+          { label: "Diversified total to be allocated", right: "£109m", segs: v.$done ? [[62.3, "c1", "£62m"], [46.7, "c2", "£47m"]] : [[109, "c3", "£109m"]] }
+        ], { max: 140 }),
+        ask: {
+          q: "Standalone, property requires £80m and casualty £60m. Together the firm requires £109m. On a proportional allocation, how much capital is attributed to property?",
+          fix: true,
+          opts: [
+            ["£80m", "That is its standalone figure. It gives property none of the benefit of sitting in a mixed book."],
+            "About £62m",
+            ["£54.5m", "That divides the total equally, ignoring the fact that property is the riskier class."],
+            ["£49m", "That gives the whole £31m benefit to property and none to casualty."]
+          ],
+          a: 1,
+          why: "80 ÷ 140 × £109m ≈ £62m. The method matters because it determines each class’s measured return. A class can appear to clear the hurdle on one allocation basis and to miss it on another, so the basis should be settled before the results are known."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: the accounts that keep the score.",
+        h: "The cost of capital",
+        say: "Investors require a return on the capital they provide: the **hurdle rate**, taken here as 10%. Since classes differ greatly in the capital they need for a given premium, the same combined ratio may be excellent in one class and inadequate in another.\n\nConsider £100m of premium. Profit includes £3m of investment income.",
+        scene: (v) => {
+          const cap = KIND[v.kind][1], profit = 100 - v.cr + 3, roc = (profit / cap) * 100;
+          return stats([["Profit", money(profit), profit < 0 ? "bad" : ""], ["Capital allocated", money(cap)], ["Return on capital", pct(roc, 1), roc < 10 ? "bad" : "good"]]) +
+            bars([{ label: "Return on capital", right: pct(roc, 1), segs: [[Math.max(roc, 0), roc < 10 ? "bad" : "c1"]] }], { max: 40, marks: [[10, "Hurdle 10%"]] });
+        },
+        ctl: [{ k: "kind", label: "Class", opts: ["Motor", "Property", "Catastrophe"] }, { k: "cr", label: "Combined ratio", min: 80, max: 104, step: 1, fmt: pct }],
+        goal: {
+          say: "Find the highest combined ratio at which catastrophe business still meets the 10% hurdle.",
+          test: (v) => v.kind === 2 && v.cr === 91,
+          done: "91%. At the same 91%, motor returns 40%. A combined ratio is therefore not comparable between classes until it is related to the capital each requires, and a firm that ranks its classes by combined ratio alone will systematically favour those that consume the most capital."
+        },
+        live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][2]}`
+      },
+      {
+        h: "Leverage",
+        say: "The ratio of premium written to capital held is a firm’s underwriting **leverage**. Writing more premium on the same capital raises the return in a good year and the loss in a bad one, in equal proportion.\n\nSuppose a good year yields an underwriting margin of 6% of premium, and a bad year a loss of 10%.",
+        scene: (v) => {
+          const good = 6 * v.lev, badY = 10 * v.lev;
+          return stats([["Premium per £1 of capital", `£${num(v.lev, 2)}`], ["Good year", `+${pct(good, 1)}`, "good"], ["Bad year", `−${pct(badY, 1)}`, badY >= 25 ? "bad" : ""]]) +
+            bars([
+              { label: "Return on capital in a good year", right: `+${pct(good, 1)}`, segs: [[good, "c1"]] },
+              { label: "Capital lost in a bad year", right: `−${pct(badY, 1)}`, segs: [[badY, "bad"]] }
+            ], { max: 30 });
+        },
+        ctl: [{ k: "lev", label: "Premium written per £1 of capital", min: 0.5, max: 3, step: 0.25, fmt: (x) => `£${num(x, 2)}` }],
+        goal: {
+          say: "Find the leverage at which a single bad year consumes a quarter of the firm’s capital.",
+          test: (v) => v.lev === 2.5,
+          done: "£2.50 of premium for each £1 of capital. The same leverage produces a 15% return in a good year, which is why it is attractive and why supervisors and rating agencies watch it. Rapid premium growth on unchanged capital is leverage rising, whether or not anyone decided that it should."
+        },
+        live: (v) => (v.lev <= 1 ? "Low leverage. The capital is safe and under-employed: the good year barely meets a 10% hurdle, if at all." : v.lev >= 2.5 ? "High leverage. Returns in good years are substantial, and one bad year removes a quarter or more of the capital." : "Moderate leverage. Much of capital management consists of choosing a position on this scale deliberately.")
+      },
+      {
+        h: "Capital at Lloyd’s",
+        say: "Each syndicate calculates an SCR on an **ultimate** basis, covering the run-off of its liabilities to extinction and not merely the next twelve months, using an internal model that Lloyd’s reviews. Lloyd’s then applies an uplift, currently 35%, to arrive at the **Economic Capital Assessment**. The purpose of the uplift is to support the market’s rating and to protect the Central Fund.\n\nMembers lodge that capital as **Funds at Lloyd’s**, and the figure is re-examined at least annually in the process known as *coming into line*.",
+        scene: (v) => bars([
+          { label: "Ultimate SCR", right: "£200m", segs: [[200, "c1", "From the syndicate’s model"]] },
+          { label: "Economic Capital Assessment", right: v.$done ? "£270m" : "?", segs: v.$done ? [[200, "c1", "uSCR"], [70, "c2", "35% uplift"]] : [[200, "c1", "uSCR"], [2, "idle"]] }
+        ], { max: 280 }),
+        ask: {
+          q: "A syndicate’s ultimate SCR is £200m. How much capital must its members provide?",
+          fix: true,
+          opts: [
+            ["£200m", "That is the regulatory figure. Lloyd’s requires more."],
+            ["£235m", "The uplift is 35% of the SCR, not £35m."],
+            "£270m"
+          ],
+          a: 2,
+          why: "£200m × 1.35 = £270m. A member’s capital is held for that member’s own liabilities only, which is why the Central Fund stands behind it, and why Lloyd’s takes so close an interest in the model that produces the SCR."
+        }
+      },
+      {
+        h: "Stress testing and the ORSA",
+        say: "A capital model summarises many scenarios in one figure. Boards are expected to examine particular scenarios as well. A **stress test** applies a defined event and measures the effect on capital. A **reverse stress test** begins from the failure of the business model and asks what would have to happen to cause it.\n\nThese feed the **Own Risk and Solvency Assessment** (ORSA): the board’s own forward-looking assessment of its risks and of the capital its plan requires. It originated in Solvency II and is retained in the UK regime.",
+        scene: () => flow({
+          h: 170,
+          nodes: [
+            { id: "s", x: 4, y: 4, w: 150, label: "Stress test", sub: "Event, then consequence" },
+            { id: "r", x: 186, y: 4, w: 150, label: "Reverse stress test", sub: "Failure, then cause", tone: "c2" },
+            { id: "o", x: 95, y: 110, label: "The ORSA", sub: "The board’s own assessment", tone: "c1" }
+          ],
+          edges: [["s", "o"], ["r", "o"]]
+        }),
+        ask: {
+          q: "Which of these questions is a reverse stress test?",
+          opts: [
+            ["What would a major Florida hurricane cost us?", "This starts from an event and measures the result: an ordinary stress test."],
+            "What combination of events would make our business unviable?",
+            ["What is our 1-in-200 loss?", "This is the output of the capital model, a point on a distribution."],
+            ["How much capital will the plan need in three years?", "A projection, and part of the ORSA, but not a test of failure."]
+          ],
+          a: 1,
+          why: "Reverse stress testing obliges a board to describe its own failure and then to judge how remote it really is. It often discloses dependencies, such as a single reinsurer or a single coverholder, that no model of insurance losses would show."
+        }
+      },
+      {
+        h: "Summary",
+        say: "With appetite and capital established, the next chapter builds the plan that must fit within both.",
         scene: () => recap([
-          "Premium is built from retention, rate, exposure and new business.",
-          "Growth with falling rates means more risk for less money.",
-          "The loss ratio is on-levelled history, split into attritional, large and catastrophe.",
-          "Reinsurance lowers the expected result to cut down the bad years.",
-          "Monitor against the original plan; shrinking a class raises its expense ratio."
+          "Premiums meet expected claims; capital absorbs the unexpected.",
+          "The capital required depends on the volatility of results and the standard of survival chosen.",
+          "Regulatory, economic and rating agency capital differ; the most demanding governs.",
+          "Diversification reduces capital, least of all in a crisis.",
+          "A class is worth writing only if its profit exceeds the cost of the capital it uses."
         ])
       }
     ]

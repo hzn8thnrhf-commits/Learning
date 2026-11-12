@@ -12,20 +12,27 @@
   const TERMS = [
     ["Condition", "A term the insured must comply with. If breached, the insurer can claim damages for any loss the breach caused it, but must usually still pay the claim."],
     ["Condition precedent", "A condition that must be met before the insurer is liable at all, such as paying the premium by a set date or notifying a claim in time. Not met: no liability."],
-    ["Warranty", "A promise that something is, or will stay, so. Under the Insurance Act 2015 a breach **suspends** cover until it is put right. Losses during the breach aren’t paid; losses after it is remedied are."],
+    ["Warranty", "A promise that something is, or will stay, so. Under the Insurance Act 2015 a breach **suspends** cover until it is put right. Losses during the breach are not paid; losses after it is remedied are."],
     ["Exclusion", "Not a promise by the insured at all. It carves a peril or situation out of the cover, such as war or wear and tear."]
   ];
 
   window.SLIP.chapters.push({
     id: "conduct", part: "LM2",
     title: "Conduct of business",
-    blurb: "From quotation to contract: fair presentation, the Market Reform Contract, policy terms and how cover ends.",
+    blurb: "Quotation and disclosure, the Market Reform Contract, contract certainty, the classification of policy terms, and termination.",
     minutes: 10,
+    lead: "This chapter follows a risk from quotation to expiry: what must be disclosed, how the contract is recorded, what its terms mean, and how it comes to an end.",
+    aims: [
+      "State the duty of fair presentation and apply the proportionate remedies of the Insurance Act 2015.",
+      "Identify the six sections of the Market Reform Contract.",
+      "Explain contract certainty and when an insurer comes on risk.",
+      "Distinguish conditions, conditions precedent, warranties and exclusions, and the effect of breach of each."
+    ],
     init: { would: 150, sec: 0, term: 0, day: 40 },
     steps: [
       {
         h: "Quotations",
-        say: "A **quotation** is the insurer’s offer: these terms, this price. It usually stays open for a stated period and rests on the information given. If the facts change before it is accepted, the quote may no longer stand.\n\nFor simpler risks the facts arrive on a **proposal form**: the insurer’s own list of questions.",
+        say: "A **quotation** is an offer by the insurer to accept a risk on stated terms at a stated price. It is normally open for a limited period and is made on the basis of the information supplied; a material change in the facts before acceptance may entitle the insurer to withdraw it.\n\nFor simpler classes the information is gathered by a **proposal form**, in which the insurer sets out the questions it requires answered.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -36,10 +43,10 @@
           edges: [["b", "u"], ["u", "c"]]
         }),
         ask: {
-          q: "A yacht owner’s proposal form doesn’t ask about a recent grounding. He says nothing. Has he met his duty?",
+          q: "A yacht owner’s proposal form does not ask about a recent grounding. He says nothing. Has he met his duty?",
           opts: [
           ["Yes. He answered every question asked.", "True for a consumer. Not for a business."],
-          ["No. A grounding is plainly material.", "True for a business. A consumer isn’t expected to volunteer what he wasn’t asked."],
+          ["No. A grounding is plainly material.", "True for a business. A consumer is not expected to volunteer what he was not asked."],
           "It depends whether he is a consumer or a business."
         ],
           a: 2,
@@ -47,8 +54,8 @@
         }
       },
       {
-        h: "When the presentation was wrong",
-        say: "A business carelessly failed to mention an earlier fire and paid **£100k**. Told the truth, the insurer would have charged more. The Insurance Act 2015 asks: *what would the insurer have done?*",
+        h: "Remedies for an unfair presentation",
+        say: "Under the Insurance Act 2015 a commercial insured must make a **fair presentation** of the risk. If it fails to do so, the insurer’s remedy depends on what it would have done had the presentation been fair, and on whether the breach was deliberate or reckless.\n\nSuppose that an insured carelessly omits to disclose an earlier fire and pays a premium of **£100,000**. A fair presentation would have led the insurer to charge more.",
         scene: (v) => {
           const share = 100 / v.would;
           return stats([["Claim", "£1m"], ["Paid", money(share), "c1"], ["Cut", money(1 - share), share < 1 ? "bad" : ""]]) +
@@ -67,14 +74,14 @@
       },
       {
         h: "The Market Reform Contract",
-        say: "London risks are recorded on a standard document, the **Market Reform Contract** (MRC), still called the slip. It always has the same six sections in the same order, so anyone can find anything. Tap through them.",
+        say: "Risks placed in London are recorded in a standard form, the **Market Reform Contract** (MRC), still commonly called the slip. Its contents are arranged in six sections in a fixed order, so that any party handling the contract can locate a given item.\n\nMove through the sections in turn.",
         scene: (v) => `<ol class="k-recap">${MRC.map((m, i) => `<li${i === v.sec ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
         ctl: [{ k: "sec", label: "Section", min: 0, max: 5, step: 1, fmt: (i) => `${i + 1} of 6` }],
         live: (v) => `**${MRC[v.sec][0]}.** ${MRC[v.sec][1]}`
       },
       {
-        h: "Find it on the slip",
-        say: "A following underwriter wants to know whether the leader can agree a change of address without asking everyone.",
+        h: "Using the structure",
+        say: "The value of a standard structure lies in knowing where to look. A following underwriter wishes to establish whether the leader may agree a change in the insured’s address without consulting the other subscribers.",
         scene: () => `<ol class="k-recap">${MRC.map((m) => `<li>${m[0]}</li>`).join("")}</ol>`,
         ask: {
           q: "Which section answers that?",
@@ -89,8 +96,8 @@
         }
       },
       {
-        h: "On risk, and certain",
-        say: "An insurer is **on risk** from the agreed inception date once it has put its line down, whether or not the paperwork is finished. Its written line may later be signed down.\n\n**Contract certainty** means the full terms are agreed by the time the insurer commits, and the contract documents reach the insured promptly afterwards. It replaced the old habit of “deal now, detail later”.",
+        h: "Coming on risk; contract certainty",
+        say: "An insurer is **on risk** from the inception date once it has subscribed the slip, whether or not the policy documentation has been completed. Its line may subsequently be signed down.\n\n**Contract certainty** requires that the complete terms of the contract be agreed by the time the insurer formally commits to it, and that the contract documentation be issued to the insured promptly afterwards. The market adopted the standard to end the practice of agreeing the detail of a contract after it had been bound.",
         scene: () => bars([
           { label: "Deal now, detail later", right: "dispute waiting", segs: [[30, "c1", "Bound"], [70, "hole", "Wording still argued when the claim arrives"]] },
           { label: "Contract certainty", right: "", segs: [[30, "c2", "Terms agreed"], [70, "c1", "Bound, wording known"]] }
@@ -108,15 +115,15 @@
         }
       },
       {
-        h: "Four kinds of term",
-        say: "Policy terms differ in what happens when they are breached. Getting the label right matters a great deal at claim time.",
+        h: "The classification of terms",
+        say: "The terms of a policy fall into classes distinguished by the consequence of their breach. The classification of a term is therefore often the decisive question when a claim is disputed.",
         scene: (v) => `<ol class="k-recap">${TERMS.map((m, i) => `<li${i === v.term ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
         ctl: [{ k: "term", label: "Term", opts: ["Condition", "Precedent", "Warranty", "Exclusion"] }],
         live: (v) => `**${TERMS[v.term][0]}.** ${TERMS[v.term][1]}`
       },
       {
-        h: "A broken warranty",
-        say: "A warehouse policy warrants that the burglar alarm is working. It runs for a year. The alarm fails on day 100 and is repaired on day 130. Move the date of a theft.",
+        h: "Breach of warranty",
+        say: "A **warranty** is a promise by the insured that a state of affairs exists or will continue. Before the Insurance Act 2015, breach of a warranty discharged the insurer from all liability from the date of breach. Under the Act, the insurer’s liability is merely **suspended** while the breach continues.\n\nA warehouse policy for twelve months warrants that the burglar alarm is operational. The alarm fails on day 100 and is repaired on day 130.",
         scene: (v) => {
           const inBreach = v.day >= 100 && v.day < 130;
           return stats([["Theft on", `day ${v.day}`], ["Claim", inBreach ? "Not paid" : "Paid", inBreach ? "bad" : "good"]]) +
@@ -133,8 +140,8 @@
         }
       },
       {
-        h: "How a contract ends",
-        say: "Most policies end by **expiry**: the period runs out. They can also end by **cancellation**, where the policy allows either side to give notice, and by **fulfilment**: the insurer has done everything it promised, for example by paying a total loss.",
+        h: "Termination",
+        say: "A policy ordinarily ends by **expiry**, at the end of the period for which it was written. It may end earlier by **cancellation**, where the policy gives either party the right to terminate on notice, or by **fulfilment**, where the insurer has performed everything it undertook, as when it pays a total loss.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -156,8 +163,8 @@
         }
       },
       {
-        h: "In five lines",
-        say: "Next: letting someone else hold the pen.",
+        h: "Summary",
+        say: "The next chapter considers the delegation of underwriting authority.",
         scene: () => recap([
           "Consumers answer honestly; businesses must volunteer a fair presentation.",
           "Careless breach: a proportionate remedy. Deliberate or reckless: avoidance.",

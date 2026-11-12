@@ -15,18 +15,25 @@
   window.SLIP.chapters.push({
     id: "classes", part: "LM1",
     title: "What London insures",
-    blurb: "Marine, non-marine and aviation, the two sides of every policy, and the idea of insuring an insurer.",
+    blurb: "The classes of business written in London, the distinction between first-party and third-party cover, and the purpose of reinsurance.",
     minutes: 8,
+    lead: "The London Market organises its business by class. The classification is partly historical, but it determines which underwriters see a risk and which wordings apply.",
+    aims: [
+      "Assign a risk to the marine, aviation or non-marine market.",
+      "Distinguish first-party from third-party cover.",
+      "Define reinsurance, retention and retrocession, and explain why insurers buy reinsurance.",
+      "Explain why a policyholder’s rights are unaffected by the failure of a reinsurer."
+    ],
     init: { loss: 30, keep: 10 },
     steps: [
       {
-        h: "Three families",
-        say: "The market sorts its business into three families, a division that goes back to its seafaring roots: **marine**, **aviation**, and everything else, called **non-marine**.\n\nAcross all three runs a fourth kind of business: **reinsurance**, insurance bought by insurers.",
+        h: "The three markets",
+        say: "London business is conventionally divided into three groups: **marine**, **aviation** and **non-marine**, the last being a residual category for everything else. The division reflects the market’s origins in the insurance of ships and cargoes and still governs how underwriting teams, wordings and market associations are organised.\n\nCutting across all three is **reinsurance**: insurance purchased by insurers on the risks they have themselves accepted.",
         scene: () => family()
       },
       {
         h: "First party, third party",
-        say: "Within every family, cover comes in two kinds.\n\n**First-party** cover pays for damage to the insured’s own property: its ship, its factory, its aircraft.\n\n**Third-party** cover pays what the insured owes to *others* it has harmed: its **liabilities**.",
+        say: "Within each group, cover is of two kinds.\n\n**First-party** insurance covers loss of or damage to the insured’s own property, and financial loss consequent upon it.\n\n**Third-party** insurance covers the insured’s legal **liability** to others for injury, damage or loss that the insured has caused them.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -39,7 +46,7 @@
         ask: {
           q: "A tanker runs aground. Its hull is torn open and oil reaches a fishing village. Which cover pays for what?",
           opts: [
-          ["First-party cover pays for both: it is one accident.", "One accident, but two different losses. The villagers’ loss isn’t the shipowner’s property."],
+          ["First-party cover pays for both: it is one accident.", "One accident, but two different losses. The villagers’ loss is not the shipowner’s property."],
           "First-party pays for the hull; third-party pays the villagers.",
           ["Third-party pays for both: the owner caused it.", "The owner’s own ship is its own property: first-party."],
           ["The villagers must claim on their own insurance.", "They may, but the shipowner is liable to them, and that liability is what third-party cover is for."]
@@ -50,12 +57,12 @@
       },
       {
         h: "Marine",
-        say: "**Hull**: the vessel. **Cargo**: goods in transit. **Marine liability**: collision, pollution, crew. **Offshore energy**: rigs and platforms, and their construction. **Specie and fine art**: valuables, which can sit in either the marine or non-marine market.\n\nMarine underwriters also write most **political risks**, such as war and confiscation.",
+        say: "The marine market writes **hull** (the vessel), **cargo** (goods in transit by any means), **marine liability** (collision, pollution and liabilities to crew), and **offshore energy** (rigs and platforms, including their construction). **Specie and fine art**, being valuables, may be placed in either the marine or the non-marine market.\n\nMarine underwriters also write most **political risks**, including war and confiscation, a specialism that grew from the war risks to which ships have always been exposed.",
         scene: () => family(["l", "m"]),
         ask: {
           q: "A satellite is trucked from the factory to its launch site. Which market insures it on the journey?",
           opts: [
-          ["Aviation, since it is going to space.", "Not yet it isn’t. Classes follow what the risk is now."],
+          ["Aviation, since it is going to space.", "Not yet it is not. Classes follow what the risk is now."],
           "Marine cargo.",
           ["Non-marine property.", "Property cover is for things at a fixed location. This is moving."],
           ["Motor, as it is on a lorry.", "Motor covers the lorry and its liabilities, not a load worth hundreds of millions."]
@@ -66,13 +73,13 @@
       },
       {
         h: "Non-marine",
-        say: "**Property**: buildings and contents, and the income lost while they are rebuilt. **Construction**: buildings going up. **Onshore energy**: refineries, power stations, wind farms.\n\n**Liability**: public, products, employers’, professional. Every **compulsory** insurance sits here. So does **personal accident**, a benefit policy, not an indemnity.",
+        say: "The non-marine market writes **property** (buildings, contents and the loss of income while they are reinstated), **construction**, and **onshore energy** such as refineries and power stations.\n\nIt also writes **liability** insurance: public, products, employers’ and professional. All insurances made compulsory by UK statute fall within it. **Personal accident** is written here too, although it is a benefit policy and not a contract of indemnity.",
         scene: () => family(["l", "n"]),
         ask: {
           q: "Why is so little ordinary motor insurance written in London?",
           opts: [
           ["UK law reserves motor for domestic insurers.", "There is no such rule."],
-          "It is high-volume, standard business that doesn’t need London.",
+          "It is high-volume, standard business that does not need London.",
           ["Motor is too risky for London’s capital.", "The opposite: it is among the most predictable classes there is."],
           ["Lloyd’s rules forbid it.", "Lloyd’s syndicates do write motor, mostly specialist or through delegated authority."]
         ],
@@ -82,7 +89,7 @@
       },
       {
         h: "Aviation",
-        say: "Aviation covers physical damage to aircraft (**hull**), **liability** to passengers and people on the ground, and **products liability** for manufacturers. Airports buy their own, separate policies.\n\nAn airline still needs ordinary non-marine cover for its offices and its staff.",
+        say: "The aviation market covers physical loss of or damage to aircraft (**hull**), **liability** to passengers and to third parties on the ground, and the **products liability** of aircraft and component manufacturers. Airports arrange separate policies for their own liabilities.\n\nOnly risks arising from flight belong here. An airline’s premises and employees are insured in the non-marine market like those of any other business.",
         scene: (v) => (v.$done ? bars([
   { label: "The aircraft", right: "aviation hull", segs: [[100, "c1", "Aviation"]] },
   { label: "Injury to passengers", right: "aviation liability", segs: [[100, "c1", "Aviation"]] },
@@ -96,22 +103,22 @@
           ["One", "The aircraft, yes. But passenger liability is aviation business too."],
           "Two",
           ["Three", "The head office is an ordinary building: non-marine property."],
-          ["All four", "Being an airline doesn’t make its office a plane. The office and its staff are ordinary non-marine risks."]
+          ["All four", "Being an airline does not make its office a plane. The office and its staff are ordinary non-marine risks."]
         ],
           a: 1,
           why: "Aircraft hull and passenger liability are aviation. The office is non-marine property, and injury to employees is employers’ liability, a compulsory non-marine cover."
         }
       },
       {
-        h: "Insurance for insurers",
-        say: "An insurer that has taken on more risk than it wants to keep can pass part of it to another insurer. That is **reinsurance**. The buyer is the **reinsured** or **cedant**; it **cedes** risk. A reinsurer that reinsures itself buys **retrocession**.\n\nThis insurer faces a loss. Decide how much it keeps.",
+        h: "Reinsurance",
+        say: "An insurer that has accepted more risk than it wishes to retain may transfer part of it to another insurer. This is **reinsurance**. The party transferring the risk is the **reinsured** or **cedant**, and is said to **cede** it; the amount it keeps is its **retention**. A reinsurer that in turn reinsures its own acceptances buys **retrocession**.\n\nThis insurer faces a loss. Set the amount it retains.",
         scene: (v) => {
           const kept = Math.min(v.loss, v.keep), ceded = v.loss - kept;
           return stats([["Insurer keeps", money(kept), "c1"], ["Reinsurer pays", money(ceded), "c2"]]) +
             bars([{ label: "The loss", right: money(v.loss), segs: [[kept, "c1", "Kept"], [ceded, "c2", "Reinsured"]] }], { max: 60, marks: [[v.keep, "Retention"]] });
         },
         ctl: [{ k: "loss", label: "Size of the loss", min: 5, max: 60, step: 5, fmt: money }, { k: "keep", label: "Most the insurer will keep", min: 5, max: 40, step: 5, fmt: money }],
-        live: (v) => `The amount the insurer bears itself is its **retention**. ${v.loss > v.keep ? "Above it, the reinsurer pays, so a single disaster can’t sink the insurer." : "This loss is inside the retention, so the reinsurer isn’t troubled."}`,
+        live: (v) => `The amount the insurer bears itself is its **retention**. ${v.loss > v.keep ? "Above it, the reinsurer pays, so a single disaster cannot sink the insurer." : "This loss is inside the retention, so the reinsurer is not troubled."}`,
         goal: {
           say: "Make the loss £45m. Then set the retention so the reinsurer pays exactly twice what the insurer keeps.",
           test: (v) => v.loss === 45 && v.keep === 15,
@@ -119,8 +126,8 @@
         }
       },
       {
-        h: "Why buy it, and from whom",
-        say: "Reinsurance lets an insurer write bigger risks than its capital alone allows, smooths its results, and helps it enter new classes with an expert behind it. Sellers gain too: access to regions and classes they can’t reach directly.\n\nBuyers include insurers, reinsurers, **mutuals** and **captives**. Sellers are specialist reinsurers, Lloyd’s syndicates and companies that write both.",
+        h: "The purposes of reinsurance",
+        say: "Reinsurance serves three purposes for the buyer. It provides **capacity**, allowing the insurer to accept risks larger than its own capital would support. It provides **stability**, by limiting the effect of large or accumulated losses on a single year’s result. And it provides **expertise**, where a reinsurer supports an insurer’s entry into an unfamiliar class.\n\nThe buyers are insurers, reinsurers, **mutuals** and **captives**. The sellers are specialist reinsurers, Lloyd’s syndicates, and companies that write both insurance and reinsurance.",
         scene: () => flow({
           h: 190,
           nodes: [
@@ -136,15 +143,15 @@
           opts: [
           ["£2m: its own retained share.", "The policyholder never agreed to depend on a reinsurer it has never heard of."],
           "The full £10m.",
-          ["£10m, but only once it recovers from the reinsurer’s liquidator.", "The policyholder’s claim doesn’t wait on the insurer’s own recoveries."]
+          ["£10m, but only once it recovers from the reinsurer’s liquidator.", "The policyholder’s claim does not wait on the insurer’s own recoveries."]
         ],
           a: 1,
           why: "Reinsurance is a separate contract between insurers. The policyholder has no rights against the reinsurer and owes it nothing, and the insurer owes the full claim whatever happens upstream. A failed reinsurer is the insurer’s **credit risk**."
         }
       },
       {
-        h: "In five lines",
-        say: "LM2 returns to reinsurance and puts numbers on it.",
+        h: "Summary",
+        say: "The methods of reinsurance, and the calculations they involve, are the subject of the first chapter of LM2.",
         scene: () => recap([
           "Three families: marine, non-marine and aviation.",
           "First-party cover protects your property; third-party cover pays your liabilities.",

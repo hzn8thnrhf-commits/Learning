@@ -9,13 +9,20 @@
   window.SLIP.chapters.push({
     id: "market", part: "LM1",
     title: "Who is in the market",
-    blurb: "Lloyd’s, companies, mutuals, captives, MGAs and brokers, and why a risk comes to London at all.",
+    blurb: "The subscription market, the structure of Lloyd’s and the company market, and the intermediaries that connect them to clients.",
     minutes: 10,
+    lead: "The London Market is a subscription market: a place where many insurers share single risks. Its institutions follow from that one fact.",
+    aims: [
+      "Explain why large risks are shared, and how a subscription market shares them.",
+      "Describe the structure of Lloyd’s: syndicates, managing agents, members and the annual venture.",
+      "Distinguish companies, mutuals, captives, MGAs and brokers, and state for whom each acts.",
+      "Explain how premium flows from client to insurers, and what the market associations do."
+    ],
     init: { size: 1000, line: 5, brk: 20 },
     steps: [
       {
-        h: "Start with a problem",
-        say: "A refinery is worth **£1bn**. Its owner wants it insured against fire and explosion.\n\nYou run an insurer with **£400m** of capital. The premium on offer is large.",
+        h: "The problem of the large risk",
+        say: "The market’s structure is best understood from the problem it solves.\n\nA refinery is valued at **£1bn**, and its owner seeks insurance against fire and explosion. Suppose that you direct an insurer with capital of **£400m**. The premium offered is substantial.",
         scene: (v) => bars([
   { label: "Your capital", right: "£400m", segs: [[400, "c1", "£400m"]] },
   { label: "A total loss, if you take it all", right: "£1bn", segs: [[1000, "bad", "2.5 times your capital"]] }
@@ -27,15 +34,15 @@
           ["100%", "A total loss would be £1bn: two and a half times everything you own."],
           ["40%", "40% of £1bn is £400m: your entire capital, not half of it."],
           "20%",
-          ["None. It is too big to touch.", "You don’t have to take all of it or none of it. That is the idea this whole market is built on."]
+          ["None. It is too big to touch.", "You do not have to take all of it or none of it. That is the idea this whole market is built on."]
         ],
           a: 2,
           why: "Half of £400m is £200m, and £200m is 20% of £1bn. So you want a slice, and the client needs someone else to take the other 80%."
         }
       },
       {
-        h: "So take a slice",
-        say: "Each insurer takes a percentage, a **line**, and many insurers together make up 100%. This is the **subscription market**, London’s defining idea.\n\nSuppose no insurer will risk more than £50m on one refinery.",
+        h: "The subscription market",
+        say: "The solution is for each insurer to accept a percentage of the risk, known as its **line**, and for the broker to assemble lines from many insurers until they total 100%. Each insurer is liable for its own share and no more. This is the **subscription market**, and it is the defining feature of London.\n\nAssume that no insurer will expose more than £50m to a single refinery.",
         scene: (v) => {
           const s = slip(v);
           return stats([["Insurers needed", String(s.n)], ["Each line", pct(s.line, 1)], ["Worst loss each", money(s.each)]]) +
@@ -54,8 +61,8 @@
         }
       },
       {
-        h: "Lloyd’s is not an insurer",
-        say: "Think of a farmers’ market: the operator provides the site and the rules, but grows nothing.\n\nLloyd’s is a **marketplace**. The risk is taken by **syndicates**. Each is run by a **managing agent** and funded by its **members**, also called **Names**, who may be individuals or companies. Today most of the capital is corporate.",
+        h: "The structure of Lloyd’s",
+        say: "Lloyd’s is not an insurance company. It is a **market**, constituted by Act of Parliament, in which insurance is transacted; the Corporation of Lloyd’s provides the premises, the rules and the oversight, as the operator of an exchange does, and underwrites nothing itself.\n\nRisk is accepted by **syndicates**. Each syndicate is run by a **managing agent** and capitalised by its **members**, historically called **Names**. Members may be individuals or companies; today corporate members supply most of the capital.",
         scene: () => flow({
           h: 224,
           nodes: [
@@ -70,18 +77,18 @@
         ask: {
           q: "A syndicate loses £80m in a year. Who bears it first?",
           opts: [
-          ["Lloyd’s itself.", "Lloyd’s is the marketplace. It doesn’t underwrite."],
-          ["The managing agent.", "The agent runs the syndicate for a fee and a profit share. The capital isn’t its own."],
+          ["Lloyd’s itself.", "Lloyd’s is the marketplace. It does not underwrite."],
+          ["The managing agent.", "The agent runs the syndicate for a fee and a profit share. The capital is not its own."],
           "The syndicate’s members.",
-          ["The Central Fund.", "Only as a last resort, if members can’t meet their share."]
+          ["The Central Fund.", "Only as a last resort, if members cannot meet their share."]
         ],
           a: 2,
           why: "The members put up the capital and carry the risk. The managing agent runs the business; a **members’ agent** advises individual Names on which syndicates to back."
         }
       },
       {
-        h: "A one-year venture",
-        say: "A syndicate exists for **one year** at a time. Its members join for that year of account only. But claims arrive slowly, so its accounts are not finalised for **three years**.",
+        h: "The annual venture",
+        say: "A syndicate is constituted for a single **year of account**, and its members participate for that year only. A syndicate that appears to trade continuously is, in law, a succession of annual ventures.\n\nSince claims on a year’s policies emerge over a long period, the account for each year is normally kept open for **three years** before its result is determined.",
         scene: () => bars([
           { label: "2024 syndicate year", right: "result known end 2026", segs: [[12, "c1", "Writing"], [24, "soft1", "Claims develop"]] },
           { label: "2025 syndicate year", right: "end 2027", segs: [[12, "none"], [12, "c1", "Writing"], [24, "soft1", "Claims develop"]] }
@@ -90,7 +97,7 @@
           q: "A member joins a syndicate for the 2024 year only. When does it learn its final profit or loss?",
           fix: true,
           opts: [
-          ["At the end of 2024.", "Policies written in December 2024 still have eleven months to run, and their claims haven’t happened yet."],
+          ["At the end of 2024.", "Policies written in December 2024 still have eleven months to run, and their claims have not happened yet."],
           ["At the end of 2025.", "The policies have expired by then, but many claims are still being reported and argued."],
           "Around the end of 2026."
         ],
@@ -100,7 +107,7 @@
       },
       {
         h: "The company market",
-        say: "Alongside Lloyd’s are **insurance companies**, owned by shareholders, many of them branches of overseas groups. Plenty of groups run both a company and a syndicate.\n\nTwo special kinds: a **mutual** is owned by its policyholders, who pool together to insure each other. A **captive** is an insurer set up by a group to insure the group’s own risks.",
+        say: "Outside Lloyd’s, risk is accepted by **insurance companies** owned by shareholders, many of them branches or subsidiaries of overseas groups. A number of groups operate both a company and a Lloyd’s syndicate.\n\nTwo forms deserve separate mention. A **mutual** is owned by its policyholders, who in effect insure one another. A **captive** is an insurer established by a commercial group to insure the risks of that group.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -118,12 +125,12 @@
           ["A reinsurer.", "It insures the group directly. It will probably be a *buyer* of reinsurance."]
         ],
           a: 1,
-          why: "A captive takes risk from one source, usually its own group. It often then buys reinsurance in London for the part it doesn’t want to keep."
+          why: "A captive takes risk from one source, usually its own group. It often then buys reinsurance in London for the part it does not want to keep."
         }
       },
       {
         h: "MGAs and brokers",
-        say: "A **managing general agent** (MGA) is given authority by insurers to act for them: to accept risks, and sometimes to agree claims. Some MGAs handle more premium than many insurers.\n\nA **broker** is a professional intermediary and the **agent of the insured**, in placing and in claims. Brokers must be authorised by the regulator; one accredited by Lloyd’s is a **Lloyd’s broker**.",
+        say: "Two kinds of intermediary must be distinguished by the party for whom they act.\n\nA **broker** is the agent of the **insured**. It advises the client, places the risk and assists with claims. Brokers must be authorised by the FCA; one admitted to place business at Lloyd’s is a **Lloyd’s broker**.\n\nA **managing general agent** (MGA) is the agent of **insurers**, who delegate to it authority to accept risks, and sometimes to settle claims, on their behalf.",
         scene: () => flow({
           h: 176,
           nodes: [
@@ -137,7 +144,7 @@
         ask: {
           q: "A broker brings its client’s risk to an MGA, which binds it. Whose agents are they?",
           opts: [
-          ["Both act for the client.", "The MGA is binding the insurers’ capital. It can’t also be working for the buyer."],
+          ["Both act for the client.", "The MGA is binding the insurers’ capital. It cannot also be working for the buyer."],
           "The broker acts for the client; the MGA for the insurers.",
           ["Both act for the insurers.", "The broker’s duty is to the buyer, in placing and in claims."],
           ["The MGA acts for the client; the broker for the insurers.", "It is the other way round."]
@@ -147,8 +154,8 @@
         }
       },
       {
-        h: "Where the premium goes",
-        say: "The client pays the broker. The broker keeps its commission, **brokerage**, which the insurers allow as a deduction, and passes on the rest. A central bureau (historically Xchanging) records each insurer’s share and moves the money in one settlement. Claims travel back the same way.\n\nThe insurers need £400k net. Change the brokerage.",
+        h: "The flow of premium",
+        say: "The client pays the premium to its broker. The broker deducts its remuneration, **brokerage**, which is expressed as a percentage of the gross premium and allowed by the insurers, and remits the balance. A central bureau, operated by Velonetic (formerly Xchanging), records each insurer’s share and settles the amounts due in a single transaction. Claims payments travel by the same route in reverse.\n\nThe insurers require £400,000 net of brokerage.",
         scene: (v) => {
           const gross = 400 / (1 - v.brk / 100), b = gross - 400;
           return stats([["Client pays", `£${num(gross, 0)}k`], ["Broker keeps", `£${num(b, 0)}k`, "c2"], ["Insurers receive", "£400k", "c1"]]) +
@@ -163,8 +170,8 @@
         }
       },
       {
-        h: "The market’s clubs",
-        say: "Each part of the market has a body that speaks for it.\n\n**LMA**: Lloyd’s managing and members’ agents. **IUA**: the company market. **LIIBA**: London and international brokers. **BIBA**: UK brokers generally. **MGAA**: managing general agents.\n\nThey work together, notably on standard wordings.",
+        h: "The market associations",
+        say: "Each section of the market has a representative association. The **Lloyd’s Market Association** (LMA) represents managing and members’ agents. The **International Underwriting Association** (IUA) represents the company market. The **London and International Insurance Brokers’ Association** (LIIBA) represents London Market brokers, and the **British Insurance Brokers’ Association** (BIBA) brokers generally. The **Managing General Agents’ Association** (MGAA) represents MGAs.\n\nThe associations have no regulatory powers. They represent their members, and they collaborate, notably in the drafting of model wordings.",
         scene: () => flow({
           h: 176,
           nodes: [
@@ -178,7 +185,7 @@
           q: "The IUA dislikes how one of its member companies is underwriting. What can it do?",
           opts: [
           ["Order it to stop.", "It has no such power. It is a trade body, not a regulator."],
-          "Nothing binding. It represents its members; it doesn’t control them.",
+          "Nothing binding. It represents its members; it does not control them.",
           ["Fine it.", "Fines come from regulators."],
           ["Withdraw its licence.", "Authorisation is granted and withdrawn by the PRA and FCA."]
         ],
@@ -188,7 +195,7 @@
       },
       {
         h: "Why risks come to London",
-        say: "Both the capital and the customers are international. Clients and their brokers choose London for five reasons.",
+        say: "London’s capital and its clients are both predominantly international. The reasons commonly given for placing a risk in London are set out below; they explain what the market must preserve if it is to remain competitive.",
         scene: () => recap([
           "Capacity: very large limits can be assembled.",
           "Subscription: a risk can be shared among many insurers.",

@@ -1,199 +1,195 @@
-/* MGA · 2 — Managing the book across carriers */
+/* MGA · 1 — The MGA and its carriers */
 (() => {
-  const { bars, cols, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
-  const QUAD = [
-    ["Well priced and growing", "Feed it. This is where underwriters’ time, marketing and capacity should go. Check that the growth isn’t being bought with price."],
-    ["Well priced but shrinking", "Find out why. A competitor undercutting, a broker lost, appetite too narrow? Good business is leaving and it is worth winning back."],
-    ["Under-priced and shrinking", "The market is doing the work for you. Push rate, accept the losses of business, and let it run down if it can’t be fixed."],
-    ["Under-priced and growing", "The danger quadrant. Something is too cheap and brokers have noticed. Left alone, it becomes the largest part of the book and then the reason a carrier leaves."]
+  const { bars, flow, stats, recap, money, pct, num } = window.SLIP.kit;
+  const SRC = [
+    ["Lloyd’s syndicates", "Grant binding authorities to approved coverholders. The MGA gains Lloyd’s licences and rating, and must meet Lloyd’s standards for delegated authority."],
+    ["Insurance companies", "Company market and overseas insurers provide their own policy paper, through a binding authority or agency agreement. Often a simpler structure."],
+    ["Fronting carriers", "A licensed insurer issues the policies for a fee and passes most of the risk to reinsurers behind it. Common where the real risk-takers have no licence of their own."],
+    ["Reinsurers and investors", "Increasingly supply the risk capital behind fronted programmes, sometimes on multi-year terms. They care about the numbers, not the paper."]
+  ];
+  const STRUCT = [
+    ["Panel", "Every carrier takes a fixed percentage of **every** risk, with one leading. Nobody can be given a worse selection than anyone else. The simplest structure to run and to trust."],
+    ["Horizontal split", "The book is divided by **segment**: Carrier A takes the property, Carrier B the liability. Each carrier gets the business it wants, but its result depends on its segment, and on the MGA allocating fairly."],
+    ["Vertical split", "Each risk is divided by **layer**: one carrier takes the primary, another the excess above it. The MGA can offer bigger limits than any one carrier would give."],
+    ["Fronting", "One licensed insurer issues every policy and keeps a little. The rest passes to reinsurers behind it. One name on the paper, several capital providers behind."]
   ];
 
   window.SLIP.chapters.push({
-    id: "mgabook", part: "MGA",
-    title: "Managing the book across carriers",
-    blurb: "Only the MGA sees the whole portfolio. Finding what the average hides, steering the mix, and living within every carrier’s limits at once.",
-    minutes: 12,
-    init: { c: 20, q: 3, a: 60, run: 1.8, m: 6 },
+    id: "mga", part: "MGA",
+    title: "The MGA and its carriers",
+    blurb: "The MGA model, the divergence between its interests and its carriers’, the mechanisms that align them, and the structuring of capacity.",
+    minutes: 11,
+    lead: "A managing general agent underwrites with other people’s capital. This chapter examines the economics of that arrangement and the means by which the interests of the MGA and its carriers are aligned.",
+    aims: [
+      "Explain the MGA model and why its income depends on volume while its carriers’ results depend on the loss ratio.",
+      "Calculate an MGA’s remuneration under flat commission, profit commission and a deficit carried forward.",
+      "Compare panel, segment, layer and fronting structures for multiple carriers.",
+      "Assess an MGA’s resilience to the withdrawal of a carrier."
+    ],
+    init: { vol: 20, lr: 55, deal: 0, src: 0, st: 0, big: 60 },
     steps: [
       {
-        h: "Only you see all of it",
-        say: "Each carrier sees its own share. A broker sees its own clients. The MGA is the only party that sees the **whole book**: every risk, every carrier’s share, every accumulation.\n\nThat makes portfolio management the MGA’s job, not something to leave to carriers’ audits. And it has to be done for several owners at once, each with its own limits and appetite.",
+        h: "The MGA model",
+        say: "A **managing general agent** (MGA) underwrites and binds insurance without bearing the insurance risk. Its **carriers**, also called capacity providers, supply the capital and are liable for the claims. The MGA contributes specialist underwriting expertise, relationships with brokers, and administration.\n\nAt Lloyd’s an MGA holding a binding authority is a coverholder. The economic relationship is the same whether the capacity is provided by a syndicate or by a company.",
         scene: () => flow({
-          h: 190,
+          h: 230,
           nodes: [
-            { id: "m", x: 95, y: 4, label: "The MGA", sub: "Sees the whole book", tone: "c1" },
-            { id: "a", x: 4, y: 100, w: 104, label: "Carrier A", sub: "Its share" }, { id: "b", x: 118, y: 100, w: 104, label: "Carrier B", sub: "Its share" }, { id: "c", x: 232, y: 100, w: 104, label: "Carrier C", sub: "Its share" }
+            { id: "c", x: 95, y: 4, label: "Carriers", sub: "Capital; pay the claims", tone: "ink" },
+            { id: "m", x: 95, y: 84, label: "The MGA", sub: "Prices, selects, binds", tone: "c1" },
+            { id: "b", x: 95, y: 164, label: "Brokers and clients" }
           ],
-          edges: [["m", "a"], ["m", "b"], ["m", "c"]]
+          edges: [["c", "m", "binding authority"], ["m", "b", "policies"]]
         }),
         ask: {
-          q: "Every risk the MGA binds is individually well underwritten. Is the portfolio therefore sound?",
+          q: "An MGA binds a policy that later produces a £2m claim. Whose money pays it?",
           opts: [
-          ["Yes. A book is the sum of its risks.", "A book also has a shape: where the risks are, and which kind is growing."],
-          "No. Concentration and mix exist only at portfolio level.",
-          ["Yes, provided each carrier audits its own share.", "Each carrier audits a slice. None of them sees the whole."]
+          ["The MGA’s.", "The MGA has no capital at risk on the policy. That is the definition of the model."],
+          "The carriers’.",
+          ["The broker’s.", "The broker arranged the cover. It does not fund it."],
+          ["It is shared between the MGA and the carriers.", "Only if the MGA has agreed to take a share of risk, which is unusual and needs capital and licences of its own."]
         ],
           a: 1,
-          why: "Forty good risks on one flood plain are a bad portfolio. So is a book whose growth all came from its cheapest segment. Risk-by-risk underwriting can’t see either."
+          why: "The MGA decided to write the risk; the carriers bear the result. Everything else in this part follows from that separation between the decision and its consequences."
         }
       },
       {
-        h: "What the average hides",
-        say: "The book runs at a comfortable overall loss ratio. Split it into its three segments and it looks different: contractors at 45%, retail at 55%, and a newer hospitality segment at 95%.\n\nHospitality is where the growth is. Let it grow.",
+        h: "The economics of the MGA",
+        say: "An MGA’s principal income is **commission**: a percentage of premium, deducted before the balance is remitted to the carriers. In this example the commission is 25%, of which ten points are paid on to the producing brokers, leaving the MGA 15%.\n\nIts costs, by contrast, are largely **fixed**: underwriting staff, systems, compliance and premises. Here they amount to £2.2m a year.",
         scene: (v) => {
-          const other = 100 - v.c, a = other * 0.5, b = other * 0.5, lr = (a * 45 + b * 55 + v.c * 95) / 100;
-          return stats([["Hospitality share", pct(v.c)], ["Overall loss ratio", pct(lr, 1), lr > 65 ? "bad" : "good"]]) +
-            bars([
-              { label: "Contractors", right: "45%", segs: [[a, "c1"]] },
-              { label: "Retail", right: "55%", segs: [[b, "c1"]] },
-              { label: "Hospitality", right: "95%", segs: [[v.c, "bad"]] }
-            ], { max: 60 });
+          const inc = v.vol * 0.15, profit = inc - 2.2;
+          return stats([["Premium", money(v.vol)], ["Commission kept", money(inc), "c1"], ["MGA profit", money(profit), profit < 0 ? "bad" : "good"]]) +
+            bars([{ label: "Income", right: money(inc), segs: [[inc, "c1", "15% of premium"]] }, { label: "Costs", right: "£2.2m", segs: [[2.2, "c2", "Fixed"]] }], { max: 6 });
         },
-        ctl: [{ k: "c", label: "Hospitality’s share of premium", min: 10, max: 60, step: 5, fmt: pct }],
-        live: (v) => (v.c <= 25 ? "At a fifth of the book, hospitality is invisible in the total: the good segments are quietly subsidising it. A carrier looking only at the headline would see nothing wrong." : v.c < 45 ? "No segment’s own loss ratio has changed. The overall figure is deteriorating purely because the **mix** is shifting towards the worst segment." : "The subsidy has run out. The book’s headline result is now poor, and it happened without any single bad underwriting decision. Results must be read by segment, by underwriting year and by type of loss, never only in total."),
+        ctl: [{ k: "vol", label: "Premium written", min: 6, max: 40, step: 1, fmt: money }],
+        live: (v) => (v.vol * 0.15 < 2.2 ? "Below about £14.7m of premium the MGA loses money, however good its underwriting. Income moves with volume; costs do not." : `Every extra £1m of premium now adds £150k straight to profit. Notice what this picture does **not** contain: the loss ratio. On commission alone, the MGA is paid for volume.`),
         goal: {
-          say: "Find the hospitality share at which the whole book’s loss ratio passes 65%.",
-          test: (v) => v.c === 35,
-          done: "Just over a third. No segment’s loss ratio changed on the way: contractors still 45%, retail 55%, hospitality 95%. The book went from good to poor through mix alone, and at every step the headline moved by only a couple of points."
+          say: "Find the smallest book on which this MGA makes any profit at all.",
+          test: (v) => v.vol === 15,
+          done: "£15m. Below about £14.7m the commission does not cover the fixed costs, whatever the quality of the underwriting. So a young MGA is under pressure to reach scale quickly, which is the moment its carriers should watch it most closely."
         }
       },
       {
-        h: "Price adequacy by segment",
-        say: "Loss ratios arrive late. A faster signal is the **actual-to-technical** ratio: premium charged divided by the technical price, segment by segment. It shows where the book is under-priced before the claims prove it.",
-        scene: () => cols({
-          h: 170, max: 130,
-          bars: [{ label: "Contractors", segs: [[108, "c1"]], top: "108%" }, { label: "Retail", segs: [[101, "c1"]], top: "101%" }, { label: "Hospitality", hot: true, segs: [[82, "bad"]], top: "82%" }, { label: "Cyber add-on", segs: [[88, "c2"]], top: "88%" }],
-          lines: [{ v: 100, label: "Technical price", right: true }]
-        }),
-        ask: {
-          q: "Hospitality is at 82% of technical price and is the fastest-growing segment. What does that combination tell you?",
-          opts: [
-          ["Brokers love the product.", "They love the price."],
-          "It is growing *because* it is cheap.",
-          ["The technical price must be too high.", "Possible, and worth checking. But a model that is wrong only in the segment that happens to be booming would be a coincidence."]
-        ],
-          a: 1,
-          why: "Brokers send business where the price is keenest. Rapid growth in an under-priced segment isn’t luck; it is the market telling you your rate is wrong."
-        }
-      },
-      {
-        h: "Steering the mix",
-        say: "Put each segment on two axes: is it adequately priced, and is it growing? Four positions, four different actions.",
-        scene: (v) => flow({
-          h: 170,
-          on: [["a", "b", "c", "d"][v.q]],
-          nodes: [
-            { id: "b", x: 4, y: 4, w: 150, label: "Priced well, shrinking", sub: "Find out why" }, { id: "a", x: 186, y: 4, w: 150, label: "Priced well, growing", sub: "Feed", tone: "good" },
-            { id: "c", x: 4, y: 100, w: 150, label: "Under-priced, shrinking", sub: "Fix or run down" }, { id: "d", x: 186, y: 100, w: 150, label: "Under-priced, growing", sub: "Danger", tone: "bad" }
-          ]
-        }),
-        ctl: [{ k: "q", label: "Segment is", opts: ["Good, growing", "Good, shrinking", "Cheap, shrinking", "Cheap, growing"] }],
-        live: (v) => `**${QUAD[v.q][0]}.** ${QUAD[v.q][1]}`
-      },
-      {
-        h: "The levers an MGA has",
-        say: "An MGA steers with what it controls: the **appetite guide** it gives brokers, its **rates** and rating factors, the **line size** it offers, **referral rules** for its own underwriters, and which **brokers** it courts.\n\nIt can’t buy reinsurance for the carriers or change their capital. So it steers by selection and price.",
-        scene: () => recap(["Appetite guide: what brokers are told you want", "Rates and rating factors", "Line size and deductibles", "Referral rules inside the MGA", "Which brokers and channels to invest in"]),
-        ask: {
-          q: "The MGA raises hospitality rates 20% and tightens its appetite. Premium in the segment falls by a third. Has the action failed?",
-          opts: [
-          ["Yes. The MGA has lost commission.", "It has, which is why the decision is hard. But commission wasn’t the aim."],
-          "No. Shrinking under-priced business was the aim.",
-          ["Yes. The rate rise should have increased premium.", "Only if every client stayed. The ones who left were the ones only there for the price."]
-        ],
-          a: 1,
-          why: "The MGA gives up income to protect its carriers’ loss ratio. An MGA willing to do that is one that keeps its capacity."
-        }
-      },
-      {
-        h: "The tightest limit governs",
-        say: "Every carrier sets its own limits in its binder. On a panel each takes a fixed share of every risk, so the carrier that fills up first stops everyone.\n\nTwo carriers share a flood-exposed book. Carrier A will hold up to **£30m** of flood aggregate; Carrier B up to **£24m**. Change how the panel is split.",
+        h: "The carrier’s position",
+        say: "Now set the carrier’s position beside the MGA’s. The portfolio is £20m of premium. The carrier receives the premium, pays the 25% commission, pays the claims, and incurs expenses of its own equal to 5% of premium.\n\nVary the loss ratio and compare the effect on each party.",
         scene: (v) => {
-          const a = v.a / 100, capA = 30 / a, capB = 24 / (1 - a), cap = Math.min(capA, capB), bind = capA < capB ? "A" : capB < capA ? "B" : "both";
-          return stats([["Most the panel can write", money(cap), "c1"], ["Limit that binds", bind === "both" ? "Both" : `Carrier ${bind}`]]) +
+          const car = 20 * (1 - 0.25 - 0.05 - v.lr / 100), mga = 20 * 0.15 - 2.2;
+          return stats([["Loss ratio", pct(v.lr)], ["Carrier’s profit", money(car), car < 0 ? "bad" : "good"], ["MGA’s profit", money(mga), "c1"]]) +
             bars([
-              { label: `Carrier A at ${v.a}%`, right: `uses ${money(cap * a)} of £30m`, segs: [[cap * a, bind !== "B" ? "bad" : "c1"], [30 - cap * a, "idle"]] },
-              { label: `Carrier B at ${100 - v.a}%`, right: `uses ${money(cap * (1 - a))} of £24m`, segs: [[cap * (1 - a), bind !== "A" ? "bad" : "c2"], [24 - cap * (1 - a), "idle"]] }
-            ], { max: 30 });
+              { label: "Carrier", right: money(car), segs: [[Math.max(car, 0), "c2"], [Math.max(-car, 0), "bad", "Loss"]] },
+              { label: "MGA", right: money(mga), segs: [[mga, "c1"]] }
+            ], { max: 6.5 });
         },
-        ctl: [{ k: "a", label: "Carrier A’s share of the panel", min: 30, max: 80, step: 5, fmt: pct }],
+        ctl: [{ k: "lr", label: "Loss ratio on the book", min: 40, max: 85, step: 1, fmt: pct }],
+        live: (v) => (v.lr > 70 ? "The carrier is losing money. The MGA’s profit **has not moved**. This is the central problem of delegated underwriting: the party choosing the risks is insulated from how they turn out." : "The carrier’s profit swings with every point of loss ratio; the MGA’s is flat. An MGA paid only by commission has an incentive to grow premium even when prices are inadequate."),
+        goal: {
+          say: "Find the loss ratio at which the carrier makes nothing at all. What is the MGA making?",
+          test: (v) => v.lr === 70,
+          done: "At 70% the carrier breaks even, and the MGA still makes its £800k. Push on to 85%: the carrier has lost £3m and the MGA’s figure has not moved by a pound."
+        }
+      },
+      {
+        h: "Profit commission",
+        say: "The usual remedy is **profit commission**: the MGA accepts a lower rate of ordinary commission in return for a share of the carrier’s profit, calculated when the results of the year are sufficiently developed.\n\nTwo proposals are made for a portfolio of £10m. The first is commission of 28%. The second is commission of 23% together with 25% of the carrier’s profit after its own expenses of 5%.",
+        scene: (v) => {
+          const flat = 2.8, prof = Math.max(0, 10 * (1 - 0.23 - 0.05 - v.lr / 100)), pc = 2.3 + 0.25 * prof, mine = v.deal ? pc : flat;
+          return stats([["Flat deal pays", money(flat), v.deal ? "" : "c1"], ["Profit-share deal pays", money(pc), v.deal ? "c1" : ""], ["Difference", money(pc - flat), pc < flat ? "bad" : "good"]]) +
+            bars([
+              { label: "Flat 28%", right: money(flat), segs: [[2.8, v.deal ? "idle" : "c1", "Commission"]] },
+              { label: "23% + profit share", right: money(pc), segs: [[2.3, v.deal ? "c1" : "idle", "Commission"], [0.25 * prof, "c3", "Profit share"]] }
+            ], { max: 3.4 });
+        },
+        ctl: [{ k: "deal", label: "The MGA’s deal", opts: ["Flat", "Profit share"] }, { k: "lr", label: "Loss ratio", min: 40, max: 85, step: 1, fmt: pct }],
         live: (v) => {
-          const a = v.a / 100, capA = 30 / a, capB = 24 / (1 - a);
-          return Math.abs(capA - capB) < 2 ? "Both carriers fill at the same moment: the panel uses all £54m of available aggregate. The shares match the carriers’ appetites." : capA < capB ? `Carrier A fills first at ${money(capA)} of total aggregate, leaving ${money(24 - capA * (1 - a))} of B’s limit unusable. To write more, renegotiate A’s limit or shift share to B.` : `Carrier B fills first at ${money(capB)}, stranding ${money(30 - capB * a)} of A’s appetite. The panel is only as large as its most cautious member allows.`;
+          const be = 52;
+          return v.lr < be ? "At this loss ratio the profit-share deal pays **more** than flat commission. Good underwriting is now worth money to the MGA." : v.lr >= 72 ? "The carrier has no profit to share, so the MGA earns only its 23%: £500k less than the flat deal. Poor results now cost the MGA too, which is the point." : "Around a 52% loss ratio the two deals pay the same. Above it, profit share pays less. The MGA has a reason to care which risks it binds.";
         },
         goal: {
-          say: "Find the split that comes closest to using every pound of both carriers’ flood appetite.",
-          test: (v) => v.a === 55,
-          done: "About 55:45, matching the ratio of their limits (30:24). Shares that mirror appetites waste nothing. Shares set by history or negotiation leave capacity stranded on one side."
+          say: "Take the profit-share deal. Find the loss ratio at which it pays exactly what the flat deal would.",
+          test: (v) => v.deal === 1 && v.lr === 52,
+          done: "52%. An MGA that believes it can beat that should want the profit share; one that prefers the flat 28% is telling its carrier something. Which deal an MGA asks for is itself a piece of underwriting information."
         }
       },
       {
-        h: "Premium limits: look ahead",
-        say: "A binder also caps the **premium** the MGA may write in the year, here £20m. Breaching it means writing without authority. The limit must be tracked as a projection, not discovered in December.",
-        scene: (v) => {
-          const pts = Array.from({ length: 13 }, (_, i) => [i, v.run * i]), end = v.run * 12, sofar = v.run * v.m, hit = 20 / v.run;
-          return stats([["Written so far", money(sofar)], ["Projected year end", money(end), end > 20 ? "bad" : "good"], ["Limit reached", end > 20 ? `month ${Math.ceil(hit)}` : "not this year", end > 20 ? "bad" : ""]]) +
-            plot({ h: 160, x: { min: 0, max: 12, ticks: [0, 3, 6, 9, 12], title: "Month" }, y: { min: 0, max: 30, ticks: [0, 10, 20, 30], fmt: (x) => `£${x}m` },
-              series: [{ tone: "c1", pts: pts.filter((p) => p[0] <= v.m) }, { tone: end > 20 ? "bad" : "c1", dash: true, pts: pts.filter((p) => p[0] >= v.m) }],
-              dots: [{ x: v.m, y: sofar, tone: "c1" }], refs: [{ y: 20, label: "Binder limit £20m", left: true }] });
-        },
-        ctl: [{ k: "run", label: "Premium written each month", min: 1.2, max: 2.4, step: 0.1, fmt: money }, { k: "m", label: "Month now", min: 1, max: 12, step: 1, fmt: (x) => `${x}` }],
-        live: (v) => (v.run * 12 > 20 ? `At this pace the limit is reached in **month ${Math.ceil(20 / v.run)}**. The time to ask the carriers for an increase is now, with the reasons for the growth, not after the breach. With several carriers, every one of them must agree.` : "On course to finish inside the limit. The same projection should be run for each carrier’s share and each sub-limit in each binder."),
-        goal: {
-          say: "Find the fastest monthly pace that stays inside the £20m limit all year.",
-          test: (v) => v.run === 1.6,
-          done: "£1.6m a month. At the £1.8m the MGA started on, the limit is breached in the last month of the year, and it could have been seen in January. The projection, not the running total, is the control."
-        }
-      },
-      {
-        h: "Whose risk is it?",
-        say: "Where carriers take different segments, or the MGA has more than one facility able to take the same risk, someone must decide where each risk goes. That decision can be worth money to the MGA.",
-        scene: () => flow({
-          h: 170,
-          nodes: [
-            { id: "r", x: 95, y: 4, label: "A good new risk", sub: "Fits both facilities", tone: "ink" },
-            { id: "a", x: 4, y: 110, w: 150, label: "Facility A", sub: "Pays MGA 30%", tone: "c2" }, { id: "b", x: 186, y: 110, w: 150, label: "Facility B", sub: "Pays MGA 25%" }
-          ],
-          edges: [["r", "a", "?"], ["r", "b", "?"]]
-        }),
+        h: "Deficit carried forward",
+        say: "Profit commission is calculated separately for each underwriting year. If each year stood alone, the MGA would share in the profit of good years while the carrier bore the whole loss of bad ones. A **deficit carried forward** clause prevents this, by requiring a loss in one year to be made good from the profits of later years before any further profit commission is earned.",
+        scene: (v) => bars([
+  { label: "Year 1", right: "loss of £1.0m", segs: [[1, "bad", "Deficit"]] },
+  { label: "Year 2", right: "profit of £1.5m", segs: v.$done ? [[1, "hole", "Repays year 1"], [0.5, "c3", "Counts"]] : [[1.5, "c3", "Profit"]] }
+], { max: 1.6 }),
         ask: {
-          q: "The risk fits both facilities. A pays the MGA more. Where should it go?",
+          q: "The profit share is 25% with deficit carried forward. Year 1 lost £1.0m; year 2 made £1.5m. What profit commission is due for year 2?",
+          fix: true,
           opts: [
-          ["To A. The MGA may maximise its income.", "Not at a carrier’s expense. B was promised a fair share of the good risks."],
-          "Wherever the written allocation rules send it.",
-          ["To B, to avoid any appearance of bias.", "Sending everything to the lower payer is just a different bias. The answer is rules, not gestures."]
+          ["£375,000", "A quarter of £1.5m, ignoring the loss the carrier took the year before."],
+          "£125,000",
+          ["Nothing", "Year 1’s deficit is fully repaid by year 2’s profit, with £0.5m to spare."]
         ],
           a: 1,
-          why: "If good risks drift to the facility that pays best, the other carrier is left with a worse book than it agreed to back. Allocation must follow rules fixed in advance and open to audit, above all where the MGA or its owners take a share of risk themselves."
+          why: "Year 1’s loss must be recovered first. £1.5m less £1.0m leaves £0.5m; a quarter of that is £125,000. Without the clause the MGA would share every profit and no loss."
         }
       },
       {
-        h: "One event, different pain",
-        say: "The structure decides how an accumulation lands on each carrier.",
+        h: "Sources of capacity",
+        say: "An MGA can transact no business without a carrier, and the securing and retention of capacity is accordingly its first commercial concern. Capacity is available from four principal sources.",
+        scene: (v) => `<ol class="k-recap">${SRC.map((m, i) => `<li${i === v.src ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
+        ctl: [{ k: "src", label: "Source", min: 0, max: 3, step: 1, fmt: (i) => `${i + 1} of 4` }],
+        live: (v) => `**${SRC[v.src][0]}.** ${SRC[v.src][1]}`
+      },
+      {
+        h: "The carrier’s due diligence",
+        say: "A carrier regards the capacity it grants as an **investment** of capital, on which it expects a return. Its due diligence therefore extends to the record of the underwriting team, the business plan, the quality of the MGA’s data and systems, its controls, and the extent to which its remuneration depends on the result.",
         scene: () => bars([
-          { label: "Panel: coastal storm, £12m", right: "shared by all", segs: [[6, "c1", "A 50%"], [3.6, "c2", "B 30%"], [2.4, "c3", "C 20%"]] },
-          { label: "By segment: same storm", right: "falls on one", segs: [[12, "bad", "The property carrier takes all £12m"]] }
-        ], { max: 12 }),
+          { label: "MGA A: plans 35% growth", right: "no rate monitoring", segs: [[35, "bad", "Growth"]] },
+          { label: "MGA B: plans 5% growth", right: "policy-level data, rate tracked", segs: [[5, "c1"]] }
+        ], { max: 40 }),
         ask: {
-          q: "Why might a carrier prefer a 30% share of a panel to 100% of one segment of the same book?",
+          q: "Two MGAs ask a carrier for capacity. A plans 35% growth and has no rate monitoring. B plans 5% and has policy-level data with rate tracked. Which is the easier yes?",
           opts: [
-          ["It wouldn’t: more premium is better.", "More premium from one segment is also more concentration."],
-          "It gets the same mix as everyone else, and only a share of any one event.",
-          ["Panels pay carriers a higher commission.", "Carriers pay commission, and the structure doesn’t set its level."]
+          ["A. More premium for the carrier.", "More premium of unknown adequacy is more risk of unknown price."],
+          "B. The carrier can see what it is buying.",
+          ["Neither: carriers avoid MGAs.", "Delegated business is a large and growing share of the market."]
         ],
           a: 1,
-          why: "On a panel no carrier can be handed a worse selection, and concentrations are diluted. A segment split gives a carrier the business it wants, with a concentrated exposure and reliance on the MGA’s fairness."
+          why: "Premium is easy to find; evidence that it is adequately priced is not. Fast growth with no view of rate adequacy is the pattern carriers have learned to fear most."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: keeping the carriers once you have them.",
+        h: "Capacity structures",
+        say: "Most MGAs seek capacity from more than one carrier. The carriers may be combined in four ways, which differ in how risks and results are shared among them.",
+        scene: (v) => [
+          bars([{ label: "Every risk", segs: [[50, "c1", "Carrier A 50%"], [30, "c2", "B 30%"], [20, "c3", "C 20%"]] }], { max: 100 }),
+          bars([{ label: "Property book", segs: [[100, "c1", "Carrier A 100%"]] }, { label: "Liability book", segs: [[100, "c2", "Carrier B 100%"]] }], { max: 100 }),
+          bars([{ label: "Excess: £15m xs £5m", segs: [[100, "c2", "Carrier B"]] }, { label: "Primary: first £5m", segs: [[100, "c1", "Carrier A"]] }], { max: 100 }),
+          bars([{ label: "On the policy", segs: [[100, "ink", "Fronting insurer"]] }, { label: "Behind it", segs: [[10, "ink", ""], [50, "c1", "Reinsurer A"], [40, "c2", "Reinsurer B"]] }], { max: 100 })
+        ][v.st],
+        ctl: [{ k: "st", label: "Structure", opts: ["Panel", "By segment", "By layer", "Fronting"] }],
+        live: (v) => `**${STRUCT[v.st][0]}.** ${STRUCT[v.st][1]}`
+      },
+      {
+        h: "Resilience to the loss of a carrier",
+        say: "Carriers withdraw for reasons unconnected with the MGA’s performance: a change of strategy, losses elsewhere, a change of management. The strength of a capacity structure is therefore measured by what would remain if its largest member left.\n\nThe MGA writes £20m, retains 15% and has fixed costs of £2.2m. Suppose that its largest carrier withdraws and cannot be replaced within the year.",
+        scene: (v) => {
+          const left = 20 * (1 - v.big / 100), profit = left * 0.15 - 2.2;
+          return stats([["Premium left", money(left)], ["MGA result", money(profit), profit < 0 ? "bad" : "good"]]) +
+            bars([{ label: "The book", segs: [[left, "c1", "Still supported"], [20 - left, "hole", "Capacity gone"]] }], { max: 20, marks: [[14.7, "Break-even"]] });
+        },
+        ctl: [{ k: "big", label: "Largest carrier’s share", min: 20, max: 100, step: 5, fmt: pct }],
+        live: (v) => (v.big >= 100 ? "A single carrier: when it goes, the business stops. The MGA cannot renew a single policy." : 20 * (1 - v.big / 100) < 14.7 ? "The remaining book no longer covers the fixed costs. The MGA is loss-making until it finds new capacity, and it is negotiating from weakness." : "The MGA stays profitable without its largest carrier. That resilience is worth something to the carriers who remain, and to anyone valuing the business."),
+        goal: {
+          say: "Find the largest share your biggest carrier can hold if the MGA is to stay profitable without it.",
+          test: (v) => v.big === 25,
+          done: "A quarter. That means at least four carriers of similar size, or a book well above break-even. Most MGAs start with one carrier at 100% and spend their first years trying to get to this picture."
+        }
+      },
+      {
+        h: "Summary",
+        say: "The next chapter considers the management of the portfolio that the carriers have entrusted to the MGA.",
         scene: () => recap([
-          "Only the MGA sees the whole book, so the portfolio is its job.",
-          "Read results by segment: a shifting mix can spoil a book with no bad decision.",
-          "Under-priced and growing is the dangerous combination.",
-          "On a panel the tightest carrier limit governs; project premium limits ahead.",
-          "Allocate between carriers by fixed, auditable rules."
+          "An MGA chooses the risks; its carriers bear the results.",
+          "Commission pays for volume, and the MGA’s costs are fixed.",
+          "Profit commission, with deficits carried forward, ties its pay to results.",
+          "Carriers can be arranged as a panel, by segment, by layer, or behind a front.",
+          "A good structure survives the loss of its largest carrier."
         ])
       }
     ]

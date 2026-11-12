@@ -1,46 +1,55 @@
-/* LM3 · 3 — Risk appetite and capital */
+/* LM3 · 3 — Risk appetite */
 (() => {
-  const { bars, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
-  const RP = [10, 25, 50, 100, 200, 500];
-  const KIND = [
-    ["Motor", 30, "Many small, predictable claims. Little capital is needed for each £1 of premium, so a thin margin still pays."],
-    ["Commercial property", 60, "Mostly steady, with the occasional large fire or storm. A middling amount of capital."],
-    ["Catastrophe reinsurance", 120, "Quiet for years, then a loss many times the premium. The capital needed can exceed the premium itself, so only a wide margin justifies it."]
+  const { bars, flow, stats, recap, money, pct, num } = window.SLIP.kit;
+  const DIM = [
+    ["Earnings", "“We accept no more than a 1-in-10 chance of an underwriting loss in any year.” This governs volatility: how often the firm is prepared to disappoint its investors."],
+    ["Capital", "“A 1-in-200 year must not cost more than 30% of our capital.” This governs survival: how much of the buffer a single bad year may consume."],
+    ["Liquidity", "“We will always hold enough liquid assets to pay our largest modelled event within thirty days.” A solvent insurer that cannot find cash on the day still fails its policyholders."],
+    ["Concentration", "“No single broker, coverholder or reinsurer will account for more than 15% of our income or our recoverables.” This limits dependence on any one counterparty."],
+    ["Conduct", "“We have no appetite for products that do not offer fair value.” Some statements are qualitative: they set a boundary the firm will not cross, whatever the return."]
   ];
+  const zone = (x) => (x <= 40 ? 0 : x <= 80 ? 1 : x < 200 ? 2 : 3);
 
   window.SLIP.chapters.push({
     id: "appetite", part: "LM3",
-    title: "Risk appetite and capital",
-    blurb: "How much an insurer is prepared to lose, how that becomes limits on an underwriter’s desk, and what capital costs.",
-    minutes: 10,
-    init: { rp: 4, yrs: 30, rho: 20, cr: 92, kind: 1 },
+    title: "Risk appetite",
+    blurb: "How a board decides the risk it will bear, and how that decision travels from a sentence in a board paper to a limit on an underwriter’s desk.",
+    minutes: 12,
+    lead: "Every insurer takes risk for a living. The question a board must answer before any other is how much, and of what kind.",
+    aims: [
+      "Distinguish risk **capacity**, **appetite**, **tolerance** and **limit**.",
+      "Classify the risks an insurer bears, including those that are not underwriting risks.",
+      "Translate an appetite statement into a measurable underwriting limit.",
+      "Explain the three lines of defence and who is responsible for acting on a breach."
+    ],
+    init: { loss: 20, dim: 0, dr: 40, util: 60 },
     steps: [
       {
-        h: "Appetite comes first",
-        say: "Investors decide how much they are prepared to lose in pursuit of a return: their **risk appetite**. The board writes it down and approves it. Everything else, the strategy, the business plan and the capital, must fit inside it.",
-        scene: () => flow({
-          h: 170,
-          nodes: [
-            { id: "a", x: 95, y: 4, label: "Risk appetite", sub: "Set by the board", tone: "ink" },
-            { id: "s", x: 4, y: 100, w: 104, label: "Strategy" }, { id: "p", x: 118, y: 100, w: 104, label: "Business plan", tone: "c1" }, { id: "c", x: 232, y: 100, w: 104, label: "Capital" }
-          ],
-          edges: [["a", "s"], ["a", "p"], ["a", "c"]]
-        }),
-        ask: {
-          q: "A cautious pension fund backs a syndicate whose plan is 80% US hurricane reinsurance at excellent rates. What is wrong?",
-          opts: [
-          ["Nothing. The rates are excellent.", "Good rates raise the expected return. They don’t change how much can be lost in one season."],
-          "The strategy doesn’t match the investor’s appetite.",
-          ["Hurricane reinsurance is always unprofitable.", "Over time it can be very profitable. The issue is how it gets there."],
-          ["The plan is too concentrated to be approved.", "Specialist catastrophe syndicates exist. Concentration is a choice, if the backers want it."]
-        ],
-          a: 1,
-          why: "Catastrophe business pays well in quiet years and can lose much of the capital in one. A plan can be perfectly sound and still be the wrong plan for its backers."
-        }
+        h: "Capacity, appetite and tolerance",
+        say: "Three terms are routinely confused. **Risk capacity** is the most a firm *could* lose before it breaches a hard constraint, usually its regulatory capital requirement. **Risk appetite** is the amount of risk its board is *willing* to accept in pursuit of its objectives, and it is always set inside capacity. **Risk tolerance** is the acceptable variation around the appetite before action is required.\n\nThis insurer holds £200m of capital against a requirement of £120m. Its board has stated an appetite for losing no more than £40m in a year.",
+        scene: (v) => {
+          const z = zone(v.loss);
+          return stats([["Loss for the year", money(v.loss)], ["Capital remaining", money(Math.max(200 - v.loss, 0)), z >= 2 ? "bad" : ""], ["Position", ["Within appetite", "Outside appetite", "Capital breach", "Insolvent"][z], z === 0 ? "good" : z === 1 ? "c2" : "bad"]]) +
+            bars([{ label: "The year’s loss against the firm’s capital", segs: [[Math.min(v.loss, 40), "c1", "Appetite"], [Math.min(Math.max(v.loss - 40, 0), 40), "c2", "Capacity"], [Math.max(v.loss - 80, 0), "bad", "Beyond"]] }], { max: 220, marks: [[80, "Capacity"], [200, "All capital"]] });
+        },
+        ctl: [{ k: "loss", label: "Loss for the year", min: 0, max: 220, step: 10, fmt: money }],
+        goal: {
+          say: "Find the smallest loss that puts the firm in breach of its capital requirement.",
+          test: (v) => v.loss === 90,
+          done: "£90m, which leaves £110m against a requirement of £120m. Between £40m and £80m the firm was outside its appetite yet fully compliant: that interval is the purpose of setting appetite inside capacity. It buys time to act while the choices are still the firm’s own."
+        },
+        live: (v) => ["The loss is one the board has said it is prepared to bear. No action is required beyond reporting it.", "The firm remains solvent and compliant, but the loss exceeds what the board agreed to accept. Management must explain it and propose a response.", "Capital has fallen below the regulatory requirement. The decisions now belong in part to the supervisor, who will require a recovery plan.", "Liabilities exceed assets. The firm cannot meet its obligations to policyholders in full."][zone(v.loss)]
       },
       {
-        h: "Every kind of risk",
-        say: "The risks aren’t only the ones underwriters take. **Enterprise risk management** looks at all of them together, because they interact.\n\n**Insurance risk** has two halves: *underwriting* (this year’s business costs more than priced) and *reserving* (past years cost more than set aside). Then **market**, **credit**, **liquidity** and **operational** risk, and around them all, **strategic** and **reputational** risk.",
+        h: "What an appetite statement contains",
+        say: "A **risk appetite statement** is approved by the board and reviewed at least annually. A well-constructed statement does not rely on a single number. It addresses several dimensions, because a firm can fail along any of them, and it combines quantitative measures with qualitative boundaries.",
+        scene: (v) => `<ol class="k-recap">${DIM.map((m, i) => `<li${i === v.dim ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
+        ctl: [{ k: "dim", label: "Dimension", min: 0, max: 4, step: 1, fmt: (i) => `${i + 1} of 5` }],
+        live: (v) => `**${DIM[v.dim][0]}.** ${DIM[v.dim][1]}`
+      },
+      {
+        h: "The risks an insurer bears",
+        say: "Appetite must be set for every material risk, and many are not underwriting risks. **Enterprise risk management** (ERM) is the discipline of identifying, measuring and managing them together, since they interact.\n\n**Insurance risk** has two components. *Underwriting risk* is the risk that business written now costs more than its price. *Reserving risk* is the risk that business written in the past costs more than the provision held for it. To these are added **market**, **credit**, **liquidity** and **operational** risk, and the less measurable **strategic** and **reputational** risks.",
         scene: () => flow({
           h: 190,
           nodes: [
@@ -50,129 +59,153 @@
           ]
         }),
         ask: {
-          q: "A syndicate discovers its 2019 liability claims will cost £30m more than it set aside. Nothing new was written. Which risk is this?",
+          q: "A syndicate concludes that its 2019 liability claims will cost £30m more than the provision it holds. It has written no new business in that class. Which risk has materialised?",
           opts: [
-          ["Underwriting risk.", "Underwriting risk is about business being written now. This was written years ago."],
-          "Reserving risk.",
-          ["Market risk.", "No investment has moved."],
-          ["Credit risk.", "Nobody has failed to pay the syndicate."]
-        ],
+            ["Underwriting risk.", "Underwriting risk concerns business being written now. This business was written years ago."],
+            "Reserving risk.",
+            ["Market risk.", "No investment has changed in value."],
+            ["Credit risk.", "No counterparty has failed to pay the syndicate."]
+          ],
           a: 1,
-          why: "What has moved is the estimate of an old year’s cost. For long-tail insurers, reserving risk can be larger than the risk in the current year’s underwriting."
+          why: "What has changed is the estimate of an earlier year’s cost. For insurers with long-tail liabilities, reserving risk is frequently larger than the risk in the current year’s underwriting, and an appetite framework that addresses only new business has ignored the larger exposure."
         }
       },
       {
-        h: "From a sentence to a desk",
-        say: "An appetite statement is useless until it reaches the person holding the pen. It is translated in three stages.\n\n**Appetite:** “We will not lose more than 15% of capital in a 1-in-200 year.”\n\n**Tolerance:** “So our net loss from a Florida windstorm at 1-in-200 must stay under £60m.”\n\n**Limit:** “So no line above £5m on any Florida risk, and no more than £150m of Florida limits in total.”",
+        h: "From statement to limit",
+        say: "An appetite statement has no effect until it constrains a decision. It is therefore translated in stages, each more specific than the last.\n\n**Appetite:** “A 1-in-200 year must not cost more than 30% of capital.”\n\n**Tolerance:** “Our net loss from a Florida windstorm at the 1-in-200 level must not exceed £60m.”\n\n**Limit:** “No line above £5m on any Florida risk, and no more than £150m of Florida limits in aggregate.”",
         scene: () => flow({
           h: 230,
           nodes: [
-            { id: "a", x: 95, y: 4, label: "Appetite", sub: "The board’s sentence", tone: "ink" },
-            { id: "t", x: 95, y: 74, label: "Tolerance", sub: "A number per risk type" },
-            { id: "l", x: 95, y: 144, label: "Limit", sub: "On the underwriter’s desk", tone: "c1" }
+            { id: "a", x: 95, y: 4, label: "Appetite", sub: "The board’s statement", tone: "ink" },
+            { id: "t", x: 95, y: 74, label: "Tolerance", sub: "A measure for each risk" },
+            { id: "l", x: 95, y: 144, label: "Limit", sub: "A rule for each underwriter", tone: "c1" }
           ],
           edges: [["a", "t"], ["t", "l"]]
         }),
         ask: {
-          q: "Every Florida risk written is within the £5m line limit. Yet the £150m total is breached. Who slipped?",
+          q: "Every Florida risk on the book is within the £5m line limit, yet the £150m aggregate has been exceeded. Where did the control fail?",
           opts: [
-          ["Nobody: each risk was within authority.", "Each underwriter was within authority. The firm was not within its limit."],
-          "Whoever should have been watching the total.",
-          ["The underwriters, for writing too many risks.", "No single underwriter can see the total from one desk. Someone has to add it up for them."],
-          ["The board, for setting the appetite too low.", "The appetite is the board’s to set. The failure was in not policing it."]
-        ],
-          a: 1,
-          why: "A line limit controls one risk; only an **aggregate** limit, monitored across the book, controls a portfolio. Forty perfectly authorised £5m lines make a £200m accumulation."
-        }
-      },
-      {
-        h: "Return periods",
-        say: "Appetite is often stated as a **return period**: “we can survive a 1-in-200-year event”. That means a **0.5% chance in any one year**, not that it happens once every 200 years on schedule.\n\nPeople hear “1 in 200” and think “never”. Try it over a working lifetime.",
-        scene: (v) => {
-          const T = RP[v.rp], p = 1 - Math.pow(1 - 1 / T, v.yrs);
-          const pts = Array.from({ length: 41 }, (_, i) => [i, (1 - Math.pow(1 - 1 / T, i)) * 100]);
-          return stats([["Chance in one year", pct(100 / T, T > 100 ? 1 : 0)], [`Chance within ${v.yrs} years`, pct(p * 100), p > 0.25 ? "bad" : ""]]) +
-            plot({ h: 170, x: { min: 0, max: 40, ticks: [0, 10, 20, 30, 40], title: "Years" }, y: { min: 0, max: 100, ticks: [0, 50, 100], fmt: (x) => `${x}%` },
-              series: [{ tone: "c1", pts }], dots: [{ x: v.yrs, y: p * 100, tone: "bad" }], refs: [{ x: v.yrs, label: `${v.yrs} years`, left: v.yrs > 28 }] });
-        },
-        ctl: [{ k: "rp", label: "Event", min: 0, max: RP.length - 1, step: 1, fmt: (i) => `1 in ${RP[i]} years` }, { k: "yrs", label: "Period you care about", min: 1, max: 40, step: 1, fmt: (x) => `${x} years` }],
-        live: (v) => {
-          const T = RP[v.rp], p = (1 - Math.pow(1 - 1 / T, v.yrs)) * 100;
-          return `A 1-in-${T} event has a **${pct(p)}** chance of happening at least once in ${v.yrs} years. It can also happen two years running: each year is a fresh draw.`;
-        },
-        goal: {
-          say: "You expect a thirty-year career. Find the rarest event that is still more likely than not to happen during it.",
-          test: (v) => RP[v.rp] === 25 && v.yrs === 30,
-          done: "A 1-in-25-year event: a 71% chance over thirty years. You should expect to live through one. Even the 1-in-50 is close to a coin toss. “Rare” events are a normal part of a working life."
-        }
-      },
-      {
-        h: "How much capital?",
-        say: "Regulatory capital is set at about a 1-in-200 standard: enough to survive the worst year in two hundred.\n\nAn insurer writes two classes. Alone, property needs £80m of capital and casualty £60m. Together they need less than £140m, because their bad years rarely coincide. That saving is the **diversification benefit**, and it depends on how closely the two move together.",
-        scene: (v) => {
-          const r = v.rho / 100, tot = Math.sqrt(80 * 80 + 60 * 60 + 2 * r * 80 * 60), ben = 140 - tot;
-          return stats([["Standalone", "£140m"], ["Together", money(tot), "c1"], ["Benefit", money(ben), ben < 8 ? "bad" : "good"]]) +
-            bars([
-              { label: "Each class alone", right: "£140m", segs: [[80, "c1", "Property"], [60, "c2", "Casualty"]] },
-              { label: "Combined", right: money(tot), segs: [[tot, "c3", "Capital needed"], [ben, "idle", "Saved"]] }
-            ], { max: 140 });
-        },
-        ctl: [{ k: "rho", label: "How closely the classes move together", min: 0, max: 100, step: 10, fmt: (x) => (x === 0 ? "independent" : x === 100 ? "in lockstep" : `${x}%`) }],
-        live: (v) => (v.rho >= 70 ? "When the classes move together there is almost nothing to save. And correlations **rise in a crisis**: a hurricane hits property, then liability, then investments. Diversification is weakest exactly when it is needed." : v.rho <= 20 ? "Nearly independent classes save a great deal of capital. This is the financial argument for a mixed book, and why a plan’s capital changes when its mix changes." : "A partial benefit. Capital models spend much of their effort on this one assumption."),
-        goal: {
-          say: "Find how closely the two classes must move together before mixing them saves less than £10m of capital.",
-          test: (v) => v.rho === 80,
-          done: "At around 80% the benefit has all but gone. That is roughly where correlations go in a real crisis, when a hurricane hits property, then liability, then the investment portfolio. The saving is there in calm years and absent in the year the capital is for."
-        }
-      },
-      {
-        h: "What capital costs",
-        say: "Capital isn’t free: investors want a return on it, the **hurdle rate**, here 10%. Classes need very different amounts of capital for the same premium, so the same combined ratio can be excellent in one class and inadequate in another.\n\n£100m of premium. Choose the class and the result.",
-        scene: (v) => {
-          const cap = KIND[v.kind][1], profit = 100 - v.cr + 3, roc = (profit / cap) * 100;
-          return stats([["Profit", money(profit), profit < 0 ? "bad" : ""], ["Capital needed", money(cap)], ["Return on capital", pct(roc, 1), roc < 10 ? "bad" : "good"]]) +
-            bars([{ label: "Return on capital", right: pct(roc, 1), segs: [[Math.max(roc, 0), roc < 10 ? "bad" : "c1"]] }], { max: 40, marks: [[10, "Hurdle 10%"]] });
-        },
-        ctl: [{ k: "kind", label: "Class", opts: ["Motor", "Property", "Cat"] }, { k: "cr", label: "Combined ratio", min: 80, max: 104, step: 1, fmt: pct }],
-        live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][2]} Profit here includes £3m of investment income.`,
-        goal: {
-          say: "Find the worst combined ratio at which catastrophe business still clears the 10% hurdle.",
-          test: (v) => v.kind === 2 && v.cr === 91,
-          done: "91%. Now switch to motor at the same 91%: it returns 40%. A cat underwriter must aim for combined ratios a motor underwriter would be ashamed to boast about, just to stand still."
-        }
-      },
-      {
-        h: "The firm’s own assessment",
-        say: "Regulators don’t want capital to be a number the actuaries produce and nobody else reads. The **Own Risk and Solvency Assessment** (ORSA) is the firm’s own, forward-looking view of its risks and the capital it needs over the plan period, owned by the board.\n\nIt came from Solvency II; the UK regulators now set their own requirements, on the same idea.",
-        scene: () => flow({
-          h: 150,
-          nodes: [
-            { id: "r", x: 4, y: 4, w: 104, label: "Risks" }, { id: "p", x: 118, y: 4, w: 104, label: "The plan" }, { id: "c", x: 232, y: 4, w: 104, label: "Capital" },
-            { id: "o", x: 95, y: 100, label: "ORSA", sub: "The board’s own view", tone: "c1" }
+            ["Nowhere: each underwriter acted within authority.", "Each underwriter did. The firm, taken as a whole, did not."],
+            "In the monitoring of the aggregate.",
+            ["With the underwriters, who wrote too many risks.", "No underwriter can observe the firm’s total from a single desk. The total must be compiled and reported to them."],
+            ["With the board, whose appetite was too restrictive.", "The level of appetite is the board’s to determine. The failure lay in enforcing it."]
           ],
-          edges: [["r", "o"], ["p", "o"], ["c", "o"]]
+          a: 1,
+          why: "A line limit constrains a single risk. Only an aggregate limit, monitored across the whole book, constrains a portfolio: forty lines of £5m, each properly authorised, amount to an accumulation of £200m."
+        }
+      },
+      {
+        h: "Where a limit comes from",
+        say: "Limits are derived, not chosen. The tolerance is a modelled loss of £60m. The limit that delivers it depends on an assumption: the proportion of the exposed limits that a 1-in-200 windstorm is expected to destroy, net of reinsurance.\n\nIf that **damage ratio** is 40%, the firm may hold £60m ÷ 0.40 = £150m of Florida limits. Revise the assumption and observe the consequence.",
+        scene: (v) => {
+          const agg = 60 / (v.dr / 100);
+          return stats([["Tolerance", "£60m"], ["Permitted aggregate", money(agg), "c1"], ["Lines of £5m", `${Math.floor(agg / 5)}`]]) +
+            bars([{ label: "Florida limits the firm may hold", right: money(agg), segs: [[60, "bad", "Modelled loss"], [agg - 60, "c1", "Expected to survive"]] }], { max: 300 });
+        },
+        ctl: [{ k: "dr", label: "Damage ratio at 1 in 200", min: 20, max: 60, step: 5, fmt: pct }],
+        goal: {
+          say: "A new version of the catastrophe model raises the damage ratio to 50%. Find the revised aggregate limit.",
+          test: (v) => v.dr === 50,
+          done: "£120m. The board’s appetite has not changed, and no new risk has been written, yet the firm is now £30m over its limit and must shed exposure or buy protection. A limit is only as stable as the model beneath it, which is why model changes are themselves subject to governance."
+        },
+        live: (v) => `At a damage ratio of ${pct(v.dr)}, £60m of modelled loss corresponds to **${money(60 / (v.dr / 100))}** of exposed limits, or ${Math.floor(60 / (v.dr / 100) / 5)} lines of £5m.`
+      },
+      {
+        h: "Three lines of defence",
+        say: "Responsibility for risk is conventionally divided among three lines.\n\nThe **first line** is the business itself: underwriters, claims and operations own the risks they take and are responsible for managing them within limits. The **second line**, the risk management and compliance functions, sets the framework, monitors adherence and challenges the first line; it does not take the risks. The **third line**, internal audit, gives the board independent assurance that the first two are working.",
+        scene: () => flow({
+          h: 230,
+          nodes: [
+            { id: "b", x: 95, y: 4, label: "The board", sub: "Sets appetite; holds all to account", tone: "ink" },
+            { id: "1", x: 4, y: 94, w: 104, label: "First line", sub: "Owns the risk", tone: "c1" },
+            { id: "2", x: 118, y: 94, w: 104, label: "Second line", sub: "Oversees" },
+            { id: "3", x: 232, y: 94, w: 104, label: "Third line", sub: "Assures" },
+            { id: "r", x: 95, y: 176, label: "The risk itself" }
+          ],
+          edges: [["b", "1"], ["b", "2"], ["b", "3"], ["1", "r"]]
         }),
         ask: {
-          q: "A board approves a plan to double premium. Its ORSA still shows last year’s capital need. What has gone wrong?",
+          q: "The risk function reports that the marine class has exceeded its aggregate limit. Whose responsibility is it to bring the exposure back within the limit?",
           opts: [
-          ["Nothing. The ORSA is an annual document.", "It is reviewed at least annually, and whenever the risk profile changes materially. Doubling premium qualifies."],
-          "The ORSA should move whenever the plan or the risks do.",
-          ["The actuaries should have stopped the plan.", "The ORSA belongs to the board. It can’t be left to the actuaries, which is the point of it."],
-          ["Nothing, provided the regulatory minimum is still met.", "The ORSA is the firm’s *own* view of what it needs, which may be well above the minimum."]
-        ],
-          a: 1,
-          why: "The ORSA exists to connect decisions to capital. A plan that doubles exposure without revisiting capital is precisely the failure it is meant to prevent."
+            "The head of the marine class.",
+            ["The chief risk officer.", "The risk function identifies and escalates the breach. If it also corrected it, it would be managing the risk it is meant to oversee."],
+            ["Internal audit.", "Audit reports on whether the control framework works. It neither takes nor remedies positions."],
+            ["The board.", "The board will require an explanation and may direct a response, but the exposure belongs to the class that wrote it."]
+          ],
+          a: 0,
+          why: "The first line owns the risk and therefore the remedy. The independence of the second and third lines depends on their not doing the first line’s work for it."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: turning the appetite into a plan.",
+        h: "Early warning",
+        say: "A limit that is noticed only when it is breached has failed. Firms therefore track **key risk indicators** against thresholds set below the limit itself: commonly an *amber* trigger at which the position is escalated and a response prepared, and a *red* trigger at the limit.\n\nThe Florida aggregate limit is £150m.",
+        scene: (v) => {
+          const used = 150 * v.util / 100, st = v.util >= 100 ? 2 : v.util >= 80 ? 1 : 0;
+          return stats([["Aggregate written", money(used)], ["Utilisation", pct(v.util), st === 2 ? "bad" : st === 1 ? "c2" : "good"], ["Status", ["Green", "Amber", "Red"][st], st === 2 ? "bad" : st === 1 ? "c2" : "good"]]) +
+            bars([{ label: "Florida aggregate", right: `${money(used)} of £150m`, segs: [[Math.min(used, 120), "c1"], [Math.min(Math.max(used - 120, 0), 30), "c2"], [Math.max(used - 150, 0), "bad"]] }], { max: 180, marks: [[120, "Amber"], [150, "Limit"]] });
+        },
+        ctl: [{ k: "util", label: "Share of the limit in use", min: 40, max: 115, step: 5, fmt: pct }],
+        live: (v) => (v.util >= 100 ? "The limit is breached. The firm is carrying more risk than its board agreed to, and the breach must be reported and remedied." : v.util >= 80 ? "Amber. Nothing has been breached, and that is the point: the class must now show how it will remain within the limit, while several inexpensive options are still open." : "Well within the limit. The indicator is reported and requires no action."),
+        ask: {
+          q: "An indicator has turned amber. What does that require?",
+          opts: [
+            ["Nothing. No limit has been breached.", "A trigger with no consequence is not a control."],
+            "Escalation, and a plan to remain within the limit.",
+            ["An immediate halt to all new business in the class.", "That may be the right response to a red indicator. Amber exists to allow something more measured."],
+            ["An increase in the limit.", "Raising a limit because it is about to be reached removes the control. Any increase is a separate decision for the body that set it."]
+          ],
+          a: 1,
+          why: "Amber converts a future breach into a present decision. The usual responses are smaller lines, facultative reinsurance, or declining to renew the weakest risks in the zone."
+        }
+      },
+      {
+        h: "Appetite and strategy",
+        say: "A plan may be sound in itself and still be wrong for the capital that supports it. Before a business plan is approved it is tested against the appetite statement, and where they conflict one of them must change.",
+        scene: () => flow({
+          h: 170,
+          nodes: [
+            { id: "a", x: 95, y: 4, label: "Risk appetite", sub: "Set by the board", tone: "ink" },
+            { id: "s", x: 4, y: 100, w: 104, label: "Strategy" }, { id: "p", x: 118, y: 100, w: 104, label: "Business plan", tone: "c1" }, { id: "c", x: 232, y: 100, w: 104, label: "Capital" }
+          ],
+          edges: [["a", "s"], ["a", "p"], ["a", "c"]]
+        }),
+        ask: {
+          q: "A pension fund with a stated preference for stable returns backs a syndicate whose plan is 80% US hurricane reinsurance, at excellent rates. What is the difficulty?",
+          opts: [
+            ["None. The rates are excellent.", "Favourable rates raise the expected return. They do not reduce the amount that can be lost in one season."],
+            "The strategy is inconsistent with the investor’s appetite.",
+            ["Hurricane reinsurance is unprofitable.", "Over a long period it can be highly profitable. The issue is the path it takes to that result."],
+            ["So concentrated a plan could not be approved.", "Specialist catastrophe syndicates exist. Concentration is a legitimate choice where the capital providers want it."]
+          ],
+          a: 1,
+          why: "Catastrophe business earns well in most years and can consume a large part of the capital in one. The expected return may be attractive; the volatility is what this investor has said it does not want."
+        }
+      },
+      {
+        h: "When appetite is breached",
+        say: "A breach leaves the board with four legitimate courses. It may **reduce the exposure**, **transfer** it through reinsurance, **raise capital** so that the same exposure is a smaller proportion of it, or **revise the appetite** by a deliberate, recorded decision that the earlier statement no longer reflects its view.\n\nWhat distinguishes these from an illegitimate response is that each either changes the risk or openly changes the board’s position on it.",
+        scene: () => recap(["Reduce the exposure", "Transfer it by reinsurance", "Raise more capital", "Revise the appetite, openly and on the record"]),
+        ask: {
+          q: "After a model update, a firm’s catastrophe exposure exceeds its appetite. Which response is **not** legitimate?",
+          opts: [
+            ["Buying additional catastrophe reinsurance.", "This transfers part of the risk, and so reduces what the firm bears."],
+            ["A board resolution raising the appetite, with reasons.", "A board may change its mind, provided it does so deliberately and can explain why."],
+            "Reverting to the previous model version because it produces a lower figure.",
+            ["Declining to renew the most exposed accounts.", "This reduces the exposure directly."]
+          ],
+          a: 2,
+          why: "Selecting the measure that gives the preferred answer changes neither the risk nor the board’s considered view of it. It merely conceals the breach, and supervisors treat it as a failure of governance in its own right."
+        }
+      },
+      {
+        h: "Summary",
+        say: "The next chapter turns from the risk a firm will accept to the capital that makes the acceptance credible.",
         scene: () => recap([
-          "Risk appetite is set by the board; strategy, plan and capital must fit inside it.",
-          "Appetite becomes tolerances, and tolerances become limits on line size and aggregates.",
-          "A 1-in-200 event has a 0.5% chance every year, and adds up over time.",
-          "Mixing classes saves capital, but less in a crisis.",
-          "A class is good only if its profit beats the cost of the capital it uses."
+          "Capacity is what a firm could lose; appetite is what its board will accept; tolerance is the permitted variation.",
+          "A sound statement covers earnings, capital, liquidity, concentration and conduct.",
+          "Appetite is translated into tolerances and then into limits derived from a model.",
+          "The first line owns the risk; the second oversees; the third assures.",
+          "A breach is answered by changing the risk or, openly, the appetite."
         ])
       }
     ]

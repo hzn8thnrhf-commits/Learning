@@ -1,145 +1,160 @@
-/* LM3 · 6 — Statistics for underwriters */
+/* LM3 · 6 — Reading the accounts */
 (() => {
-  const { bars, cols, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
-  const BASE = [20, 30, 30, 40, 50, 60];
-  const BOOKS = [[58, 62, 60, 57, 63, 61, 59, 60, 62, 58], [35, 48, 110, 40, 52, 38, 95, 45, 42, 95]];
-  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length); };
+  const { bars, flow, stats, recap, wfall, money, pct, num } = window.SLIP.kit;
+  const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   window.SLIP.chapters.push({
-    id: "statistics", part: "LM3",
-    title: "Statistics for underwriters",
-    blurb: "Frequency and severity, why averages mislead, what a clean record really proves, and how data lies when it changes.",
+    id: "accounts", part: "LM3",
+    title: "Reading the accounts",
+    blurb: "The primary financial statements, earned premium, reserve movements, and the ratios by which insurers are judged.",
     minutes: 9,
-    init: { freq: 4, sev: 50, big: 100, book: 0, near: 0, yrs: 5 },
+    lead: "An underwriter need not be an accountant, but must be able to read the statements in which an insurer’s performance and strength are reported.",
+    aims: [
+      "Distinguish financial from management accounts, and identify the three primary statements.",
+      "Explain why profit differs from cash flow, and written premium from earned premium.",
+      "Explain how movements in prior-year reserves affect the reported result.",
+      "Calculate a combined ratio and a solvency ratio, and distinguish profitability, liquidity and solvency."
+    ],
+    init: { m: 6, pyd: 0, loss: 60, exp: 35, inv: 3, hit: 0 },
     steps: [
       {
-        h: "How often, and how big",
-        say: "Every expected loss cost is two numbers multiplied: **frequency** (how often claims happen) and **severity** (how large they are).\n\nA fleet of 1,000 vans. Set both.",
-        scene: (v) => {
-          const n = 1000 * v.freq / 100, cost = n * v.sev / 1000;
-          return stats([["Claims a year", num(n, 0)], ["Expected cost", `£${num(cost, 2)}m`, "c1"], ["Per van", `£${num(cost * 1000, 0)}`]]) +
-            bars([{ label: "Frequency: claims per 100 vans", right: `${v.freq}`, segs: [[v.freq, "c2"]] }, { label: "Severity: average claim", right: `£${v.sev}k`, segs: [[v.sev / 20, "c1"]] }], { max: 10 });
-        },
-        ctl: [{ k: "freq", label: "Frequency", min: 1, max: 10, step: 1, fmt: (x) => `${x} per 100` }, { k: "sev", label: "Severity", min: 5, max: 200, step: 5, fmt: (x) => `£${x}k` }],
-        live: (v) => (v.freq >= 6 && v.sev <= 40 ? "**High frequency, low severity:** motor, small property. Many small claims, statistically predictable. The past is a good guide." : v.freq <= 2 && v.sev >= 100 ? "**Low frequency, high severity:** catastrophe, aviation, energy. Few data points, huge swings. The past tells you little, so models and judgement take over." : "The same expected cost can come from many small claims or a few large ones. They are very different risks to hold."),
-        goal: {
-          say: "The fleet’s expected cost is £2m. Find another way to reach exactly £2m, with twice as many claims.",
-          test: (v) => v.freq === 8 && v.sev === 25,
-          done: "Eighty claims of £25k, where before there were forty of £50k. The expected cost is identical, but the second fleet’s result will sit closer to £2m year after year: more, smaller claims are more predictable."
-        }
-      },
-      {
-        h: "Three averages",
-        say: "“The average claim” has three meanings. The **mean**: total divided by the number of claims. The **median**: the middle claim when ranked. The **mode**: the most common value.\n\nSeven claims. Six are ordinary. Change the seventh.",
-        scene: (v) => {
-          const all = [...BASE, v.big], s = all.slice().sort((x, y) => x - y), mean = all.reduce((a, b) => a + b, 0) / 7, med = s[3];
-          return stats([["Mean", `£${num(mean, 0)}k`, mean > med * 1.5 ? "bad" : ""], ["Median", `£${med}k`, "c1"], ["Mode", "£30k"]]) +
-            cols({ h: 170, max: Math.max(120, v.big), bars: all.map((x, i) => ({ label: `${i + 1}`, hot: i === 6, segs: [[x, i === 6 ? "bad" : "c1"]] })), lines: [{ v: mean, label: "Mean" }] });
-        },
-        ctl: [{ k: "big", label: "The seventh claim", min: 60, max: 900, step: 20, fmt: (x) => `£${x}k` }],
-        live: (v) => (v.big > 300 ? "One large claim has dragged the **mean** far above what a typical claim looks like, while the **median** hasn’t moved. Insurance losses are skewed like this. Always ask which average you are being shown." : "With no outlier, the three averages sit close together and any of them describes the book."),
-        goal: {
-          say: "Find the smallest seventh claim that pulls the mean above twice the median.",
-          test: (v) => v.big === 340,
-          done: "£340k. One claim in seven has made the “average” twice as large as a typical claim. Quote the mean and you alarm the client; quote the median and you understate the cost. The honest answer shows both, and the big one separately."
-        }
-      },
-      {
-        h: "The same average, a different risk",
-        say: "An average says nothing about **spread**: how far individual results stray from it. The usual measure is the **standard deviation**.\n\nTwo books, ten years each. Both average a 60% claims ratio.",
-        scene: (v) => {
-          const a = BOOKS[v.book], worst = Math.max(...a);
-          return stats([["Average", "60%"], ["Standard deviation", `${num(sd(a), 0)} points`, v.book ? "bad" : "good"], ["Worst year", pct(worst), worst > 65 ? "bad" : ""]]) +
-            cols({ h: 170, max: 120, bars: a.map((x, i) => ({ label: `${i + 1}`, segs: [[x, x > 65 ? "bad" : "c1"]] })), lines: [{ v: 65, label: "Break-even", right: true }] });
-        },
-        ctl: [{ k: "book", label: "Book", opts: ["Steady", "Volatile"] }],
-        live: (v) => (v.book ? "Three losing years in ten, each severe. The same 60% average needs far more capital behind it, so it must earn a wider margin to be worth writing. Averages price the expected loss; spread prices the capital." : "Every year lands within a few points of 60%. Little capital is needed to survive the worst of them.")
-      },
-      {
-        h: "Probability, and independence",
-        say: "Probability runs from 0 (impossible) to 1 (certain). For two events that have nothing to do with each other, the chance of **both** is the two chances multiplied.\n\nTwo warehouses each have a 1% chance of a serious fire this year.",
-        scene: (v) => {
-          const both = v.near ? 0.8 : 0.01;
-          return stats([["One burns", "1%"], ["Both burn", pct(both, 2), v.near ? "bad" : "good"]]) +
-            flow({
-              h: 110,
-              nodes: v.near ? [{ id: "a", x: 60, y: 30, w: 104, label: "Warehouse A", tone: "bad" }, { id: "b", x: 176, y: 30, w: 104, label: "Warehouse B", tone: "bad" }]
-                : [{ id: "a", x: 4, y: 30, w: 104, label: "Warehouse A" }, { id: "b", x: 232, y: 30, w: 104, label: "Warehouse B" }],
-              edges: v.near ? [["a", "b"]] : []
-            });
-        },
-        ctl: [{ k: "near", label: "The warehouses are", opts: ["In different towns", "Next door"] }],
-        live: (v) => (v.near ? "Next door, a fire in one will probably take the other. The events are **dependent**, and the chance of losing both is close to the chance of losing one. Multiplying the probabilities would understate it eighty times over." : "1% × 1% = **0.01%**: one year in ten thousand. This is why spreading risk works. But the multiplication is only valid if the events are truly **independent**.")
-      },
-      {
-        h: "Chance has no memory",
-        say: "A **return period** is a probability in disguise: 1-in-100 means 1% each year. It is not a timetable.",
-        scene: () => bars([
-          { label: "Chance of the flood last year", right: "1%", segs: [[1, "c1"]] },
-          { label: "It happened", right: "", segs: [[100, "bad", "The 1-in-100 flood"]] },
-          { label: "Chance of the flood this year", right: "?", segs: [[0.5, "idle"]] }
-        ], { max: 100 }),
+        h: "Financial and management accounts",
+        say: "**Financial accounts** are prepared for external users: investors, regulators, rating agencies, and brokers assessing security. They are drawn up in accordance with accounting standards and are audited.\n\n**Management accounts** are prepared for internal use. They are more detailed and more frequent, are analysed by class and by team, and take whatever form best serves the decisions to be made.",
+        scene: () => flow({
+          h: 150,
+          nodes: [
+            { id: "d", x: 95, y: 4, label: "The same transactions", tone: "ink" },
+            { id: "f", x: 4, y: 100, w: 150, label: "Financial accounts", sub: "Outward, audited, annual" },
+            { id: "m", x: 186, y: 100, w: 150, label: "Management accounts", sub: "Inward, monthly, by class", tone: "c1" }
+          ],
+          edges: [["d", "f"], ["d", "m"]]
+        }),
         ask: {
-          q: "A town had its “1-in-100-year” flood last year. What is the chance of another this year?",
+          q: "A class underwriter wants her loss ratio by broker for the last three months. Where does she look?",
           opts: [
-          ["Almost nil. It isn’t due for 99 years.", "A return period is a probability, not a timetable."],
-          "Still about 1%.",
-          ["Much higher: these things come in runs.", "The river has no memory. Though a recent event is a fair reason to ask whether 1% was ever right."],
-          ["Exactly 0.01%: 1% × 1%.", "That is the chance of floods in two *specified* years, judged in advance. Last year has already happened."]
+          ["The financial accounts.", "They show the whole company, once or twice a year."],
+          "The management accounts.",
+          ["The regulatory returns.", "Detailed, but built for the supervisor’s questions, and not by broker."]
         ],
           a: 1,
-          why: "Each year is an independent draw at 1%. The useful doubt is a different one: a town that has just flooded may have been mis-rated, and the true figure may be nearer 1 in 30."
+          why: "Running a class needs figures that are current and cut the way decisions are made. That is what management accounts are for."
         }
       },
       {
-        h: "What a clean record proves",
-        say: "A broker presents a risk with **no large losses** in its history. How much comfort is that?\n\nSuppose the true chance of a large loss is 1 in 20 each year. See how often such a risk shows a spotless record anyway.",
+        h: "The balance sheet",
+        say: "The **balance sheet** states the insurer’s position at a single date: its **assets**, its **liabilities**, and the difference between them, which is the **equity** attributable to its owners.\n\nBy construction, assets equal liabilities plus equity. An insurer’s largest liability is its **technical provisions**: the amounts it expects to pay on business already written.",
+        scene: () => bars([
+          { label: "Assets", right: "£500m", segs: [[380, "c1", "Investments and cash"], [120, "soft1", "Owed by others"]] },
+          { label: "Liabilities and equity", right: "£500m", segs: [[300, "c2", "Claims reserves"], [80, "soft2", "Unearned"], [120, "c3", "Equity"]] }
+        ], { max: 500 }),
+        ask: {
+          q: "“Owed by others” includes £60m due from reinsurers on claims already paid. Equity is £120m. Why would an analyst look hard at that £60m?",
+          opts: [
+          ["It is too small to matter.", "It is half the equity."],
+          "It is only an asset if the reinsurers pay.",
+          ["Because it should be shown as a liability.", "It is money owed *to* the insurer: an asset, if it is good."],
+          ["Because it has already been counted in investments.", "It is a separate item. The worry is its quality."]
+        ],
+          a: 1,
+          why: "Reinsurance recoverables are credit risk sitting on the balance sheet. If a reinsurer fails or disputes the claim, the asset shrinks and equity shrinks with it: here, by up to half."
+        }
+      },
+      {
+        h: "Profit and cash flow",
+        say: "The **income statement** reports profit or loss for a period. The **cash flow statement** reports the cash actually received and paid. For an insurer the two can diverge widely, since premium is received at the outset and claims may not be paid for years.",
+        scene: () => bars([
+          { label: "Cash this year", right: "+£40m", segs: [[100, "c1", "Premium received"], [0.1, "none"]] },
+          { label: "", right: "", segs: [[60, "c2", "Claims and costs paid so far"]] },
+          { label: "Profit this year", right: "−£10m", segs: [[100, "c1", "Premium earned"]] },
+          { label: "", right: "", segs: [[110, "bad", "Claims and costs incurred"]] }
+        ], { max: 115 }),
+        ask: {
+          q: "A fast-growing liability insurer has cash pouring in. What does that tell you about its profitability?",
+          opts: [
+          ["It is profitable: cash is fact.", "The cash is real. Whose it will turn out to be is not yet known."],
+          "Nothing. Its claims simply have not been paid yet.",
+          ["It is unprofitable: growth always loses money.", "Growth is a warning sign, not a verdict."]
+        ],
+          a: 1,
+          why: "Growth and a long tail make any insurer cash-rich for years, however badly it has priced. Insurers have collapsed with full bank accounts. Profit depends on what the claims will eventually cost."
+        }
+      },
+      {
+        h: "Written and earned premium",
+        say: "Premium is recognised as income not when it is written but as it is **earned**, in proportion to the period of cover that has elapsed. At the accounting date, the part of the premium relating to the unexpired period is **unearned** and is carried as a liability.\n\nConsider an annual premium of £1.2m. (Insurers reporting under IFRS 17 present this differently, but the principle of recognising income as cover is provided is the same.)",
         scene: (v) => {
-          const clean = Math.pow(0.95, v.yrs) * 100;
-          const pts = Array.from({ length: 21 }, (_, i) => [i, Math.pow(0.95, i) * 100]);
-          return stats([["Years of history", `${v.yrs}`], ["Chance it looks clean", pct(clean), clean > 50 ? "bad" : ""]]) +
-            plot({ h: 160, x: { min: 0, max: 20, ticks: [0, 5, 10, 15, 20], title: "Years of loss-free history" }, y: { min: 0, max: 100, ticks: [0, 50, 100], fmt: (x) => `${x}%` },
-              series: [{ tone: "c1", pts }], dots: [{ x: v.yrs, y: clean, tone: "bad" }] });
+          const earned = (12 - v.m) / 12 * 1.2;
+          return stats([["Written", "£1.2m"], ["Earned by 31 Dec", money(earned), "c1"], ["Unearned", money(1.2 - earned), "c2"]]) +
+            bars([{ label: `Policy starting 1 ${MON[v.m]}`, segs: [[v.m, "none"], [12 - v.m, "c1", "Earned"], [v.m, "c2", "Unearned"]] }], { max: 24, marks: [[12, "Year end"]] });
         },
-        ctl: [{ k: "yrs", label: "Loss-free years presented", min: 1, max: 20, step: 1, fmt: (x) => `${x}` }],
+        ctl: [{ k: "m", label: "Policy starts", min: 0, max: 11, step: 1, fmt: (i) => `1 ${MON[i]}` }],
+        live: (v) => (v.m === 0 ? "A January policy is fully earned by December." : `Only ${12 - v.m} of 12 months of cover have been given. The rest is a liability: if the policy were cancelled, that premium would go back. A fast-growing insurer always looks less profitable on an earned basis than on a written one.`),
+        goal: {
+          say: "Find the latest date this policy can start if £900k of its premium is to be earned by 31 December.",
+          test: (v) => v.m === 3,
+          done: "1 April: nine months of cover, nine twelfths of the premium. Business written late in the year barely touches this year’s income, which is why a strong fourth quarter shows up in next year’s results."
+        }
+      },
+      {
+        h: "Prior-year development",
+        say: "The charge for claims **incurred** in a period is not the amount paid in it. It is the amount paid **plus the change in the provision for outstanding claims**, and that change includes any revision to the estimates for *earlier* years.\n\nSuppose the current year’s own business has produced a profit of £10m. Now revise the provisions held for prior years.",
+        scene: (v) => {
+          const res = 10 - v.pyd;
+          return stats([["This year’s business", "£10m"], ["Prior years", money(-v.pyd), v.pyd > 0 ? "bad" : v.pyd < 0 ? "good" : ""], ["Reported profit", money(res), res < 0 ? "bad" : ""]]) +
+            wfall([{ label: "This year", v: 10 }, { label: v.pyd > 0 ? "Strengthened" : "Released", v: -v.pyd }, { label: "Reported profit", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
+        },
+        ctl: [{ k: "pyd", label: "Past years’ reserves", min: -20, max: 20, step: 5, fmt: (x) => (x === 0 ? "unchanged" : x > 0 ? `£${x}m short` : `£${-x}m too high`) }],
+        live: (v) => (v.pyd < 0 ? "A **release**: past years were over-reserved, and the surplus flows into this year’s profit. Pleasant, but it says nothing about current underwriting. A company living on releases is spending its savings." : v.pyd > 0 ? "**Strengthening**: past years were under-reserved, and today’s shareholders pay for yesterday’s optimism. A reader should always separate the current year’s result from prior-year movement." : "No movement: the reported profit is the current year’s own."),
+        goal: {
+          say: "Find the size of reserve shortfall on past years that wipes out this year’s profit entirely.",
+          test: (v) => v.pyd === 10,
+          done: "£10m. A sound year’s underwriting reports no profit at all, because of estimates made years ago by people who may have moved on. Always split a result into the current year and prior-year movement."
+        }
+      },
+      {
+        h: "The combined ratio",
+        say: "The principal measure of underwriting performance is the **combined ratio**: the sum of the **claims ratio** (claims incurred as a percentage of earned premium) and the **expense ratio** (expenses as a percentage of premium). A combined ratio below 100% represents an underwriting profit.\n\nInvestment income earned on premiums and reserves is additional to the underwriting result.",
+        scene: (v) => {
+          const cr = v.loss + v.exp, res = 100 - cr + v.inv;
+          return stats([["Combined ratio", pct(cr), cr > 100 ? "bad" : "good"], ["Underwriting", `${100 - cr >= 0 ? "+" : "−"}£${Math.abs(100 - cr)}`, cr > 100 ? "bad" : ""], ["With investments", `${res >= 0 ? "+" : "−"}£${Math.abs(res)}`, res < 0 ? "bad" : "good"]]) +
+            bars([{ label: "Per £100 of earned premium", segs: [[v.loss, "c1", "Claims"], [v.exp, "c2", "Expenses"]] }], { max: 125, marks: [[100, "Break-even"]] });
+        },
+        ctl: [{ k: "loss", label: "Claims ratio", min: 40, max: 85, step: 1, fmt: pct }, { k: "exp", label: "Expense ratio", min: 25, max: 45, step: 1, fmt: pct }, { k: "inv", label: "Investment return on premium", min: 0, max: 10, step: 1, fmt: pct }],
         live: (v) => {
-          const clean = Math.pow(0.95, v.yrs) * 100;
-          return `A risk with a real 1-in-20 chance of a large loss still has a **${pct(clean)}** chance of showing ${v.yrs} clean year${v.yrs > 1 ? "s" : ""}. For rare, severe losses, a short clean record is weak evidence. This is why experience is given little weight on small or low-frequency risks: statisticians call the weight **credibility**.`;
+          const cr = v.loss + v.exp;
+          return cr <= 100 ? "An underwriting profit before any investment income. This is the discipline Lloyd’s asks for." : cr - v.inv <= 100 ? "An underwriting loss rescued by investment income. This is **cash-flow underwriting**: it works until interest rates fall or claims arrive early." : "A loss even after investment income. Capital is being consumed.";
         },
         goal: {
-          say: "Find how many clean years it takes before a risk like this has less than an even chance of still looking clean.",
-          test: (v) => v.yrs === 14,
-          done: "Fourteen years. A five-year loss record, the usual submission, would look spotless more than three times in four. For rare losses, the absence of claims in a short history is close to no evidence at all."
+          say: "Claims are running at 70% and expenses at 35%. Find the investment return needed to break even.",
+          test: (v) => v.loss === 70 && v.exp === 35 && v.inv === 5,
+          done: "5% on the premium held. Possible when interest rates are high and claims take years to pay; impossible on short-tail business or when rates are near zero. An insurer in this position is really running an investment fund with an underwriting problem."
         }
       },
       {
-        h: "When the data changes under you",
-        say: "Statistics describe the data that was collected. If what is being counted changes, the numbers move even when the risk doesn’t.",
-        scene: () => bars([
-          { label: "Last year: £5,000 excess", right: "40 claims, average £30k", segs: [[40, "c1", "Large claims only"]] },
-          { label: "This year: no excess", right: "140 claims, average £10k", segs: [[40, "c1", "Large"], [100, "c2", "Small claims now reported"]] }
-        ], { max: 150 }),
-        ask: {
-          q: "A fleet’s average claim fell from £30k to £10k after its excess was removed. What has happened?",
-          opts: [
-          ["It has become safer: severity fell by two thirds.", "The same accidents are happening. More of them are now being counted."],
-          "Small claims that were always happening are now being reported.",
-          ["Its drivers are more careful without an excess.", "If anything, removing an excess removes a reason to be careful."],
-          ["The insurer’s costs have fallen.", "Total cost has gone **up**: 140 claims at £10k is £1.4m against £1.2m before."]
-        ],
-          a: 1,
-          why: "Before, small accidents stayed under the excess and never appeared in the data. The average fell because the mix changed. Always ask what changed in the data before believing a trend."
+        h: "Profitability, liquidity and solvency",
+        say: "Accounts are read for three distinct purposes. **Profitability** concerns whether the insurer has earned a return. **Liquidity** concerns whether it can produce cash when its obligations fall due. **Solvency** concerns whether its assets exceed its liabilities by the margin required.\n\nSolvency is commonly expressed as the ratio of capital held to capital required. This insurer holds £150m against a requirement of £100m.",
+        scene: (v) => {
+          const own = 150 - v.hit, ratio = own;
+          return stats([["Capital held", money(own)], ["Required", "£100m"], ["Solvency ratio", pct(ratio), ratio < 100 ? "bad" : ratio < 120 ? "c2" : "good"]]) +
+            bars([{ label: "Capital held", right: pct(ratio), segs: [[Math.max(own, 0), ratio < 100 ? "bad" : "c1"]] }], { max: 160, marks: [[100, "Required"]] });
+        },
+        ctl: [{ k: "hit", label: "Loss for the year", min: 0, max: 80, step: 5, fmt: money }],
+        live: (v) => (150 - v.hit < 100 ? "Below 100%: the insurer no longer meets its capital requirement. The regulator steps in, and the firm must raise capital or cut risk, usually on poor terms because everyone knows it has to." : 150 - v.hit < 120 ? "Still compliant, but the buffer is thin. Rating agencies and brokers’ security committees start asking questions well before 100%." : "A comfortable buffer. Boards usually set their own target well above the regulatory minimum for exactly this reason."),
+        goal: {
+          say: "The board’s own target is a solvency ratio of 120%. Find the largest loss it can take and stay there.",
+          test: (v) => v.hit === 30,
+          done: "£30m. The regulatory line is at £50m, but the questions from rating agencies and brokers start well before it. An insurer’s usable capital is the buffer above its own target, not the whole of what it holds."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: turning these numbers into a price.",
+        h: "Summary",
+        say: "The next chapter introduces the statistical ideas on which pricing depends.",
         scene: () => recap([
-          "Expected cost = frequency × severity.",
-          "Mean, median and mode differ on skewed data.",
-          "Spread, not the average, decides how much capital a book needs.",
-          "Probabilities multiply only when events are independent.",
-          "A short clean record proves little about rare losses; check what the data really counts."
+          "Financial accounts face outwards; management accounts run the business.",
+          "An insurer can be full of cash and losing money.",
+          "Premium counts only as it is earned.",
+          "Reserve movements on old years flow through this year’s profit.",
+          "Profitability, liquidity and solvency are three separate questions."
         ])
       }
     ]

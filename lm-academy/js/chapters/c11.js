@@ -6,13 +6,20 @@
   window.SLIP.chapters.push({
     id: "law", part: "LM2",
     title: "Law, consumers and tax",
-    blurb: "Insurance the law insists on, the Acts that protect consumers and third parties, and how to work out premium tax.",
+    blurb: "Compulsory insurance, statutory protection for consumers and third parties, insurance premium tax, and individual accountability.",
     minutes: 8,
+    lead: "Insurance contracts are made within a framework of statute. This chapter considers the legislation that compels insurance, protects consumers and third parties, and taxes premiums.",
+    aims: [
+      "Identify the compulsory insurances and explain why insurers’ defences are restricted under them.",
+      "Explain the effect of the Consumer Rights Act 2015 and of the Contracts (Rights of Third Parties) Act 1999.",
+      "Calculate insurance premium tax and identify the principal exemptions.",
+      "Explain the personal accountability of individuals in regulated firms."
+    ],
     init: { prem: 10000, type: 0 },
     steps: [
       {
-        h: "Insurance you must buy",
-        say: "Most insurance is a choice. A few are **compulsory**, and nearly all of those are **liability** covers. The idea is simple: someone injured by your activity should be compensated even if you can’t pay.\n\nThe two everyone meets: **motor** third-party liability and **employers’ liability**. Others apply to particular trades and professions.",
+        h: "Compulsory insurance",
+        say: "Insurance is ordinarily a matter of choice. In a small number of cases Parliament has made it **compulsory**, and almost all of those are **liability** insurances. The policy is that a person injured by an activity should not go uncompensated merely because the person responsible lacks the means to pay.\n\nThe two of widest application are **motor** third-party liability, under the Road Traffic Act 1988, and **employers’ liability**, under the Employers’ Liability (Compulsory Insurance) Act 1969. Others apply to particular trades and professions.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -27,7 +34,7 @@
           opts: [
           ["Property insurance on its premises.", "Its own building is its own risk to take or insure."],
           "Employers’ liability insurance.",
-          ["Public liability insurance.", "Almost every business buys it, and contracts often demand it. The law doesn’t."],
+          ["Public liability insurance.", "Almost every business buys it, and contracts often demand it. The law does not."],
           ["Business interruption insurance.", "Prudent, never compulsory."]
         ],
           a: 1,
@@ -35,8 +42,8 @@
         }
       },
       {
-        h: "The insurer’s usual defences fall away",
-        say: "With ordinary insurance, an insured who breaks a policy term may lose the claim. With compulsory insurance, that would punish the wrong person: the victim.\n\nSo insurers **cannot rely on normal defences**, such as a breach of warranty, to refuse the injured party.",
+        h: "Restricted defences",
+        say: "Under an ordinary policy, an insured who breaches a term may forfeit the claim. If the same rule applied to compulsory insurance, the consequence would fall on the injured party, whom the legislation exists to protect.\n\nThe statutes therefore **restrict the defences** on which an insurer may rely against the injured party. The insurer must meet the claim, and is left to recover from its own insured.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -51,16 +58,16 @@
           opts: [
           ["The insurer refuses the claim. The condition was broken.", "That would leave an injured worker unpaid because of his employer’s fault."],
           "The insurer pays the worker, and may then seek recovery from the employer.",
-          ["The insurer pays the worker and the matter ends.", "The worker is protected, but the employer doesn’t escape the consequences of its breach."],
+          ["The insurer pays the worker and the matter ends.", "The worker is protected, but the employer does not escape the consequences of its breach."],
           ["The worker must sue the employer personally.", "He may, but the point of compulsory cover is that the insurer stands behind the judgment."]
         ],
           a: 1,
-          why: "Against the injured party, the insurer can’t rely on the breach. Between insurer and employer the breach still counts, and the insurer may claim back what it paid."
+          why: "Against the injured party, the insurer cannot rely on the breach. Between insurer and employer the breach still counts, and the insurer may claim back what it paid."
         }
       },
       {
-        h: "Consumers get extra protection",
-        say: "The **Consumer Rights Act 2015** applies to contracts with consumers, not commercial clients. Terms must be **fair** and **transparent**. A term that tilts the contract unfairly against the consumer, such as a harsh claims deadline buried in small print, **does not bind them**.\n\nNote that the regulator’s definition of a consumer is wider than you might guess.",
+        h: "The Consumer Rights Act 2015",
+        say: "The **Consumer Rights Act 2015** applies to contracts between a trader and a **consumer**: an individual acting outside their trade or profession. It requires written terms to be **transparent**, and provides that a term which is **unfair**, in that it causes a significant imbalance to the consumer’s detriment contrary to good faith, is **not binding** on the consumer.\n\nThe Act does not apply to commercial insureds. The FCA’s own rules, however, extend some protections to small businesses.",
         scene: () => bars([
           { label: "A clear 30-day claims notice period", right: "binding", segs: [[100, "c1", "Fair and transparent"]] },
           { label: "“Notify within 24 hours or lose all cover”, in small print", right: "not binding", segs: [[100, "hole", "Unfair"]] }
@@ -78,8 +85,8 @@
         }
       },
       {
-        h: "Outsiders with rights",
-        say: "Normally only the parties to a contract can enforce it. The **Contracts (Rights of Third Parties) Act 1999** lets certain people who are *not* parties enforce a term meant to benefit them.\n\nInsurers dislike strangers gaining rights under their policies, so London wordings usually **contract out** of the Act with an exclusion clause.",
+        h: "Rights of third parties",
+        say: "At common law a contract can be enforced only by those who are party to it: the doctrine of **privity**. The **Contracts (Rights of Third Parties) Act 1999** modified the doctrine, allowing a third party to enforce a term that expressly so provides or that purports to confer a benefit on them.\n\nThe Act permits the parties to exclude it. Since insurers wish to know exactly who may enforce their obligations, London Market wordings commonly do so.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -90,10 +97,10 @@
         ask: {
           q: "A policy contains a clause excluding the 1999 Act. A supplier named in the policy as benefiting from it tries to claim directly. Can it?",
           opts: [
-          ["Yes. The Act gives it rights.", "The Act gives rights only where the parties haven’t excluded it."],
+          ["Yes. The Act gives it rights.", "The Act gives rights only where the parties have not excluded it."],
           "No. The parties have validly excluded the Act.",
           ["Yes, because it is named in the policy.", "Being named would normally be enough under the Act. The exclusion clause removes that."],
-          ["Only if the insured is insolvent.", "That is a different statute, the Third Parties (Rights against Insurers) Act, which can’t be excluded."]
+          ["Only if the insured is insolvent.", "That is a different statute, the Third Parties (Rights against Insurers) Act, which cannot be excluded."]
         ],
           a: 1,
           why: "The 1999 Act allows contracting out. That is exactly why the exclusion appears in so many London policies: insurers want to know precisely who can enforce their promise."
@@ -101,7 +108,7 @@
       },
       {
         h: "Insurance premium tax",
-        say: "**Insurance premium tax** (IPT) is charged on most UK general insurance premiums. It works much like VAT: the **insured pays** it on top of the premium, and the **insurer collects** it and accounts to HMRC.\n\nThere are two rates, **12% standard** and **20% higher** (travel, and cover sold alongside vehicles and appliances), and several exemptions.",
+        say: "**Insurance premium tax** (IPT) is charged on premiums for most general insurance of risks located in the UK. It is borne by the **insured** in addition to the premium, and the **insurer** is responsible for accounting for it to HM Revenue and Customs. Unlike VAT, it cannot be reclaimed by a business.\n\nThere are two rates: a **standard rate of 12%**, and a **higher rate of 20%** for travel insurance and for certain insurance sold with vehicles and domestic appliances. There are also several exemptions.",
         scene: (v) => {
           const tax = (v.prem * RATE[v.type]) / 100;
           return stats([["Premium", `£${num(v.prem, 0)}`], ["IPT", `£${num(tax, 0)}`, "c2"], ["Client pays", `£${num(v.prem + tax, 0)}`]]) +
@@ -112,12 +119,12 @@
         goal: {
           say: "A UK firm buys travel insurance for its staff at a premium of £20,000. Find what it actually pays.",
           test: (v) => v.type === 1 && v.prem === 20000,
-          done: "£24,000. Travel is taxed at the higher rate of 20%. And unlike VAT, a business can’t reclaim IPT, so it is a real cost."
+          done: "£24,000. Travel is taxed at the higher rate of 20%. And unlike VAT, a business cannot reclaim IPT, so it is a real cost."
         }
       },
       {
-        h: "An IPT question",
-        say: "London writes a great deal of marine, aviation and overseas business.",
+        h: "The exemptions",
+        say: "The exemptions are of particular importance in London, since they cover much of what the market writes: reinsurance, commercial ships and aircraft, goods in international transit, and risks located outside the UK.",
         scene: (v) => bars([
   { label: "UK warehouse", right: v.$done ? "£12,000" : "?", segs: [[v.$done ? 12 : 0.2, v.$done ? "c2" : "idle", "12%"]] },
   { label: "Ship’s hull", right: v.$done ? "exempt" : "?", segs: [[0.2, "idle"]] },
@@ -138,8 +145,8 @@
         }
       },
       {
-        h: "People, not just firms",
-        say: "Regulators hold named **individuals** responsible for a regulated firm. Those performing key functions must be approved and must follow conduct principles of their own: integrity, due skill and care, openness with the regulator.\n\nTwo roles you have already met: the **compliance officer** and the **Money Laundering Reporting Officer**. This applies to brokers, insurers, managing agents and members’ agents alike.",
+        h: "Individual accountability",
+        say: "Regulation attaches to individuals as well as to firms. Under the **Senior Managers and Certification Regime**, those who perform the most senior functions must be approved by the regulator before taking up the role, and each has prescribed responsibilities for which they are personally accountable. All are bound by conduct rules requiring, among other things, integrity, due skill, care and diligence, and openness with the regulators.\n\nThe functions include those responsible for **compliance** and for **money laundering reporting**. The regime applies to insurers, managing agents and intermediaries alike.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -157,15 +164,15 @@
           ["Only if the director stole the money.", "No dishonesty is needed. Failing to take reasonable care in the role is enough."]
         ],
           a: 1,
-          why: "The regulator can fine, publicly censure or ban an individual. The aim is that responsibility can’t dissolve into “the firm”."
+          why: "The regulator can fine, publicly censure or ban an individual. The aim is that responsibility cannot dissolve into “the firm”."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: the law that governs the people in the middle.",
+        h: "Summary",
+        say: "The next chapter considers the law and regulation that govern intermediaries.",
         scene: () => recap([
           "Compulsory insurances are almost all liability covers; injured parties are paid regardless.",
-          "Consumer Rights Act 2015: unfair terms don’t bind consumers.",
+          "Consumer Rights Act 2015: unfair terms do not bind consumers.",
           "Third Parties Act 1999: outsiders may gain rights unless the policy excludes the Act.",
           "IPT: 12% standard, 20% higher; paid by the insured, collected by the insurer.",
           "Ships, aircraft, international cargo, reinsurance and overseas risks are exempt."

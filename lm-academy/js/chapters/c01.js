@@ -13,13 +13,20 @@
   window.SLIP.chapters.push({
     id: "risk", part: "LM1",
     title: "Risk and insurance",
-    blurb: "What risk is, which risks can be insured, and why a pool of strangers beats going it alone.",
+    blurb: "What risk is, which risks can be insured, and why a large pool of independent risks is more predictable than any one of them.",
     minutes: 8,
+    lead: "Insurance is one response to risk among several. This chapter establishes what risk is, which risks can be insured, and why pooling them works.",
+    aims: [
+      "Define risk and the four ways of responding to it.",
+      "Explain how pooling makes an uncertain loss predictable, and why the size of the pool matters.",
+      "Distinguish a **peril** from a **hazard**, and physical from moral hazard.",
+      "Apply the tests of insurability to a given risk."
+    ],
     init: { n: 2 },
     steps: [
       {
-        h: "Four things you can do with a risk",
-        say: "Risk is uncertainty about a loss. A business that has spotted one has four choices: **avoid** it, **reduce** it, **keep** it, or **transfer** it to someone else. Spotting, measuring and choosing is called **risk management**.\n\nInsurance is the fourth choice: transfer, in exchange for a premium.",
+        h: "Responses to risk",
+        say: "In insurance, **risk** means uncertainty as to whether a loss will occur, and how large it will be. A firm that has identified a risk can respond in four ways. It may **avoid** the activity that gives rise to it, **reduce** its likelihood or severity, **retain** it and bear any loss itself, or **transfer** it to another party. The process of identifying, measuring and choosing among these responses is **risk management**.\n\nInsurance is a form of transfer: the insurer assumes the risk in return for a premium.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -35,16 +42,16 @@
           opts: [
           ["Avoided it.", "Avoiding means not running the risk at all: selling the lorries. They are still on the road."],
           "Reduced it, then transferred what is left.",
-          ["Transferred it twice.", "A tracker company doesn’t take on the loss. Only the insurer does."],
+          ["Transferred it twice.", "A tracker company does not take on the loss. Only the insurer does."],
           ["Kept it.", "Keeping means paying for thefts itself. It has an insurer for that."]
         ],
           a: 1,
-          why: "The four choices aren’t exclusive. Most firms **reduce** what they can and **transfer** the rest, and insurers reward the first with a better price on the second."
+          why: "The four choices are not exclusive. Most firms **reduce** what they can and **transfer** the rest, and insurers reward the first with a better price on the second."
         }
       },
       {
-        h: "The common pool",
-        say: "A house costs £250,000 to rebuild. In any year, about 4 houses in 1,000 burn down. No owner knows if theirs is one of them.\n\nSo owners club together. Each pays a small, certain premium into a **pool**; the unlucky few are paid from it. Change the size of the pool.",
+        h: "Pooling",
+        say: "Suppose a house costs £250,000 to rebuild and that, in any year, four houses in every thousand are destroyed by fire. The expected loss for each owner is £1,000 a year, but no owner will ever lose £1,000: each loses either nothing or £250,000.\n\nInsurance resolves this by **pooling**. Each owner pays a small, certain premium into a common fund from which the few who suffer a loss are paid. Whether the arrangement is reliable depends on the number of independent risks in the pool.",
         scene: (v) => {
           const p = pool(v);
           return stats([["Members", p.n.toLocaleString("en-GB")], ["Fair premium", `£${num(p.fair, 0)}`], ["Bad year, each", `£${num(p.hi, 0)}`, p.hi > p.fair * 1.5 ? "bad" : "good"]]) +
@@ -65,7 +72,7 @@
       },
       {
         h: "Peril and hazard",
-        say: "Two words underwriters never mix up.\n\nA **peril** is what causes the loss: fire, theft, storm.\n\nA **hazard** is anything that makes the peril more likely or its damage worse.",
+        say: "Two terms are used with precision by underwriters and should not be interchanged.\n\nA **peril** is the event that causes a loss: fire, theft, storm, collision.\n\nA **hazard** is a condition that increases the likelihood that a peril will operate, or the severity of the loss if it does.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -78,7 +85,7 @@
         ask: {
           q: "A cottage has a thatched roof. In underwriting terms, the thatch is…",
           opts: [
-          ["A peril.", "A peril is the event that does the damage. Thatch doesn’t cause a loss; fire does."],
+          ["A peril.", "A peril is the event that does the damage. Thatch does not cause a loss; fire does."],
           "A physical hazard.",
           ["A moral hazard.", "Moral hazard is about the owner’s behaviour. Thatch is a feature of the building."],
           ["Neither: it is simply part of the property insured.", "It is part of the property, but one that changes the risk, which is exactly what a hazard is."]
@@ -88,8 +95,8 @@
         }
       },
       {
-        h: "The hazard you can’t photograph",
-        say: "Physical hazard is about the *thing*: thatch, no sprinklers, a factory next to a river.\n\n**Moral hazard** is about the *person*: their honesty, their care, their attitude to loss. A surveyor can measure the first. The second shows up in behaviour and history.",
+        h: "Physical and moral hazard",
+        say: "Hazard is of two kinds. **Physical hazard** arises from the characteristics of the subject-matter: its construction, its location, the absence of sprinklers. It can be inspected and measured.\n\n**Moral hazard** arises from the conduct and attitude of the insured: honesty, care, and the incentive that insurance itself may create to be less careful. It cannot be surveyed; it is inferred from behaviour and from claims history.",
         scene: () => bars([
           { label: "Shop A: alarm, tidy stock, no claims in ten years", segs: [[20, "c1", "Low"]] },
           { label: "Shop B: same building, three unexplained fires", segs: [[85, "bad", "High moral hazard"]] }
@@ -107,8 +114,8 @@
         }
       },
       {
-        h: "Three ways to sort a risk",
-        say: "**Pure or speculative.** Pure risks can only hurt you (a fire). Speculative risks might pay off (launching a product).\n\n**Particular or fundamental.** Particular risks strike individuals. Fundamental ones strike whole societies: war, famine.\n\n**Financial or non-financial.** Can the loss be measured in money?",
+        h: "The classification of risks",
+        say: "Risks are classified along three dimensions, each of which bears on insurability.\n\nA **pure** risk offers only the possibility of loss; a **speculative** risk is undertaken in the hope of gain. A **particular** risk affects an individual or a firm; a **fundamental** risk, such as war or famine, affects a whole society at once. A **financial** risk produces a loss that can be measured in money; a **non-financial** risk does not.",
         scene: () => flow({
           h: 176,
           nodes: [
@@ -123,31 +130,31 @@
           ["That it never becomes popular.", "A speculative risk: she took it hoping to profit, and it depends on her own decisions."],
           "That a kitchen fire closes it for three months.",
           ["That a recession hits every restaurant in the country.", "A fundamental risk, striking a whole society at once. There is nobody left in the pool to pay."],
-          ["That she comes to regret opening it.", "Regret can’t be measured in money: a non-financial risk."]
+          ["That she comes to regret opening it.", "Regret cannot be measured in money: a non-financial risk."]
         ],
           a: 1,
           why: "A fire is **pure** (loss or no loss), **particular** (her restaurant, not everyone’s) and **financial** (repairs and lost income can be valued). The other three each fail one test."
         }
       },
       {
-        h: "The insurability test",
-        say: "Put it together. The blue column in the last picture is the insurable side. A risk generally needs to pass all of these.",
+        h: "The conditions of insurability",
+        say: "The classifications combine into a set of conditions that a risk must ordinarily satisfy before an insurer will accept it. None is a rule of law in itself, and specialist markets, Lloyd’s among them, have long been willing to test the boundaries; but a risk that fails one of them will be difficult or impossible to place.",
         scene: () => tick([[1, "Financial: the loss can be valued"], [1, "Pure, not speculative"], [1, "Particular, not fundamental"], [1, "Fortuitous: accidental as far as the insured is concerned"], [1, "The insured has an insurable interest"], [1, "Not against public policy"], [0, "One-offs with no comparable risks are hard, though Lloyd’s is known for trying"]]),
         ask: {
           q: "A courier wants a policy to pay his speeding fines. Which test does it fail?",
           opts: [
-          ["It isn’t financial.", "A fine is an exact sum of money. It couldn’t be more financial."],
+          ["It is not financial.", "A fine is an exact sum of money. It could not be more financial."],
           "It is against public policy.",
           ["It is a fundamental risk.", "It strikes one driver, not society. It is a particular risk."],
           ["He has no insurable interest.", "He would certainly lose money, so the interest is there. The objection lies elsewhere."]
         ],
           a: 1,
-          why: "A fine is meant to punish. Letting someone insure it away would defeat the law, so the courts won’t enforce such a contract. It isn’t fortuitous either: he chooses how fast to drive."
+          why: "A fine is meant to punish. Letting someone insure it away would defeat the law, so the courts will not enforce such a contract. It is not fortuitous either: he chooses how fast to drive."
         }
       },
       {
-        h: "What insurance is for",
-        say: "The **primary functions**: transfer risk, spread it through the pool, and give the insured certainty, a known premium in place of an unknown loss.\n\nThe **secondary functions** are what follows: firms needn’t hoard cash against disaster, so they can invest and expand; jobs survive a fire; and insurers’ funds are invested in the economy.\n\nSome cover is **compulsory**, such as motor and employers’ liability, so that injured people are always compensated.",
+        h: "The functions of insurance",
+        say: "The **primary functions** of insurance are those it performs directly: the transfer of risk, the spreading of the losses of the few across the many, and the substitution of a known premium for an uncertain loss.\n\nIts **secondary functions** follow from these. A firm that is insured need not hold idle reserves against disaster and can invest them; employment survives a loss that would otherwise close a business; and insurers’ funds are themselves invested in the economy.\n\nCertain insurances are **compulsory** by statute, notably motor and employers’ liability, so that those injured are certain of compensation.",
         scene: () => flow({
           h: 190,
           nodes: [
@@ -170,8 +177,8 @@
         }
       },
       {
-        h: "In five lines",
-        say: "Next: what makes that promise a contract.",
+        h: "Summary",
+        say: "The next chapter considers the legal principles that turn the insurer’s promise into an enforceable contract.",
         scene: () => recap([
           "Risk can be avoided, reduced, kept or transferred. Insurance transfers it.",
           "Many pay a little into a pool so the few can be paid a lot; large numbers make the cost predictable.",

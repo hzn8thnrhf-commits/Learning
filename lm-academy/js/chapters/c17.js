@@ -12,13 +12,20 @@
   window.SLIP.chapters.push({
     id: "framework", part: "LM3",
     title: "The market framework",
-    blurb: "London as a global market: where its capital comes from, who regulates it after Brexit, and how firms are governed.",
+    blurb: "London as a global market: its sources of capital, its regulation since the UK left the EU, and the governance of the firms within it.",
     minutes: 9,
+    lead: "LM3 considers the market from the underwriter’s position. It begins with the framework within which every underwriting decision is taken: where the business and the capital come from, and how firms are regulated and governed.",
+    aims: [
+      "Distinguish a global from a domestic market and explain the significance of overseas licensing.",
+      "Identify the sources of London’s capital and explain why expenses affect its supply.",
+      "Describe the regulatory position following the UK’s withdrawal from the EU.",
+      "Explain the role of Lloyd’s as a supervisor of its own market, the Senior Managers regime and the Corporate Governance Code."
+    ],
     init: { exp: 38, loss: 55, code: 0 },
     steps: [
       {
-        h: "Global, not domestic",
-        say: "A **domestic** market insures its own territory. A **global** market draws clients from everywhere. London is global: most of its premium comes from overseas.\n\nA client may still keep part of its programme at home, out of loyalty or because local rules require a local insurer. And London can only write a country’s risks if that country’s regulator **permits** overseas insurers to do so.",
+        h: "A global market",
+        say: "A **domestic** market insures risks located in its own territory. A **global** market attracts business from many territories. London is a global market: the greater part of its premium income originates outside the UK.\n\nA client may nevertheless place part of its programme in its home market, from preference or because local law requires it. And London may insure risks in another country only to the extent that the law of that country **permits** insurers established abroad to do so.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -40,8 +47,8 @@
         }
       },
       {
-        h: "Whose money is it?",
-        say: "London’s capital comes from many kinds of investor: overseas insurance groups (a large share), UK insurers, pension and investment funds, and at Lloyd’s some private individuals. Many groups operate **both** a company and a Lloyd’s syndicate.\n\nInvestors can put money anywhere. Capital stays only while the return beats the alternatives.",
+        h: "The sources of capital",
+        say: "The capital supporting the London Market comes from several sources: overseas insurance groups, which supply a large share; UK insurers; pension funds and other institutional investors; and, at Lloyd’s, a diminishing number of private individuals. Many groups participate through **both** a company and a syndicate.\n\nCapital is mobile. It remains only while the return it earns in London exceeds what it could earn at comparable risk elsewhere.",
         scene: (v) => {
           const cr = v.loss + v.exp, margin = 100 - cr, roc = margin * 1.5 + 3;
           return stats([["Combined ratio", pct(cr)], ["Return on capital", pct(roc), roc < 8 ? "bad" : "good"]]) +
@@ -55,12 +62,12 @@
         goal: {
           say: "Investors want at least 8%. With a claims ratio of 60%, find the highest expense ratio the market can afford.",
           test: (v) => v.loss === 60 && v.exp === 36,
-          done: "36%. One more point of expense and the capital has a better home elsewhere. Underwriters can’t control the weather, but the market can control what it spends, which is why expenses are where London’s competitiveness is decided."
+          done: "36%. One more point of expense and the capital has a better home elsewhere. Underwriters cannot control the weather, but the market can control what it spends, which is why expenses are where London’s competitiveness is decided."
         }
       },
       {
-        h: "Modernising the market",
-        say: "The expense problem has a market-wide response. **Blueprint Two** is a cross-market programme, led by Lloyd’s with the market associations, to replace decades-old shared systems with digital placing, accounting and claims processes built around standard data.",
+        h: "Market modernisation",
+        say: "London’s expenses are high by international standards, in part because a subscription market requires each transaction to be processed by many parties. The market’s collective response is **Blueprint Two**, a programme led by Lloyd’s with the market associations to replace long-established central systems with digital processes for placing, accounting and claims, founded on common data standards. Its delivery has been phased over several years.",
         scene: () => bars([
           { label: "Before", right: "re-keyed at every stage", segs: [[25, "bad", "Broker"], [25, "bad", "Insurer"], [25, "bad", "Bureau"], [25, "bad", "Claims"]] },
           { label: "The aim", right: "entered once, reused", segs: [[25, "c1", "Data captured"], [75, "soft1", "Flows through"]] }
@@ -68,7 +75,7 @@
         ask: {
           q: "One insurer on a twenty-insurer slip still wants paper documents. Who bears the cost?",
           opts: [
-          ["Only that insurer.", "The slip can’t be processed digitally for nineteen and on paper for one."],
+          ["Only that insurer.", "The slip cannot be processed digitally for nineteen and on paper for one."],
           "Everyone on the slip, and the broker.",
           ["Nobody: the bureau absorbs it.", "The bureau’s costs are charged back to the market."],
           ["The client, directly.", "Eventually, through the premium. But first it lands on every firm handling the risk."]
@@ -78,8 +85,8 @@
         }
       },
       {
-        h: "Regulation after Brexit",
-        say: "Brokers are regulated by the **FCA** only. Insurers and managing agents are **dual-regulated** by the PRA and FCA.\n\nBefore Brexit, a UK insurer could **passport**: use its UK authorisation across the EU. That right has gone. Rules that came from Europe, such as the Insurance Distribution Directive, remain because they were written into UK law. The **Financial Services and Markets Act 2023** lets the UK replace inherited EU rules, including Solvency II, with its own.",
+        h: "Regulation since withdrawal from the EU",
+        say: "While the UK was a member of the EU, an insurer authorised in the UK could conduct business throughout the Union on the strength of that authorisation, a right known as **passporting**. The right ended with the UK’s withdrawal.\n\nLegislation of European origin that had been incorporated into UK law, such as the rules implementing the Insurance Distribution Directive, continues to apply. The **Financial Services and Markets Act 2023** provides for such inherited law, including the Solvency II regime, to be replaced over time by rules made by the UK regulators.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -92,7 +99,7 @@
         ask: {
           q: "How does Lloyd’s write EU business now that passporting has ended?",
           opts: [
-          ["It can’t.", "It can, by a different route."],
+          ["It cannot.", "It can, by a different route."],
           "Through an insurance company it set up in Brussels.",
           ["Under a UK–EU agreement that replaced passporting.", "No such agreement exists for insurance."],
           ["As surplus lines business.", "That is a US concept. The EU has no equivalent open door."]
@@ -102,8 +109,8 @@
         }
       },
       {
-        h: "Lloyd’s as a regulator",
-        say: "Inside its own market Lloyd’s acts as a partial regulator, alongside the PRA and FCA, with cooperation agreements so firms aren’t asked for the same thing three times.\n\nIt works through **byelaws** and the **Principles for doing business at Lloyd’s**: outcome-based standards covering underwriting, claims, reserving, governance, culture and more. Syndicates that meet them well get a lighter touch; those that don’t get closer oversight and may be made to hold more capital.",
+        h: "Lloyd’s as supervisor",
+        say: "Within its own market Lloyd’s exercises supervisory functions alongside the PRA and the FCA, with which it has cooperation arrangements designed to avoid duplication.\n\nIt does so through **byelaws** and through the **Principles for doing business at Lloyd’s**: standards, expressed as outcomes, covering underwriting, claims, reserving, governance, culture and other matters. Oversight is proportionate. A syndicate that meets the Principles is subject to less intervention; one that does not may face restrictions on its plan and a higher capital requirement.",
         scene: () => bars([
           { label: "Syndicate A: meets the Principles", right: "lighter oversight", segs: [[30, "c1", "Oversight"]] },
           { label: "Syndicate B: falls short", right: "plan restricted, capital loaded", segs: [[85, "bad", "Oversight"]] }
@@ -114,15 +121,15 @@
           ["Because the PRA asks it to.", "The PRA supervises managing agents itself. Lloyd’s has its own reason."],
           "Because a failure falls on the Central Fund and the market’s shared rating.",
           ["Because Lloyd’s shares in each syndicate’s profit.", "Lloyd’s takes levies and contributions, not a share of underwriting profit."],
-          ["It doesn’t: reserving is the managing agent’s business.", "It is the agent’s job. But everyone else pays if it is done badly."]
+          ["It does not: reserving is the managing agent’s business.", "It is the agent’s job. But everyone else pays if it is done badly."]
         ],
           a: 1,
           why: "The chain of security makes every syndicate’s standards everyone’s business."
         }
       },
       {
-        h: "Accountable people",
-        say: "Under the **Senior Managers and Certification Regime**, each senior manager holds a regulator-approved function with a written statement of what they are personally responsible for. Staff whose jobs could cause significant harm are certified fit and proper by the firm each year. Conduct rules apply to nearly everyone.\n\nThe aim is that after a failure, “who was responsible?” already has an answer.",
+        h: "The Senior Managers and Certification Regime",
+        say: "The **Senior Managers and Certification Regime** has three elements. **Senior managers** hold functions for which regulatory approval is required, and each has a statement of the matters for which they are personally responsible. Staff in **certified** roles, whose work could cause significant harm, must be assessed by the firm as fit and proper each year. **Conduct rules** apply to almost all employees.\n\nThe purpose is that, when something goes wrong, responsibility can be attributed to an identified individual.",
         scene: () => flow({
           h: 190,
           nodes: [
@@ -146,14 +153,14 @@
       },
       {
         h: "Governance",
-        say: "The **UK Corporate Governance Code** is not insurance-specific, but London insurers follow it. It works on a “comply or explain” basis and has five themes.",
+        say: "The **UK Corporate Governance Code**, issued by the Financial Reporting Council, applies to companies with a premium listing and is widely adopted as a standard by others, including London Market insurers. It operates on a “comply or explain” basis: a company must either follow each provision or give its reasons for not doing so.\n\nThe Code is organised under five headings.",
         scene: (v) => `<ol class="k-recap">${CODE.map((m, i) => `<li${i === v.code ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
         ctl: [{ k: "code", label: "Theme", min: 0, max: 4, step: 1, fmt: (i) => `${i + 1} of 5` }],
         live: (v) => `**${CODE[v.code][0]}.** ${CODE[v.code][1]}`
       },
       {
-        h: "In five lines",
-        say: "Next: the words that make the promise.",
+        h: "Summary",
+        say: "The next chapter considers the contract itself and the wording in which it is expressed.",
         scene: () => recap([
           "London is a global market, but each country decides whether it may write there.",
           "Capital is mobile: it stays only while returns beat the alternatives.",

@@ -1,184 +1,206 @@
-/* LM3 · 8 — Exposure and accumulation */
+/* LM3 · 8 — Pricing a risk */
 (() => {
-  const { bars, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
-  const RP = [5, 10, 25, 50, 100, 200, 500];
-  const loss = (T) => 6 * Math.pow(Math.log(T), 1.8);
-  const MOD = [
-    ["Hazard", "A catalogue of thousands of simulated events: where each storm or earthquake strikes and how strong it is at every point."],
-    ["Exposure", "Your data: where each insured property is, what it is built of, what it is worth. The only part the insurer supplies, and the part most often wrong."],
-    ["Vulnerability", "How much damage a building of that type suffers at that wind speed or ground movement."],
-    ["Financial", "Applies policy terms, deductibles, limits and reinsurance to turn damage into the insurer’s own loss."]
-  ];
+  const { bars, cols, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
+  const YEARS = [[2021, 300, 80], [2022, 420, 90], [2023, 250, 100], [2024, 510, 110], [2025, 380, 120]];
+  const FLEET = [5, 20, 50, 100, 250, 500, 1000, 2500];
 
   window.SLIP.chapters.push({
-    id: "exposure", part: "LM3",
-    title: "Exposure and accumulation",
-    blurb: "Why a book of well-priced risks can still sink an insurer, how catastrophe models are read, and the levers that control it.",
-    minutes: 10,
-    init: { n: 12, mod: 0, rp: 2, lim: 50 },
+    id: "pricing", part: "LM3",
+    title: "Pricing a risk",
+    blurb: "The components of a premium, experience and exposure rating, burning cost and triangulation, and the measurement of price adequacy.",
+    minutes: 12,
+    lead: "A price must be sufficient for the risk it covers. This chapter constructs a premium from its components and considers how its adequacy is tested.",
+    aims: [
+      "Calculate a premium from expected claims, expenses and a required return.",
+      "Distinguish experience rating from exposure rating and explain the role of credibility.",
+      "Explain the adjustments that a burning cost or a triangulation requires, and their limits.",
+      "Interpret an actual-to-technical ratio and a cumulative rate index."
+    ],
+    init: { exp: 30, mar: 10, spr: 0, tim: 0, rec: 0, fl: 3, adj: 0, att: 95, rate: 2, inf: 5 },
     steps: [
       {
-        h: "Good risks, bad portfolio",
-        say: "Pricing asks: *is this risk worth writing?* Exposure management asks a different question: *what happens if many of my risks are hit at once?*\n\nAn **accumulation** is the total exposed to one event.",
-        scene: () => bars([
-          { label: "Book A: 40 risks across 40 cities", right: "worst event: 1 risk", segs: [[5, "c1"]] },
-          { label: "Book B: 40 risks along one coast", right: "worst event: all 40", segs: [[200, "bad", "One hurricane"]] }
-        ], { max: 200 }),
-        ask: {
-          q: "Two books each hold 40 identical, well-priced £5m lines. Book A is spread over 40 cities; Book B sits along one coast. Which is the better portfolio?",
-          opts: [
-          ["The same: identical risks at identical prices.", "Identical one by one. Very different when a single storm arrives."],
-          "Book A. Book B can lose £200m in an afternoon.",
-          ["Book B: the underwriter knows that coast best.", "Expertise improves selection. It doesn’t stop one hurricane hitting everything selected."]
-        ],
-          a: 1,
-          why: "The difference exists only at portfolio level, which is why an underwriter can do everything right risk by risk and still build something dangerous."
+        h: "The components of a premium",
+        say: "The premium for a risk should reflect the cost it brings to the pool. It must provide for three things: the expected cost of **claims**; the **expenses** of the business, including brokerage; and a **return** on the capital that the risk requires.\n\nThe expected claims on the risk below are £60,000.",
+        scene: (v) => {
+          const prem = 60 / (1 - v.exp / 100 - v.mar / 100);
+          return stats([["Expected claims", "£60k"], ["Premium needed", `£${num(prem, 0)}k`, "c1"], ["Claims ratio", pct(6000 / prem)]]) +
+            bars([{ label: "The premium", right: `£${num(prem, 0)}k`, segs: [[60, "c1", "Claims"], [prem * v.exp / 100, "c2", "Expenses"], [prem * v.mar / 100, "c3", "Return"]] }], { max: 160 });
+        },
+        ctl: [{ k: "exp", label: "Expenses and brokerage", min: 20, max: 45, step: 1, fmt: pct }, { k: "mar", label: "Return on capital", min: 0, max: 15, step: 1, fmt: pct }],
+        live: (v) => `Expenses and return are percentages of the *premium*, so divide: £60k ÷ ${pct(100 - v.exp - v.mar)} = **£${num(60 / (1 - v.exp / 100 - v.mar / 100), 0)}k**. Simply adding ${pct(v.exp + v.mar)} to £60k would give £${num(60 * (1 + (v.exp + v.mar) / 100), 0)}k and leave the insurer short.`,
+        goal: {
+          say: "Expenses and brokerage take 35%. Find the return on capital at which the premium is exactly double the expected claims.",
+          test: (v) => v.exp === 35 && v.mar === 15,
+          done: "15%. Half of every pound of premium never reaches a claim. That is not greed: it is brokerage, staff, systems, reinsurance and the cost of the capital that makes the promise worth having."
         }
       },
       {
-        h: "Counting the aggregate",
-        say: "The first tool is simple: add up the limits exposed in each zone and compare the total with a ceiling.\n\nThe underwriter writes £5m lines. The Miami zone has an aggregate limit of £100m. Keep saying yes to good Miami risks.",
+        h: "Rate, exposure and rating factors",
+        say: "In practice a premium is calculated by applying a **base rate** to a measure of **exposure**, and adjusting the result by **rating factors** that reflect the features in which the particular risk differs from the average of its class.\n\nA factory with a sum insured of £50m, at a base rate of 0.20%, produces a premium of £100,000 before adjustment.",
         scene: (v) => {
-          const agg = v.n * 5;
-          return stats([["Miami risks", `${v.n}`], ["Aggregate", money(agg), agg > 100 ? "bad" : ""], ["Room left", money(Math.max(100 - agg, 0)), agg >= 90 ? "bad" : "good"]]) +
+          const f = (v.spr ? 0.8 : 1) * (v.tim ? 1.3 : 1) * (v.rec ? 1.25 : 1), prem = 100 * f;
+          return stats([["Base premium", "£100k"], ["Factors", `× ${num(f, 2)}`], ["Premium", `£${num(prem, 0)}k`, "c1"]]) +
             bars([
-              { label: "Miami", right: money(agg), segs: [[Math.min(agg, 100), "c1"], [Math.max(agg - 100, 0), "bad", "Over"]] },
-              { label: "Houston", right: "£45m", segs: [[45, "c1"]] },
-              { label: "New Orleans", right: "£30m", segs: [[30, "c1"]] }
-            ], { max: 160, marks: [[100, "Zone limit"]] });
+              { label: "Sprinklers", right: v.spr ? "× 0.80" : "× 1.00", segs: [[v.spr ? 80 : 100, v.spr ? "c3" : "idle"]] },
+              { label: "Construction", right: v.tim ? "× 1.30" : "× 1.00", segs: [[v.tim ? 130 : 100, v.tim ? "bad" : "idle"]] },
+              { label: "Claims record", right: v.rec ? "× 1.25" : "× 1.00", segs: [[v.rec ? 125 : 100, v.rec ? "bad" : "idle"]] }
+            ], { max: 135, marks: [[100, "Average risk"]] });
         },
-        ctl: [{ k: "n", label: "Miami risks written", min: 4, max: 30, step: 1, fmt: (x) => `${x}` }],
-        live: (v) => (v.n * 5 > 100 ? "Over the limit, and every single risk was within the £5m line authority. Nobody broke a rule on any one risk; the breach exists only in the total." : v.n * 5 >= 90 ? "Nearly full. From here every new Miami risk should prompt a question: a smaller line, facultative reinsurance, or letting a weaker Miami risk go at renewal to make room." : "Room to write. Aggregates are tracked by zone and peril, in real time where possible, so the answer is known before the stamp goes down."),
+        ctl: [{ k: "spr", label: "Sprinklers", opts: ["None", "Fitted"] }, { k: "tim", label: "Construction", opts: ["Brick and steel", "Timber frame"] }, { k: "rec", label: "Claims record", opts: ["Clean", "Two fires"] }],
+        live: (v) => "A **discount** rewards a feature that reduces the risk; a **loading** charges for one that increases it. Factors multiply. A rating matrix like this suits similar risks; large or unusual ones are priced individually.",
         goal: {
-          say: "Find the largest number of Miami risks the zone limit allows.",
-          test: (v) => v.n === 20,
-          done: "Twenty lines of £5m. The twenty-first is no worse a risk than the first, which is exactly why a limit is needed: nothing about the individual risk tells you to stop."
+          say: "Find a building with a loading and a discount whose premium comes out at exactly the base £100k.",
+          test: (v) => v.spr === 1 && v.tim === 0 && v.rec === 1,
+          done: "Sprinklers (× 0.80) and a poor claims record (× 1.25) cancel exactly, because 0.8 × 1.25 = 1. Notice that a 20% discount and a 25% loading are needed to cancel: factors multiply, so percentages do not simply add."
         }
       },
       {
-        h: "Inside a catastrophe model",
-        say: "Adding limits assumes everything in the zone is a total loss. A **catastrophe model** is subtler: it simulates thousands of possible events against the actual portfolio. It has four parts.",
-        scene: (v) => flow({
-          h: 250,
-          on: [["h", "e", "v", "f"][v.mod]],
-          nodes: [
-            { id: "h", x: 95, y: 4, label: "Hazard", sub: "The events" },
-            { id: "e", x: 95, y: 68, label: "Exposure", sub: "Your data", tone: "c2" },
-            { id: "v", x: 95, y: 132, label: "Vulnerability", sub: "Damage" },
-            { id: "f", x: 95, y: 196, label: "Financial", sub: "Your loss", tone: "c1" }
-          ],
-          edges: [["h", "e"], ["e", "v"], ["v", "f"]]
-        }),
-        ctl: [{ k: "mod", label: "Module", opts: ["Hazard", "Exposure", "Damage", "Financial"] }],
-        live: (v) => `**${MOD[v.mod][0]}.** ${MOD[v.mod][1]}`
-      },
-      {
-        h: "Reading the curve",
-        say: "The model’s main output is an **exceedance probability curve**: for each return period, the loss that will be equalled or exceeded that often. The average of all the simulated years is the **average annual loss**, which is what the catastrophe load in the price must cover.\n\nThis insurer has £110m of capital.",
-        scene: (v) => {
-          const T = RP[v.rp], L = loss(T);
-          const pts = [2, 3, 5, 10, 25, 50, 100, 200, 500].map((t) => [t, loss(t)]);
-          return stats([["Return period", `1 in ${T}`], ["Loss at that level", money(L), L > 110 ? "bad" : "c1"], ["Chance each year", pct(100 / T, T > 100 ? 1 : 0)]]) +
-            plot({ h: 170, x: { min: 2, max: 500, log: true, ticks: [5, 10, 50, 200, 500], title: "Return period, years" }, y: { min: 0, max: 180, ticks: [0, 60, 120, 180], fmt: (x) => `£${x}m` },
-              series: [{ tone: "c1", pts }], dots: [{ x: T, y: L, tone: L > 110 ? "bad" : "c1" }], refs: [{ y: 110, label: "Capital £110m", left: true }] });
-        },
-        ctl: [{ k: "rp", label: "Return period", min: 0, max: RP.length - 1, step: 1, fmt: (i) => `1 in ${RP[i]} years` }],
-        live: (v) => {
-          const T = RP[v.rp], L = loss(T);
-          return L > 110 ? `At 1 in ${T} the modelled loss of ${money(L)} is **more than the capital**. If the board’s appetite is to survive a 1-in-200 year, this book is outside it, and something must change: less exposure, more reinsurance, or more capital.` : `At 1 in ${T} the loss is ${money(L)}: painful, survivable. Appetite is usually set at several points on this curve, such as “no more than a quarter of capital at 1 in 50”.`;
-        },
-        goal: {
-          say: "Find the return period at which the modelled loss first exceeds the insurer’s capital.",
-          test: (v) => RP[v.rp] === 200,
-          done: "1 in 200: a loss of £121m against £110m of capital. Regulatory capital is calibrated to exactly this point, so on its own figures this insurer doesn’t have enough. It needs less exposure, more reinsurance or more capital."
-        }
-      },
-      {
-        h: "Reinsurance reshapes the curve",
-        say: "The gross 1-in-200 loss is £121m against £110m of capital. The board wants the **net** 1-in-200 loss under £50m. The insurer keeps the first £20m of any event and buys catastrophe excess of loss above that.",
-        scene: (v) => {
-          const rec = Math.min(v.lim, 101), net = 121 - rec;
-          return stats([["Gross", "£121m"], ["Recovered", money(rec), "c2"], ["Net", money(net), net > 50 ? "bad" : "good"]]) +
-            bars([{ label: "The 1-in-200 loss", segs: [[20, "c1", "Kept"], [101 - rec, "bad", "Also kept"], [rec, "c2", "Reinsurers"]] }], { max: 125, marks: [[50, "Net appetite"]] });
-        },
-        ctl: [{ k: "lim", label: "Cover bought above £20m", min: 0, max: 120, step: 10, fmt: (x) => (x ? `${money(x)} xs £20m` : "none") }],
-        live: (v) => {
-          const net = 121 - Math.min(v.lim, 101);
-          return v.lim > 101 ? "Cover above the modelled loss. Not wasted: it protects against the model being wrong, which it will be. But it costs premium." : net > 50 ? `Net ${money(net)}: still outside appetite. Buy more, or write less.` : `Net ${money(net)}: inside appetite. Two cautions. The recovery depends on the **reinsurers paying**, so their security is part of the exposure. And after a big event, cover must be **reinstated** at extra cost, or the next event is unprotected.`;
-        },
-        goal: {
-          say: "Find the least cover that brings the net 1-in-200 loss inside the board’s £50m appetite.",
-          test: (v) => v.lim === 80,
-          done: "£80m excess of £20m, leaving £41m net. The first £20m and the top £21m both stay with the insurer: reinsurance removes the middle of the loss. Each extra £10m of cover costs premium every year to save money once in two centuries, which is what the board is deciding."
-        }
-      },
-      {
-        h: "What the model doesn’t see",
-        say: "**Realistic disaster scenarios** complement the model: take one defined event and add up everything it would cost. They catch what models miss.\n\n**Clash:** one event hitting several classes at once. **Non-modelled perils:** risks with no reliable model yet, where exposure must be tracked by simpler means.",
-        scene: () => flow({
-          h: 190,
-          nodes: [
-            { id: "e", x: 95, y: 4, label: "One port explosion", tone: "bad" },
-            { id: "a", x: 4, y: 76, w: 104, label: "Property" }, { id: "b", x: 118, y: 76, w: 104, label: "Marine cargo" }, { id: "c", x: 232, y: 76, w: 104, label: "Liability" },
-            { id: "d", x: 60, y: 136, w: 104, label: "Business interr." }, { id: "f", x: 176, y: 136, w: 104, label: "Marine hull" }
-          ],
-          edges: [["e", "a"], ["e", "b"], ["e", "c"]]
-        }),
+        h: "The meanings of “premium”",
+        say: "“Premium” is used in several senses, which must be distinguished.\n\n**Written** premium is calculated on the line an underwriter has written; **signed** premium on the line after signing down. **Gross** premium is stated before deductions such as brokerage and the cost of reinsurance; **net** premium after them. **Earned** premium is the part attributable to the period of cover that has elapsed.",
+        scene: (v) => bars([
+  { label: "Written line 20%", right: "£200k", segs: [[200, "soft1", "Written"]] },
+  { label: "Signed line 15%", right: v.$done ? "£150k" : "?", segs: v.$done ? [[150, "c1", "Signed gross"]] : [[0.5, "idle"]] },
+  { label: "After 20% brokerage", right: v.$done ? "£120k" : "?", segs: v.$done ? [[120, "c1", "Net"], [30, "c2", "Brokerage"]] : [[0.5, "idle"]] }
+], { max: 200 }),
         ask: {
-          q: "Each class underwriter is inside their own aggregate limit for the port. Is the insurer safe?",
+          q: "An underwriter writes a 20% line on a £1m premium. It signs down to 15%, and brokerage is 20%. How much premium does she actually receive?",
+          fix: true,
           opts: [
-          ["Yes. Every limit is respected.", "Every limit was set class by class. The explosion doesn’t respect classes."],
-          "Not necessarily. Nobody has added the classes together.",
-          ["Yes, provided each class has its own reinsurance.", "Five separate programmes mean five separate retentions from one event, all at once."]
+          ["£200,000", "That is the written line, before signing down and before brokerage."],
+          ["£160,000", "That takes brokerage off the written line. Premium follows the *signed* line."],
+          ["£150,000", "That is signed gross premium. The broker has not been paid yet."],
+          "£120,000"
         ],
-          a: 1,
-          why: "Five teams, each within limits, can share one loss. **Clash** is found only by someone looking across classes, which is the job of a central exposure management function and the reason Lloyd’s prescribes cross-class scenarios."
+          a: 3,
+          why: "15% of £1m is £150,000 signed; less 20% brokerage leaves £120,000. An underwriter who budgets on written, gross figures will be 40% short. Plans are built on signed, net income."
         }
       },
       {
-        h: "Garbage in",
-        say: "A model is exactly as good as the exposure data fed to it. Location, construction, occupancy and value all change the answer, sometimes dramatically.",
+        h: "Experience and exposure rating",
+        say: "The expected cost of claims may be estimated in two ways. **Experience rating** derives it from the claims history of the risk itself. **Exposure rating** derives it from the cost of similar risks, by means of market rates or a model.\n\nA haulier’s own record implies a cost of £900 a vehicle. Comparable fleets cost £600. The weight to be given to the haulier’s own record, its **credibility**, depends on the volume of data that record contains.",
+        scene: (v) => {
+          const n = FLEET[v.fl], z = n / (n + 150), price = z * 900 + (1 - z) * 600;
+          return stats([["Fleet", `${num(n, 0)} vehicles`], ["Weight on own record", pct(z * 100), "c1"], ["Rate", `£${num(price, 0)} a vehicle`]]) +
+            bars([{ label: "Where the price comes from", segs: [[z * 100, "c1", "Own experience"], [(1 - z) * 100, "c2", "Similar risks"]] }], { max: 100 });
+        },
+        ctl: [{ k: "fl", label: "Size of the fleet", min: 0, max: FLEET.length - 1, step: 1, fmt: (i) => `${num(FLEET[i], 0)} vehicles` }],
+        live: (v) => (FLEET[v.fl] <= 50 ? "A handful of vehicles produce a handful of claims: mostly luck. Its record gets little weight and the price sits near the market rate." : FLEET[v.fl] >= 500 ? "Hundreds of vehicles generate enough claims for the record to mean something. The fleet is priced largely on itself." : "A blend. The weight given to a risk’s own experience is its **credibility**: it rises with the volume of data behind it."),
+        goal: {
+          say: "Find the smallest fleet whose own record gets more than half the weight.",
+          test: (v) => v.fl === 4,
+          done: "250 vehicles. Below that, the fleet’s history is more noise than signal and the market rate does most of the work. This is why a small client with a “great record” cannot expect a great price for it."
+        }
+      },
+      {
+        h: "Burning cost",
+        say: "The simplest form of experience rating is the **burning cost**: the total claims of a past period divided by the total exposure of that period, which gives a rate for application to the coming year.\n\nHistorical figures cannot be used as they stand. They must first be adjusted to present-day conditions.",
+        scene: (v) => {
+          const rows = YEARS.map(([y, c, f], i) => { const k = v.adj ? Math.pow(1.06, 4 - i) : 1; return [y, c * k, f]; });
+          const tot = rows.reduce((a, r) => a + r[1], 0), veh = rows.reduce((a, r) => a + r[2], 0), bc = tot / veh;
+          return stats([["Claims, 5 years", `£${num(tot, 0)}k`], ["Vehicle-years", `${veh}`], ["Burning cost", `£${num(bc * 1000, 0)} a vehicle`, "c1"]]) +
+            cols({ h: 160, max: 650, bars: rows.map(([y, c]) => ({ label: `${y}`, segs: [[c, "c1"]], top: `£${num(c, 0)}k` })) });
+        },
+        ctl: [{ k: "adj", label: "Claims shown", opts: ["As paid", "At today’s prices"] }],
+        live: (v) => (v.adj ? "Inflating old claims at 6% a year lifts the burning cost. A 2021 repair bill would cost much more today. Other adjustments: claims not yet fully developed, and changes in the risk itself." : "Raw history understates today’s cost: these claims were paid at old prices, and the latest years are probably not fully reported yet."),
+        ask: {
+          q: "The latest year, 2025, shows £380k of claims. Compared with what 2025 will finally cost, that figure is probably…",
+          opts: [
+          "Too low: claims from 2025 are still coming in.",
+          ["Too high: recent claims are always over-reserved.", "Not as a rule. And claims nobody has reported yet are not reserved at all."],
+          ["About right: it is the most up-to-date year.", "The newest year is the *least* complete."]
+        ],
+          a: 0,
+          why: "Recent years are undeveloped. A burning cost that treats them as finished understates the rate, which is why the calculation is often done on older years, or with development factors applied."
+        }
+      },
+      {
+        h: "Triangulation",
+        say: "A **triangulation** tabulates the claims of each year of origin at successive stages of development: after one year, after two, and so on. The pattern shown by years that are fully developed is used to project the ultimate cost of years that are not.\n\nIn the example, the 2022 year had reported £4m after one year and finally cost £10m: it developed by a factor of **2.5**.",
         scene: () => bars([
-          { label: "Coded to the street address", right: "in the flood plain", segs: [[90, "bad", "High modelled loss"]] },
-          { label: "Coded only to the postcode centre", right: "on the hill", segs: [[15, "c1"]] }
-        ], { max: 100 }),
+          { label: "2022: fully developed", right: "£10m", segs: [[4, "c1", "Yr 1"], [3, "c1", "Yr 2"], [3, "c1", "Yr 3"]] },
+          { label: "2023: two years in", right: "£8.4m so far", segs: [[4.8, "c1", "Yr 1"], [3.6, "c1", "Yr 2"], [3.6, "soft1", "?"]] },
+          { label: "2024: one year in", right: "£5m so far", segs: [[5, "c1", "Yr 1"], [7.5, "soft1", "?"]] }
+        ], { max: 13 }),
         ask: {
-          q: "A coverholder’s bordereau gives only a town name for each property. What does the catastrophe model do with it?",
+          q: "2024 has reported £5m after one year. If it develops like 2022, where will it finish?",
+          fix: true,
           opts: [
-          ["Refuses to run.", "It would be safer if it did."],
-          "Assumes an average location, which may be badly wrong.",
-          ["Assumes the worst location in the town.", "Models default to the centre or an average, not the worst case."]
+          ["£5m: that is what has been reported.", "The whole point of the triangle is that year one is not the end."],
+          ["£7.5m", "That adds 2022’s later growth as a percentage of the wrong base. 2022 multiplied by 2.5."],
+          ["£11m", "That adds 2022’s £6m of later growth as a fixed amount. Development is proportional: a bigger year grows by more."],
+          "£12.5m"
+        ],
+          a: 3,
+          why: "£5m × 2.5 = £12.5m. The catch is the “if”. Triangles only work on a **stable** book. Change the mix, the limits, the claims handling or the reinsurance, and the old pattern describes a business that no longer exists."
+        }
+      },
+      {
+        h: "Technical price",
+        say: "The **technical price** is the premium that the insurer’s own pricing basis indicates a risk requires, allowing for expected claims, expenses and the cost of capital. The premium actually obtainable is determined by the market.\n\nThe ratio of the premium charged to the technical price, the **actual-to-technical** ratio, is the most direct measure of the adequacy of the price.",
+        scene: (v) => {
+          const cr = 60 / (v.att / 100) + 30;
+          return stats([["Technical price", "£100k"], ["Charged", `£${v.att}k`, v.att < 100 ? "bad" : "good"], ["Expected combined", pct(cr), cr > 100 ? "bad" : cr > 90 ? "c2" : "good"]]) +
+            bars([{ label: "Premium charged", right: `${v.att}% of technical`, segs: [[v.att, v.att < 100 ? "bad" : "c1"]] }], { max: 130, marks: [[100, "Technical price"]] });
+        },
+        ctl: [{ k: "att", label: "Premium the market will bear", min: 60, max: 130, step: 5, fmt: (x) => `£${x}k` }],
+        live: (v) => (v.att < 85 ? "Well under technical. The risk will probably still make an accounting profit in a quiet year, which is what makes it dangerous: it is not paying for the capital it uses." : v.att < 100 ? "Slightly under. One risk like this is a commercial judgement. A whole portfolio drifting below 100% is a soft market showing up in the data." : "At or above technical: the risk earns its cost of capital. In a hard market the whole book can sit here, which is when to grow."),
+        goal: {
+          say: "Find the lowest premium at which this risk still shows an accounting profit.",
+          test: (v) => v.att === 90,
+          done: "£90k: a 97% combined ratio. It looks profitable and is 10% under technical, so it is not paying for the capital it uses. Everything between about £86k and £100k sits in that zone, and it is where soft markets do their damage: nothing in the accounts says stop."
+        }
+      },
+      {
+        h: "Cumulative rate change",
+        say: "Insurers monitor **rate change**: the change in premium, from one year to the next, for an unchanged risk. A single year’s movement appears small. Rate changes compound, however, and so does claims inflation, which operates in the opposite direction.\n\nA book begins with a claims ratio of 60%. Assume that the risks themselves do not change over five renewals.",
+        scene: (v) => {
+          const pts = Array.from({ length: 6 }, (_, i) => [i, 60 * Math.pow((1 + v.inf / 100) / (1 + v.rate / 100), i)]);
+          const end = pts[5][1];
+          return stats([["Rate index after 5", `${num(Math.pow(1 + v.rate / 100, 5) * 100, 0)}`], ["Claims ratio, year 5", pct(end), end > 70 ? "bad" : end < 60 ? "good" : ""]]) +
+            plot({ h: 160, x: { min: 0, max: 5, ticks: [0, 1, 2, 3, 4, 5], title: "Renewals from now" }, y: { min: 30, max: 110, ticks: [40, 70, 100], fmt: (x) => `${x}%` },
+              series: [{ tone: end > 70 ? "bad" : "c1", pts }], refs: [{ y: 70, label: "Break-even" }] });
+        },
+        ctl: [{ k: "rate", label: "Rate change each year", min: -10, max: 10, step: 1, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` }, { k: "inf", label: "Claims inflation each year", min: 0, max: 10, step: 1, fmt: pct }],
+        live: (v) => (v.rate < v.inf ? `Each year the gap between rate and inflation is only ${v.inf - v.rate} points. After five renewals the claims ratio has moved from 60% to **${pct(60 * Math.pow((1 + v.inf / 100) / (1 + v.rate / 100), 5))}** without a single extra loss. A cumulative **rate index** shows this; a list of annual changes hides it.` : "Rate is keeping up with or beating claims inflation, so the book improves by itself. This is what a hardening market feels like."),
+        goal: {
+          say: "Claims inflation is 5% a year. Find the largest annual rate **increase** that still leaves this book loss-making after five renewals.",
+          test: (v) => v.inf === 5 && v.rate === 1,
+          done: "+1% a year. Five consecutive rate rises, reported each year as good news, and the book ends up under water. A rate increase means nothing until it is set against what claims are doing."
+        }
+      },
+      {
+        h: "Oversight of pricing",
+        say: "Pricing is subject to oversight. The **Principles for doing business at Lloyd’s** require a syndicate to have a view of its technical price, to monitor rate change and price adequacy, and to act on the results.\n\nWhere the customer is a consumer, the **FCA** imposes a further requirement of a different kind: the product must provide **fair value**, and, for home and motor insurance, a renewing customer may not be quoted more than an equivalent new customer would be.",
+        scene: () => flow({
+          h: 150,
+          nodes: [
+            { id: "l", x: 4, y: 4, w: 150, label: "Lloyd’s and the PRA", sub: "Is the price enough?", tone: "c1" },
+            { id: "f", x: 186, y: 4, w: 150, label: "The FCA", sub: "Is the price fair?", tone: "c2" },
+            { id: "p", x: 95, y: 100, label: "The price", tone: "ink" }
+          ],
+          edges: [["l", "p"], ["f", "p"]]
+        }),
+        ask: {
+          q: "A home insurer raises prices every year for customers who never shop around, while offering newcomers a low rate. What is the problem?",
+          opts: [
+          ["None. That is how markets work.", "It was common practice. It is now prohibited for UK home and motor insurance."],
+          "It penalises loyalty, which UK rules prohibit.",
+          ["The new-customer price is below technical.", "Possibly, and Lloyd’s or the PRA would care. But the conduct problem is the renewal price."],
+          ["It breaches the Insurance Act 2015.", "That Act is about disclosure, warranties and remedies, not pricing."]
         ],
           a: 1,
-          why: "The model runs and produces a confident number. Nothing on the output says the inputs were guesses. Asking for better data, and loading the price for poor data, is part of underwriting delegated business."
+          why: "Prudential regulators worry about prices that are too low; the conduct regulator worries about prices that exploit. An underwriter with consumer business, often through coverholders, answers to both."
         }
       },
       {
-        h: "The levers",
-        say: "Exposure is managed with a small set of tools, used together.",
+        h: "Summary",
+        say: "The next chapter considers the risk that remains when every individual risk has been adequately priced.",
         scene: () => recap([
-          "Line size: how much of each risk",
-          "Aggregate limits: how much per zone and peril",
-          "Reinsurance: facultative on one risk, treaty on the book",
-          "Price: charge for the capital the accumulation uses",
-          "Mix: write less where you are full, more where you are empty"
-        ]),
-        ask: {
-          q: "The Miami zone is at 95% of its limit. An excellent new Miami risk is offered. What is the best response?",
-          opts: ["Decline. The zone is nearly full.", "Write it anyway. It is excellent.", "Find room: a smaller line, facultative cover, or drop a weaker Miami risk."],
-          a: 2,
-          why: "A limit is a budget, not a wall. The skilled move is to spend scarce capacity on the best risks in the zone, improving the quality of the accumulation without growing it."
-        }
-      },
-      {
-        h: "In five lines",
-        say: "Next: getting the business through the door.",
-        scene: () => recap([
-          "An accumulation is everything one event can hit.",
-          "Line limits control a risk; aggregate limits control a portfolio.",
-          "Cat models give a loss for each return period, and are only as good as the data.",
-          "Reinsurance brings the net curve inside appetite, if the reinsurers pay.",
-          "Clash and unmodelled perils need scenarios and someone looking across classes."
+          "Premium = claims ÷ (1 − expenses − return).",
+          "Base rate × exposure, then rating factors that load or discount.",
+          "Experience rating needs volume; small risks lean on exposure rating.",
+          "Burning cost and triangles need adjusted, stable history.",
+          "Actual-to-technical and a cumulative rate index show whether the price is adequate."
         ])
       }
     ]

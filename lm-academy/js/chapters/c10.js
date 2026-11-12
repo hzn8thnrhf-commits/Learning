@@ -5,13 +5,20 @@
   window.SLIP.chapters.push({
     id: "security", part: "LM2",
     title: "Market security",
-    blurb: "Will the insurer still be there when the claim arrives? Solvency, Lloyd’s chain of security, and ratings.",
+    blurb: "Solvency and its regulation, Lloyd’s chain of security, and the part played by rating agencies in a broker’s choice of insurer.",
     minutes: 8,
+    lead: "An insurance policy is worth no more than the ability of the insurer to pay. This chapter considers how that ability is measured, regulated and judged by the market.",
+    aims: [
+      "Define solvency and explain why it depends on the adequacy of reserves.",
+      "Describe the three pillars of the Solvency II regime.",
+      "Set out the links in Lloyd’s chain of security in the order in which they respond.",
+      "Explain the role of rating agencies and the consequences of a downgrade."
+    ],
     init: { res: 0, claims: 150 },
     steps: [
       {
-        h: "Solvency in one line",
-        say: "An insurer is **solvent** when its **assets** exceed its **liabilities**. Assets are cash and anything that can be turned into cash: investments, buildings. Liabilities are claims, paid and unpaid, plus the costs of running the business.\n\nThe gap is the **solvency margin**. The biggest liability, unpaid claims, is an *estimate*. Watch what happens when the estimate is revised.",
+        h: "Solvency",
+        say: "An insurer is **solvent** if its **assets** exceed its **liabilities**. Its assets are principally cash and investments. Its liabilities are principally its obligations to policyholders: claims notified but unpaid, and claims that have occurred but have not yet been notified.\n\nThe excess of assets over liabilities is the **solvency margin**. The largest liability, the provision for unpaid claims, is an *estimate*, and the margin is therefore only as reliable as the estimate.",
         scene: (v) => {
           const A = 500, L = 380 * (1 + v.res / 100), m = A - L;
           return stats([["Assets", money(A)], ["Liabilities", money(L)], ["Margin", money(m), m < 40 ? "bad" : "good"]]) +
@@ -27,7 +34,7 @@
       },
       {
         h: "Solvency II",
-        say: "The rules on how much margin an insurer must hold come from **Solvency II**, the European regime in force since 2016, supervised day to day in the UK by the **PRA**. It rests on three pillars.",
+        say: "The margin that an insurer must maintain is prescribed by regulation. The UK regime derives from the European **Solvency II** Directive, in force since 2016 and now being adapted as “Solvency UK”; it is administered by the **PRA**.\n\nThe regime is organised in three **pillars**, which address respectively how much capital a firm holds, how it is governed, and what it discloses.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -51,8 +58,8 @@
         }
       },
       {
-        h: "Risks that aren’t insurance",
-        say: "Capital must cover more than bad claims years. An insurer also faces **market risk** (investments fall), **credit risk** (someone who owes it money fails), **liquidity risk** (assets can’t be sold quickly enough), **operational risk** (systems, people, fraud) and **group risk** (trouble elsewhere in its group).",
+        h: "Risks other than insurance risk",
+        say: "The capital requirement is not confined to the risk of adverse claims. It also covers **market risk** (a fall in the value of investments), **credit risk** (the failure of a counterparty to pay), **liquidity risk** (the inability to realise assets when cash is needed), **operational risk** (failures of systems, processes or people) and **group risk** (difficulties elsewhere in the insurer’s group).",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -76,7 +83,7 @@
       },
       {
         h: "Lloyd’s chain of security",
-        say: "A Lloyd’s policy is backed by three links, used in order. **First**, the premiums held in trust for each syndicate. **Second**, the funds each member has deposited at Lloyd’s. **Third**, the **Central Fund**, topped up by a contribution from every premium written in the market.\n\nPush a syndicate’s claims up.",
+        say: "A policy written at Lloyd’s is supported by three successive resources, known as the **chain of security**. The first link is the **premium trust funds** in which each syndicate’s premiums are held. The second is each member’s **funds at Lloyd’s**, the capital lodged to support that member’s underwriting. The third is the **Central Fund**, financed by contributions from all members and available, at the Council’s discretion, where a member cannot meet its liabilities.\n\nIncrease the syndicate’s claims and observe the order in which the links respond.",
         scene: (v) => {
           const a = Math.min(v.claims, 200), b = Math.min(Math.max(v.claims - 200, 0), 150), c = Math.max(v.claims - 350, 0);
           return bars([
@@ -96,8 +103,8 @@
         }
       },
       {
-        h: "One market, one test",
-        say: "Because of that shared third link, solvency rules treat **Lloyd’s as a single entity**, and the market carries one financial strength rating for every syndicate.",
+        h: "Lloyd’s as a single undertaking",
+        say: "Since the Central Fund stands behind every member, the solvency regime treats **Lloyd’s as a single undertaking**, and the rating agencies assign one financial strength rating to the market as a whole. Every syndicate trades on that rating.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -120,7 +127,7 @@
       },
       {
         h: "Rating agencies",
-        say: "Brokers can’t audit every insurer, so they lean on **rating agencies**: A.M. Best, Standard & Poor’s and Fitch. Each publishes a grade based on an insurer’s capital, management, operations and business profile.\n\nRatings move. And many clients, and brokers’ security committees, set a **minimum** rating below which they will not place.",
+        say: "A broker cannot examine the finances of every insurer it uses. It relies substantially on the **rating agencies**, principally A.M. Best, Standard & Poor’s and Fitch, each of which publishes an opinion of an insurer’s financial strength based on its capital, performance, management and business profile.\n\nRatings are revised as circumstances change. Many clients, and most brokers’ **security committees**, prescribe a **minimum** rating below which an insurer may not be used.",
         scene: () => bars([
           { label: "Insurer A, rated A+", right: "accepted", segs: [[90, "c1"]] },
           { label: "Insurer B, rated A", right: "accepted", segs: [[78, "c1"]] },
@@ -139,8 +146,8 @@
         }
       },
       {
-        h: "In four lines",
-        say: "Security is the first thing a broker checks and the last thing a client thinks about, until the day it matters.",
+        h: "Summary",
+        say: "The security of the insurer is the first matter a prudent broker considers, although it is seldom in the client’s mind until a claim depends on it.",
         scene: () => recap([
           "Solvency: assets must exceed liabilities, and liabilities are partly estimates.",
           "Solvency II: three pillars: capital, supervision, disclosure.",

@@ -27,7 +27,12 @@
   /* ---- chapter state: the numbers you set carry from step to step ---- */
   const VALS = {};
   const vals = (c) => VALS[c.id] || (VALS[c.id] = Object.assign({}, c.init || {}));
-  const ansKey = (c, i) => `${c.id}:${i}`;
+  /* a chapter's learning objectives become its opening step; answers stay keyed to the chapter's own steps */
+  CH.forEach((c) => {
+    if (!c.aims || c.steps[0].isAims) return;
+    c.steps.unshift({ isAims: true, h: "What you should take from this chapter", say: (c.lead ? c.lead + "\n\n" : "") + "By the end you should be able to:", scene: () => `<ol class="k-recap k-aims">${c.aims.map((t) => `<li>${fmt(t)}</li>`).join("")}</ol>` });
+  });
+  const ansKey = (c, i) => `${c.id}:${i - (c.aims ? 1 : 0)}`;
   const view = (c, i) => Object.assign({}, vals(c), { $ans: S.ans[ansKey(c, i)], $done: S.ans[ansKey(c, i)] !== undefined, $goal: !!S.ans[ansKey(c, i) + "g"] });
   /* answer options are shown in a shuffled order that is stable for each step, so position never gives the answer away */
   const optText = (o) => (Array.isArray(o) ? o[0] : o);

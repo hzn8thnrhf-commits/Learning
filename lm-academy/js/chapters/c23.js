@@ -1,199 +1,152 @@
-/* LM3 · 7 — Pricing a risk */
+/* LM3 · 7 — Statistics for underwriters */
 (() => {
   const { bars, cols, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
-  const YEARS = [[2021, 300, 80], [2022, 420, 90], [2023, 250, 100], [2024, 510, 110], [2025, 380, 120]];
-  const FLEET = [5, 20, 50, 100, 250, 500, 1000, 2500];
+  const BASE = [20, 30, 30, 40, 50, 60];
+  const BOOKS = [[58, 62, 60, 57, 63, 61, 59, 60, 62, 58], [35, 48, 110, 40, 52, 38, 95, 45, 42, 95]];
+  const sd = (a) => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length); };
 
   window.SLIP.chapters.push({
-    id: "pricing", part: "LM3",
-    title: "Pricing a risk",
-    blurb: "Build a premium from its parts, rate from experience and from exposure, and tell a fair price from a merely higher one.",
-    minutes: 12,
-    init: { exp: 30, mar: 10, spr: 0, tim: 0, rec: 0, fl: 3, adj: 0, att: 95, rate: 2, inf: 5 },
+    id: "statistics", part: "LM3",
+    title: "Statistics for underwriters",
+    blurb: "Frequency and severity, averages and dispersion, probability and independence, and the limits of what a claims record can show.",
+    minutes: 9,
+    lead: "Underwriting is applied statistics, whether or not it is described as such. This chapter sets out the few ideas an underwriter needs, and the errors to which each is prone.",
+    aims: [
+      "Express an expected loss cost as the product of frequency and severity.",
+      "Distinguish the mean, median and mode, and explain why dispersion matters as much as the average.",
+      "Combine probabilities correctly, recognising when events are not independent.",
+      "Assess how much weight a claims record can bear, and identify changes in data that distort a trend."
+    ],
+    init: { freq: 4, sev: 50, big: 100, book: 0, near: 0, yrs: 5 },
     steps: [
       {
-        h: "Building a price",
-        say: "Each risk must contribute to the pool in proportion to the risk it brings. The premium has to cover three things: expected **claims**, **expenses** (including brokerage), and a **return** on the capital at risk.\n\nExpected claims on this risk: £60k.",
+        h: "Frequency and severity",
+        say: "The expected cost of claims is the product of two quantities: **frequency**, the number of claims expected for a given exposure, and **severity**, their average size. The two are estimated separately, since they respond to different influences and behave differently from class to class.\n\nConsider a fleet of 1,000 vans.",
         scene: (v) => {
-          const prem = 60 / (1 - v.exp / 100 - v.mar / 100);
-          return stats([["Expected claims", "£60k"], ["Premium needed", `£${num(prem, 0)}k`, "c1"], ["Claims ratio", pct(6000 / prem)]]) +
-            bars([{ label: "The premium", right: `£${num(prem, 0)}k`, segs: [[60, "c1", "Claims"], [prem * v.exp / 100, "c2", "Expenses"], [prem * v.mar / 100, "c3", "Return"]] }], { max: 160 });
+          const n = 1000 * v.freq / 100, cost = n * v.sev / 1000;
+          return stats([["Claims a year", num(n, 0)], ["Expected cost", `£${num(cost, 2)}m`, "c1"], ["Per van", `£${num(cost * 1000, 0)}`]]) +
+            bars([{ label: "Frequency: claims per 100 vans", right: `${v.freq}`, segs: [[v.freq, "c2"]] }, { label: "Severity: average claim", right: `£${v.sev}k`, segs: [[v.sev / 20, "c1"]] }], { max: 10 });
         },
-        ctl: [{ k: "exp", label: "Expenses and brokerage", min: 20, max: 45, step: 1, fmt: pct }, { k: "mar", label: "Return on capital", min: 0, max: 15, step: 1, fmt: pct }],
-        live: (v) => `Expenses and return are percentages of the *premium*, so divide: £60k ÷ ${pct(100 - v.exp - v.mar)} = **£${num(60 / (1 - v.exp / 100 - v.mar / 100), 0)}k**. Simply adding ${pct(v.exp + v.mar)} to £60k would give £${num(60 * (1 + (v.exp + v.mar) / 100), 0)}k and leave the insurer short.`,
+        ctl: [{ k: "freq", label: "Frequency", min: 1, max: 10, step: 1, fmt: (x) => `${x} per 100` }, { k: "sev", label: "Severity", min: 5, max: 200, step: 5, fmt: (x) => `£${x}k` }],
+        live: (v) => (v.freq >= 6 && v.sev <= 40 ? "**High frequency, low severity:** motor, small property. Many small claims, statistically predictable. The past is a good guide." : v.freq <= 2 && v.sev >= 100 ? "**Low frequency, high severity:** catastrophe, aviation, energy. Few data points, huge swings. The past tells you little, so models and judgement take over." : "The same expected cost can come from many small claims or a few large ones. They are very different risks to hold."),
         goal: {
-          say: "Expenses and brokerage take 35%. Find the return on capital at which the premium is exactly double the expected claims.",
-          test: (v) => v.exp === 35 && v.mar === 15,
-          done: "15%. Half of every pound of premium never reaches a claim. That isn’t greed: it is brokerage, staff, systems, reinsurance and the cost of the capital that makes the promise worth having."
+          say: "The fleet’s expected cost is £2m. Find another way to reach exactly £2m, with twice as many claims.",
+          test: (v) => v.freq === 8 && v.sev === 25,
+          done: "Eighty claims of £25k, where before there were forty of £50k. The expected cost is identical, but the second fleet’s result will sit closer to £2m year after year: more, smaller claims are more predictable."
         }
       },
       {
-        h: "Rate, exposure and rating factors",
-        say: "In practice a premium is a **base rate** applied to an **exposure measure**, then adjusted by **rating factors**.\n\nA £50m factory at a base rate of 0.20% gives £100,000. Now describe the building.",
+        h: "Measures of average",
+        say: "“Average” has three distinct meanings. The **mean** is the total divided by the number of observations. The **median** is the middle value when the observations are ranked. The **mode** is the value that occurs most often.\n\nFor a symmetrical distribution the three coincide. Insurance losses are not symmetrical: they are **skewed**, with many small claims and a few very large ones. Of the seven claims shown, six are fixed; vary the seventh.",
         scene: (v) => {
-          const f = (v.spr ? 0.8 : 1) * (v.tim ? 1.3 : 1) * (v.rec ? 1.25 : 1), prem = 100 * f;
-          return stats([["Base premium", "£100k"], ["Factors", `× ${num(f, 2)}`], ["Premium", `£${num(prem, 0)}k`, "c1"]]) +
-            bars([
-              { label: "Sprinklers", right: v.spr ? "× 0.80" : "× 1.00", segs: [[v.spr ? 80 : 100, v.spr ? "c3" : "idle"]] },
-              { label: "Construction", right: v.tim ? "× 1.30" : "× 1.00", segs: [[v.tim ? 130 : 100, v.tim ? "bad" : "idle"]] },
-              { label: "Claims record", right: v.rec ? "× 1.25" : "× 1.00", segs: [[v.rec ? 125 : 100, v.rec ? "bad" : "idle"]] }
-            ], { max: 135, marks: [[100, "Average risk"]] });
+          const all = [...BASE, v.big], s = all.slice().sort((x, y) => x - y), mean = all.reduce((a, b) => a + b, 0) / 7, med = s[3];
+          return stats([["Mean", `£${num(mean, 0)}k`, mean > med * 1.5 ? "bad" : ""], ["Median", `£${med}k`, "c1"], ["Mode", "£30k"]]) +
+            cols({ h: 170, max: Math.max(120, v.big), bars: all.map((x, i) => ({ label: `${i + 1}`, hot: i === 6, segs: [[x, i === 6 ? "bad" : "c1"]] })), lines: [{ v: mean, label: "Mean" }] });
         },
-        ctl: [{ k: "spr", label: "Sprinklers", opts: ["None", "Fitted"] }, { k: "tim", label: "Construction", opts: ["Brick and steel", "Timber frame"] }, { k: "rec", label: "Claims record", opts: ["Clean", "Two fires"] }],
-        live: (v) => "A **discount** rewards a feature that reduces the risk; a **loading** charges for one that increases it. Factors multiply. A rating matrix like this suits similar risks; large or unusual ones are priced individually.",
+        ctl: [{ k: "big", label: "The seventh claim", min: 60, max: 900, step: 20, fmt: (x) => `£${x}k` }],
+        live: (v) => (v.big > 300 ? "One large claim has dragged the **mean** far above what a typical claim looks like, while the **median** has not moved. Insurance losses are skewed like this. Always ask which average you are being shown." : "With no outlier, the three averages sit close together and any of them describes the book."),
         goal: {
-          say: "Find a building with a loading and a discount whose premium comes out at exactly the base £100k.",
-          test: (v) => v.spr === 1 && v.tim === 0 && v.rec === 1,
-          done: "Sprinklers (× 0.80) and a poor claims record (× 1.25) cancel exactly, because 0.8 × 1.25 = 1. Notice that a 20% discount and a 25% loading are needed to cancel: factors multiply, so percentages don’t simply add."
+          say: "Find the smallest seventh claim that pulls the mean above twice the median.",
+          test: (v) => v.big === 340,
+          done: "£340k. One claim in seven has made the “average” twice as large as a typical claim. Quote the mean and you alarm the client; quote the median and you understate the cost. The honest answer shows both, and the big one separately."
         }
       },
       {
-        h: "Which premium?",
-        say: "Be precise about the word.\n\n**Written** premium is on the line the underwriter put down; **signed** premium is on the line after signing down. **Gross** premium is before deductions such as brokerage and reinsurance cost; **net** is after. **Earned** premium is the part for cover already given.",
-        scene: (v) => bars([
-  { label: "Written line 20%", right: "£200k", segs: [[200, "soft1", "Written"]] },
-  { label: "Signed line 15%", right: v.$done ? "£150k" : "?", segs: v.$done ? [[150, "c1", "Signed gross"]] : [[0.5, "idle"]] },
-  { label: "After 20% brokerage", right: v.$done ? "£120k" : "?", segs: v.$done ? [[120, "c1", "Net"], [30, "c2", "Brokerage"]] : [[0.5, "idle"]] }
-], { max: 200 }),
-        ask: {
-          q: "An underwriter writes a 20% line on a £1m premium. It signs down to 15%, and brokerage is 20%. How much premium does she actually receive?",
-          fix: true,
-          opts: [
-          ["£200,000", "That is the written line, before signing down and before brokerage."],
-          ["£160,000", "That takes brokerage off the written line. Premium follows the *signed* line."],
-          ["£150,000", "That is signed gross premium. The broker hasn’t been paid yet."],
-          "£120,000"
-        ],
-          a: 3,
-          why: "15% of £1m is £150,000 signed; less 20% brokerage leaves £120,000. An underwriter who budgets on written, gross figures will be 40% short. Plans are built on signed, net income."
-        }
-      },
-      {
-        h: "Two ways to find the claims cost",
-        say: "**Experience rating** uses the risk’s *own* history. **Exposure rating** uses what *similar* risks cost, through market rates or a model.\n\nA haulier’s own record suggests £900 a vehicle. Fleets like it average £600. How far should its own record be believed? That depends on how much record there is.",
+        h: "Dispersion",
+        say: "An average describes the centre of a distribution and conveys nothing about its **dispersion**: the extent to which individual results depart from the centre. The usual measure of dispersion is the **standard deviation**.\n\nThe two books shown have each run for ten years, and each has an average claims ratio of 60%.",
         scene: (v) => {
-          const n = FLEET[v.fl], z = n / (n + 150), price = z * 900 + (1 - z) * 600;
-          return stats([["Fleet", `${num(n, 0)} vehicles`], ["Weight on own record", pct(z * 100), "c1"], ["Rate", `£${num(price, 0)} a vehicle`]]) +
-            bars([{ label: "Where the price comes from", segs: [[z * 100, "c1", "Own experience"], [(1 - z) * 100, "c2", "Similar risks"]] }], { max: 100 });
+          const a = BOOKS[v.book], worst = Math.max(...a);
+          return stats([["Average", "60%"], ["Standard deviation", `${num(sd(a), 0)} points`, v.book ? "bad" : "good"], ["Worst year", pct(worst), worst > 65 ? "bad" : ""]]) +
+            cols({ h: 170, max: 120, bars: a.map((x, i) => ({ label: `${i + 1}`, segs: [[x, x > 65 ? "bad" : "c1"]] })), lines: [{ v: 65, label: "Break-even", right: true }] });
         },
-        ctl: [{ k: "fl", label: "Size of the fleet", min: 0, max: FLEET.length - 1, step: 1, fmt: (i) => `${num(FLEET[i], 0)} vehicles` }],
-        live: (v) => (FLEET[v.fl] <= 50 ? "A handful of vehicles produce a handful of claims: mostly luck. Its record gets little weight and the price sits near the market rate." : FLEET[v.fl] >= 500 ? "Hundreds of vehicles generate enough claims for the record to mean something. The fleet is priced largely on itself." : "A blend. The weight given to a risk’s own experience is its **credibility**: it rises with the volume of data behind it."),
-        goal: {
-          say: "Find the smallest fleet whose own record gets more than half the weight.",
-          test: (v) => v.fl === 4,
-          done: "250 vehicles. Below that, the fleet’s history is more noise than signal and the market rate does most of the work. This is why a small client with a “great record” can’t expect a great price for it."
-        }
+        ctl: [{ k: "book", label: "Book", opts: ["Steady", "Volatile"] }],
+        live: (v) => (v.book ? "Three losing years in ten, each severe. The same 60% average needs far more capital behind it, so it must earn a wider margin to be worth writing. Averages price the expected loss; spread prices the capital." : "Every year lands within a few points of 60%. Little capital is needed to survive the worst of them.")
       },
       {
-        h: "Burning cost",
-        say: "The simplest experience rating: total past claims divided by total past exposure gives a rate to apply next year. Here, five years of the haulier’s claims.\n\nBut old years aren’t comparable to today until they are adjusted.",
+        h: "Probability and independence",
+        say: "A probability is a number between 0, denoting impossibility, and 1, denoting certainty. Where two events are **independent**, so that the occurrence of one does not alter the probability of the other, the probability that both occur is the product of their separate probabilities.\n\nTwo warehouses each have a probability of 1% of suffering a serious fire in the year.",
         scene: (v) => {
-          const rows = YEARS.map(([y, c, f], i) => { const k = v.adj ? Math.pow(1.06, 4 - i) : 1; return [y, c * k, f]; });
-          const tot = rows.reduce((a, r) => a + r[1], 0), veh = rows.reduce((a, r) => a + r[2], 0), bc = tot / veh;
-          return stats([["Claims, 5 years", `£${num(tot, 0)}k`], ["Vehicle-years", `${veh}`], ["Burning cost", `£${num(bc * 1000, 0)} a vehicle`, "c1"]]) +
-            cols({ h: 160, max: 650, bars: rows.map(([y, c]) => ({ label: `${y}`, segs: [[c, "c1"]], top: `£${num(c, 0)}k` })) });
+          const both = v.near ? 0.8 : 0.01;
+          return stats([["One burns", "1%"], ["Both burn", pct(both, 2), v.near ? "bad" : "good"]]) +
+            flow({
+              h: 110,
+              nodes: v.near ? [{ id: "a", x: 60, y: 30, w: 104, label: "Warehouse A", tone: "bad" }, { id: "b", x: 176, y: 30, w: 104, label: "Warehouse B", tone: "bad" }]
+                : [{ id: "a", x: 4, y: 30, w: 104, label: "Warehouse A" }, { id: "b", x: 232, y: 30, w: 104, label: "Warehouse B" }],
+              edges: v.near ? [["a", "b"]] : []
+            });
         },
-        ctl: [{ k: "adj", label: "Claims shown", opts: ["As paid", "At today’s prices"] }],
-        live: (v) => (v.adj ? "Inflating old claims at 6% a year lifts the burning cost. A 2021 repair bill would cost much more today. Other adjustments: claims not yet fully developed, and changes in the risk itself." : "Raw history understates today’s cost: these claims were paid at old prices, and the latest years are probably not fully reported yet."),
-        ask: {
-          q: "The latest year, 2025, shows £380k of claims. Compared with what 2025 will finally cost, that figure is probably…",
-          opts: [
-          "Too low: claims from 2025 are still coming in.",
-          ["Too high: recent claims are always over-reserved.", "Not as a rule. And claims nobody has reported yet aren’t reserved at all."],
-          ["About right: it is the most up-to-date year.", "The newest year is the *least* complete."]
-        ],
-          a: 0,
-          why: "Recent years are undeveloped. A burning cost that treats them as finished understates the rate, which is why the calculation is often done on older years, or with development factors applied."
-        }
+        ctl: [{ k: "near", label: "The warehouses are", opts: ["In different towns", "Next door"] }],
+        live: (v) => (v.near ? "Next door, a fire in one will probably take the other. The events are **dependent**, and the chance of losing both is close to the chance of losing one. Multiplying the probabilities would understate it eighty times over." : "1% × 1% = **0.01%**: one year in ten thousand. This is why spreading risk works. But the multiplication is only valid if the events are truly **independent**.")
       },
       {
-        h: "Triangles",
-        say: "A **triangulation** sets out each year’s claims as they develop: after one year, two, three. Older, finished years show how much the recent ones still have to grow.\n\nThe 2022 year reported £4m after one year and finished at £10m: it grew **2.5 times**.",
+        h: "Return periods and independence",
+        say: "A **return period** is the reciprocal of an annual probability: an event with a return period of 100 years has a probability of 1% in each year. It does not describe an interval between occurrences, and where successive years are independent, the occurrence of the event in one year leaves its probability in the next unchanged.",
         scene: () => bars([
-          { label: "2022: fully developed", right: "£10m", segs: [[4, "c1", "Yr 1"], [3, "c1", "Yr 2"], [3, "c1", "Yr 3"]] },
-          { label: "2023: two years in", right: "£8.4m so far", segs: [[4.8, "c1", "Yr 1"], [3.6, "c1", "Yr 2"], [3.6, "soft1", "?"]] },
-          { label: "2024: one year in", right: "£5m so far", segs: [[5, "c1", "Yr 1"], [7.5, "soft1", "?"]] }
-        ], { max: 13 }),
+          { label: "Chance of the flood last year", right: "1%", segs: [[1, "c1"]] },
+          { label: "It happened", right: "", segs: [[100, "bad", "The 1-in-100 flood"]] },
+          { label: "Chance of the flood this year", right: "?", segs: [[0.5, "idle"]] }
+        ], { max: 100 }),
         ask: {
-          q: "2024 has reported £5m after one year. If it develops like 2022, where will it finish?",
-          fix: true,
+          q: "A town had its “1-in-100-year” flood last year. What is the chance of another this year?",
           opts: [
-          ["£5m: that is what has been reported.", "The whole point of the triangle is that year one isn’t the end."],
-          ["£7.5m", "That adds 2022’s later growth as a percentage of the wrong base. 2022 multiplied by 2.5."],
-          ["£11m", "That adds 2022’s £6m of later growth as a fixed amount. Development is proportional: a bigger year grows by more."],
-          "£12.5m"
-        ],
-          a: 3,
-          why: "£5m × 2.5 = £12.5m. The catch is the “if”. Triangles only work on a **stable** book. Change the mix, the limits, the claims handling or the reinsurance, and the old pattern describes a business that no longer exists."
-        }
-      },
-      {
-        h: "Technical price",
-        say: "The **technical price** is what the insurer’s own pricing says the risk needs: expected claims, expenses and the cost of capital. The market decides what can actually be charged.\n\nThe ratio of the two, **actual to technical**, is the most direct measure of price adequacy.",
-        scene: (v) => {
-          const cr = 60 / (v.att / 100) + 30;
-          return stats([["Technical price", "£100k"], ["Charged", `£${v.att}k`, v.att < 100 ? "bad" : "good"], ["Expected combined", pct(cr), cr > 100 ? "bad" : cr > 90 ? "c2" : "good"]]) +
-            bars([{ label: "Premium charged", right: `${v.att}% of technical`, segs: [[v.att, v.att < 100 ? "bad" : "c1"]] }], { max: 130, marks: [[100, "Technical price"]] });
-        },
-        ctl: [{ k: "att", label: "Premium the market will bear", min: 60, max: 130, step: 5, fmt: (x) => `£${x}k` }],
-        live: (v) => (v.att < 85 ? "Well under technical. The risk will probably still make an accounting profit in a quiet year, which is what makes it dangerous: it isn’t paying for the capital it uses." : v.att < 100 ? "Slightly under. One risk like this is a commercial judgement. A whole portfolio drifting below 100% is a soft market showing up in the data." : "At or above technical: the risk earns its cost of capital. In a hard market the whole book can sit here, which is when to grow."),
-        goal: {
-          say: "Find the lowest premium at which this risk still shows an accounting profit.",
-          test: (v) => v.att === 90,
-          done: "£90k: a 97% combined ratio. It looks profitable and is 10% under technical, so it isn’t paying for the capital it uses. Everything between about £86k and £100k sits in that zone, and it is where soft markets do their damage: nothing in the accounts says stop."
-        }
-      },
-      {
-        h: "Rate change compounds",
-        say: "Insurers track **rate change**: what the same risk is charged this year against last. One year’s movement looks small. But rate compounds, and so does claims inflation, in the opposite direction.\n\nA book starts at a 60% claims ratio. Nothing about the risks changes for five renewals.",
-        scene: (v) => {
-          const pts = Array.from({ length: 6 }, (_, i) => [i, 60 * Math.pow((1 + v.inf / 100) / (1 + v.rate / 100), i)]);
-          const end = pts[5][1];
-          return stats([["Rate index after 5", `${num(Math.pow(1 + v.rate / 100, 5) * 100, 0)}`], ["Claims ratio, year 5", pct(end), end > 70 ? "bad" : end < 60 ? "good" : ""]]) +
-            plot({ h: 160, x: { min: 0, max: 5, ticks: [0, 1, 2, 3, 4, 5], title: "Renewals from now" }, y: { min: 30, max: 110, ticks: [40, 70, 100], fmt: (x) => `${x}%` },
-              series: [{ tone: end > 70 ? "bad" : "c1", pts }], refs: [{ y: 70, label: "Break-even" }] });
-        },
-        ctl: [{ k: "rate", label: "Rate change each year", min: -10, max: 10, step: 1, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` }, { k: "inf", label: "Claims inflation each year", min: 0, max: 10, step: 1, fmt: pct }],
-        live: (v) => (v.rate < v.inf ? `Each year the gap between rate and inflation is only ${v.inf - v.rate} points. After five renewals the claims ratio has moved from 60% to **${pct(60 * Math.pow((1 + v.inf / 100) / (1 + v.rate / 100), 5))}** without a single extra loss. A cumulative **rate index** shows this; a list of annual changes hides it.` : "Rate is keeping up with or beating claims inflation, so the book improves by itself. This is what a hardening market feels like."),
-        goal: {
-          say: "Claims inflation is 5% a year. Find the largest annual rate **increase** that still leaves this book loss-making after five renewals.",
-          test: (v) => v.inf === 5 && v.rate === 1,
-          done: "+1% a year. Five consecutive rate rises, reported each year as good news, and the book ends up under water. A rate increase means nothing until it is set against what claims are doing."
-        }
-      },
-      {
-        h: "Who watches the price?",
-        say: "Pricing isn’t left to the underwriter’s instinct. Lloyd’s **Principles for doing business** expect a syndicate to know its technical price, monitor rate change and price adequacy, and act on what it finds.\n\nWhere the customer is a consumer, the **FCA** adds another test: the product must offer **fair value**, and a renewing customer must not be charged more than an equivalent new one.",
-        scene: () => flow({
-          h: 150,
-          nodes: [
-            { id: "l", x: 4, y: 4, w: 150, label: "Lloyd’s and the PRA", sub: "Is the price enough?", tone: "c1" },
-            { id: "f", x: 186, y: 4, w: 150, label: "The FCA", sub: "Is the price fair?", tone: "c2" },
-            { id: "p", x: 95, y: 100, label: "The price", tone: "ink" }
-          ],
-          edges: [["l", "p"], ["f", "p"]]
-        }),
-        ask: {
-          q: "A home insurer raises prices every year for customers who never shop around, while offering newcomers a low rate. What is the problem?",
-          opts: [
-          ["None. That is how markets work.", "It was common practice. It is now prohibited for UK home and motor insurance."],
-          "It penalises loyalty, which UK rules prohibit.",
-          ["The new-customer price is below technical.", "Possibly, and Lloyd’s or the PRA would care. But the conduct problem is the renewal price."],
-          ["It breaches the Insurance Act 2015.", "That Act is about disclosure, warranties and remedies, not pricing."]
+          ["Almost nil. It is not due for 99 years.", "A return period is a probability, not a timetable."],
+          "Still about 1%.",
+          ["Much higher: these things come in runs.", "The river has no memory. Though a recent event is a fair reason to ask whether 1% was ever right."],
+          ["Exactly 0.01%: 1% × 1%.", "That is the chance of floods in two *specified* years, judged in advance. Last year has already happened."]
         ],
           a: 1,
-          why: "Prudential regulators worry about prices that are too low; the conduct regulator worries about prices that exploit. An underwriter with consumer business, often through coverholders, answers to both."
+          why: "Each year is an independent draw at 1%. The useful doubt is a different one: a town that has just flooded may have been mis-rated, and the true figure may be nearer 1 in 30."
         }
       },
       {
-        h: "In five lines",
-        say: "Next: when good prices aren’t enough.",
+        h: "The evidential value of a claims record",
+        say: "A risk is frequently presented with a record free of large losses, and the absence of losses is offered as evidence of its quality. The weight that evidence deserves depends on how often a loss would be expected in the period observed.\n\nSuppose that the true annual probability of a large loss is 1 in 20. Consider how often such a risk will nevertheless present a clean record.",
+        scene: (v) => {
+          const clean = Math.pow(0.95, v.yrs) * 100;
+          const pts = Array.from({ length: 21 }, (_, i) => [i, Math.pow(0.95, i) * 100]);
+          return stats([["Years of history", `${v.yrs}`], ["Chance it looks clean", pct(clean), clean > 50 ? "bad" : ""]]) +
+            plot({ h: 160, x: { min: 0, max: 20, ticks: [0, 5, 10, 15, 20], title: "Years of loss-free history" }, y: { min: 0, max: 100, ticks: [0, 50, 100], fmt: (x) => `${x}%` },
+              series: [{ tone: "c1", pts }], dots: [{ x: v.yrs, y: clean, tone: "bad" }] });
+        },
+        ctl: [{ k: "yrs", label: "Loss-free years presented", min: 1, max: 20, step: 1, fmt: (x) => `${x}` }],
+        live: (v) => {
+          const clean = Math.pow(0.95, v.yrs) * 100;
+          return `A risk with a real 1-in-20 chance of a large loss still has a **${pct(clean)}** chance of showing ${v.yrs} clean year${v.yrs > 1 ? "s" : ""}. For rare, severe losses, a short clean record is weak evidence. This is why experience is given little weight on small or low-frequency risks: statisticians call the weight **credibility**.`;
+        },
+        goal: {
+          say: "Find how many clean years it takes before a risk like this has less than an even chance of still looking clean.",
+          test: (v) => v.yrs === 14,
+          done: "Fourteen years. A five-year loss record, the usual submission, would look spotless more than three times in four. For rare losses, the absence of claims in a short history is close to no evidence at all."
+        }
+      },
+      {
+        h: "Changes in the data",
+        say: "A statistic describes the data from which it was calculated. If the basis on which the data is recorded changes, the statistic will change although the underlying risk has not, and an apparent trend may be an artefact of the change.",
+        scene: () => bars([
+          { label: "Last year: £5,000 excess", right: "40 claims, average £30k", segs: [[40, "c1", "Large claims only"]] },
+          { label: "This year: no excess", right: "140 claims, average £10k", segs: [[40, "c1", "Large"], [100, "c2", "Small claims now reported"]] }
+        ], { max: 150 }),
+        ask: {
+          q: "A fleet’s average claim fell from £30k to £10k after its excess was removed. What has happened?",
+          opts: [
+          ["It has become safer: severity fell by two thirds.", "The same accidents are happening. More of them are now being counted."],
+          "Small claims that were always happening are now being reported.",
+          ["Its drivers are more careful without an excess.", "If anything, removing an excess removes a reason to be careful."],
+          ["The insurer’s costs have fallen.", "Total cost has gone **up**: 140 claims at £10k is £1.4m against £1.2m before."]
+        ],
+          a: 1,
+          why: "Before, small accidents stayed under the excess and never appeared in the data. The average fell because the mix changed. Always ask what changed in the data before believing a trend."
+        }
+      },
+      {
+        h: "Summary",
+        say: "The next chapter applies these ideas to the pricing of a risk.",
         scene: () => recap([
-          "Premium = claims ÷ (1 − expenses − return).",
-          "Base rate × exposure, then rating factors that load or discount.",
-          "Experience rating needs volume; small risks lean on exposure rating.",
-          "Burning cost and triangles need adjusted, stable history.",
-          "Actual-to-technical and a cumulative rate index show whether the price is adequate."
+          "Expected cost = frequency × severity.",
+          "Mean, median and mode differ on skewed data.",
+          "Spread, not the average, decides how much capital a book needs.",
+          "Probabilities multiply only when events are independent.",
+          "A short clean record proves little about rare losses; check what the data really counts."
         ])
       }
     ]

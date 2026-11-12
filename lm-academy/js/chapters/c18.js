@@ -5,13 +5,20 @@
   window.SLIP.chapters.push({
     id: "wording", part: "LM3",
     title: "Contracts and wordings",
-    blurb: "Who is actually insured, why a pasted clause can cost millions, and how a court reads a policy.",
+    blurb: "The parties to the contract, the drafting of wordings and the dangers of amendment, and the principles of interpretation.",
     minutes: 8,
+    lead: "What an insurer has agreed to pay is determined by the words of the contract. This chapter considers who is party to it, how it is drafted, and how a court will read it.",
+    aims: [
+      "Identify the parties to an insurance contract and distinguish joint from composite insurance.",
+      "Explain the rights that statute gives to third parties.",
+      "Explain the risks of amending model wordings and the purpose of clauses such as service of suit.",
+      "State the approach of the courts to the interpretation of a policy."
+    ],
     init: { kind: 0, clause: 0 },
     steps: [
       {
-        h: "Who is in the contract?",
-        say: "A policy names its parties: the **insured** and the **insurers**. Others shape it without being parties: the broker, lenders who insist on cover, and regulators.\n\nStart by getting the name right. A group of companies is not one legal person, and a subsidiary left off the schedule may simply be uninsured.",
+        h: "The parties",
+        say: "The parties to an insurance contract are the **insured** and the **insurers**. Others influence its terms without being party to it: the broker, lenders who require the insurance as a condition of finance, and regulators.\n\nThe insured must be identified accurately. Each company in a group is a separate legal person, and a subsidiary that is neither named nor brought within the definition of the insured has no cover.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -24,9 +31,9 @@
         ask: {
           q: "A policy insures “Harbour Foods Ltd”. Fire destroys a warehouse owned by its subsidiary, Harbour Cold Stores Ltd. Is the loss covered?",
           opts: [
-          ["Yes. It is the same group.", "A group isn’t a legal person. Each company in it is."],
+          ["Yes. It is the same group.", "A group is not a legal person. Each company in it is."],
           "Not unless the subsidiary is also an insured.",
-          ["Yes, because the parent owns the subsidiary’s shares.", "Owning shares in a company isn’t owning its warehouse."],
+          ["Yes, because the parent owns the subsidiary’s shares.", "Owning shares in a company is not owning its warehouse."],
           ["Yes, if the premium was calculated on group values.", "Evidence of what was intended, perhaps. But the policy insures who it says it insures."]
         ],
           a: 1,
@@ -34,8 +41,8 @@
         }
       },
       {
-        h: "Joint or composite?",
-        say: "When a policy insures several parties, the kind of policy decides what happens if **one of them** misbehaves.\n\n**Joint** insureds share a single interest, like co-owners of one house. They stand or fall together. **Composite** insureds have separate interests under one document, like an owner and its bank. Each has, in effect, its own contract.",
+        h: "Joint and composite insurance",
+        say: "Where a policy insures more than one person, the nature of their interests determines the effect of misconduct by one of them.\n\nUnder a **joint** policy the insureds share a single, indivisible interest, as co-owners of a property do, and the policy is one contract: a defence available against one is available against all. Under a **composite** policy the insureds have distinct interests, as an owner and its mortgagee do, and the policy is treated as a bundle of separate contracts, each of which stands alone.",
         scene: (v) => {
           const comp = v.kind === 1;
           return stats([["Guilty party", "Nothing", "bad"], ["Innocent party", comp ? "Paid" : "Nothing", comp ? "good" : "bad"]]) +
@@ -64,8 +71,8 @@
         }
       },
       {
-        h: "Outsiders with rights",
-        say: "Two Acts can give rights to people who aren’t parties.\n\nThe **Contracts (Rights of Third Parties) Act 1999** lets a non-party enforce a term meant to benefit it. Insurance wordings usually exclude it.\n\nThe **Third Parties (Rights against Insurers) Act 2010** cannot be excluded. If an insured owes someone damages and then becomes **insolvent**, that person can claim directly from the liability insurer.",
+        h: "Rights of third parties",
+        say: "Two statutes confer rights on persons who are not party to the contract.\n\nThe **Contracts (Rights of Third Parties) Act 1999** enables a third party to enforce a term intended to benefit them; as noted in LM2, it is commonly excluded. The **Third Parties (Rights against Insurers) Act 2010** cannot be excluded. Where an insured incurs a liability to a third party and becomes **insolvent**, the insured’s rights against its liability insurer in respect of that liability are transferred to the third party, who may proceed against the insurer directly.",
         scene: () => flow({
           h: 170,
           nodes: [
@@ -84,12 +91,12 @@
           ["To the firm’s directors.", "It is the company’s asset, and so its creditors’."]
         ],
           a: 1,
-          why: "The injured person would be one unsecured creditor among many, getting pennies. The Act steers the proceeds to the person the cover was really for, and it can’t be excluded."
+          why: "The injured person would be one unsecured creditor among many, getting pennies. The Act steers the proceeds to the person the cover was really for, and it cannot be excluded."
         }
       },
       {
-        h: "Why wording matters",
-        say: "A wording is the product. Most London contracts start from a **model wording** tested over years, then add clauses: other model clauses, or ones drafted by the broker or insurer.\n\nThe danger is in the additions. A clause **cut and pasted** from another contract may use different defined terms, or contradict the base wording.",
+        h: "Wordings and their amendment",
+        say: "The wording defines what has been sold. Most London contracts are built on a **model wording** whose meaning has been settled by long use and, often, by litigation. To this are added further clauses: other model clauses, or clauses drafted for the purpose by the broker or the insurer.\n\nThe principal source of dispute is amendment. A clause **copied** from another contract may rely on definitions that differ from those of the base wording, or may contradict one of its provisions.",
         scene: (v) => {
           const bad = v.clause === 1;
           return bars([
@@ -101,8 +108,8 @@
         live: (v) => (v.clause ? "Is a flood “water damage”? The policy now says both yes and no. That ambiguity will be found on the day of the claim, and courts tend to read ambiguity **against the party who put the clause forward**." : "The addition uses the same terms as the base wording and extends cover in one defined direction. Nothing to argue about.")
       },
       {
-        h: "Clauses others insist on",
-        say: "Some clauses are there because a regulator requires them. US business commonly needs a **service of suit** clause: London insurers agree to submit to a US court and name someone in the US to accept legal papers.\n\nA **side letter** records something agreed outside the main contract. Treat them with suspicion: terms hidden from the wording undermine contract certainty.\n\nAnd where the insured is a **consumer**, the Consumer Rights Act requires plain, fair, transparent terms.",
+        h: "Required clauses and side letters",
+        say: "Certain clauses are included because a regulator requires them. US surplus lines business commonly requires a **service of suit** clause, by which the insurers submit to the jurisdiction of a competent US court and nominate a person in the United States to accept service of proceedings.\n\nA **side letter** records a term agreed outside the principal contract. Such letters are to be avoided: a term that does not appear in the contract documentation is inconsistent with contract certainty. Where the insured is a **consumer**, the Consumer Rights Act 2015 requires that terms be transparent and fair.",
         scene: () => flow({
           h: 130,
           nodes: [
@@ -124,8 +131,8 @@
         }
       },
       {
-        h: "How a court reads a policy",
-        say: "When the parties disagree, a court asks what the words would mean to a reasonable person with the background both sides had.\n\nIt starts with the **ordinary meaning**. Then any **technical or trade meaning** the market gives a term. It reads the contract **as a whole**. And if real ambiguity remains, it reads the clause against the party relying on it.",
+        h: "Interpretation",
+        say: "An insurance policy is interpreted on the same principles as any other commercial contract. The court seeks the meaning the document would convey to a reasonable person having the background knowledge available to both parties when the contract was made; the subjective intentions of either are irrelevant.\n\nIt begins with the **natural and ordinary meaning** of the words, takes account of any **technical or trade meaning**, and reads each clause in the context of the contract **as a whole**. Only if genuine ambiguity remains will it construe the clause against the party who proposed it, the rule known as *contra proferentem*.",
         scene: () => flow({
           h: 250,
           nodes: [
@@ -150,7 +157,7 @@
       },
       {
         h: "The wordings specialist",
-        say: "Insurers and brokers employ specialists who read each contract **in its entirety**, not clause by clause. They track regulatory and legal changes, and feed back what claims and complaints reveal about how the words actually performed.",
+        say: "Insurers and brokers employ wordings specialists, whose function is to review each contract **in its entirety** and not merely the clauses that have been changed. They monitor developments in law and regulation, and they report to underwriters what claims and complaints disclose about the operation of the wordings in use.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -161,11 +168,11 @@
         })
       },
       {
-        h: "In five lines",
-        say: "Next: planning the business the wordings will be used for.",
+        h: "Summary",
+        say: "The next two chapters consider the risk an insurer is prepared to bear and the capital that supports it.",
         scene: () => recap([
           "Name every insured: each company is a separate legal person.",
-          "Joint insureds stand or fall together; composite insureds don’t.",
+          "Joint insureds stand or fall together; composite insureds do not.",
           "The 2010 Act lets an injured party claim directly from an insolvent insured’s insurer.",
           "Pasted clauses that contradict the base wording create ambiguity, read against their author.",
           "Courts start with ordinary meaning and read the contract as a whole."

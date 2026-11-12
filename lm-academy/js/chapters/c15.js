@@ -12,13 +12,20 @@
   window.SLIP.chapters.push({
     id: "delegated", part: "LM2",
     title: "Delegated underwriting",
-    blurb: "Why insurers hand the pen to someone else, the three ways of doing it, and how they keep control.",
+    blurb: "Why and how insurers delegate underwriting authority, the forms it takes, and the controls they retain.",
     minutes: 8,
+    lead: "An insurer need not make every underwriting decision itself. It may authorise another to accept risks on its behalf, within limits it defines.",
+    aims: [
+      "Explain the economic reason for delegating underwriting authority.",
+      "Distinguish a binding authority, a line slip and a consortium.",
+      "Describe the approval of a Lloyd’s coverholder and the scope of its authority.",
+      "Explain how a delegated arrangement is monitored and where responsibility remains."
+    ],
     init: { p: 2, kind: 0, late: 0 },
     steps: [
       {
-        h: "Not every risk can come to London",
-        say: "An underwriter’s and a broker’s attention costs money. Compare the cost of placing one risk individually with binding it under rules agreed in advance. Shrink the premium.",
+        h: "The economics of delegation",
+        say: "The individual consideration of a risk by a broker and an underwriter has a cost, which does not fall in proportion as the premium falls. Below a certain size, a risk cannot bear it.\n\nCompare the expense of placing a risk individually with that of accepting it under terms agreed in advance, as the premium is reduced.",
         scene: (v) => {
           const prem = PREM[v.p];
           const open = 15 + (2500 / prem) * 100, da = 27 + (60 / prem) * 100;
@@ -38,8 +45,8 @@
         }
       },
       {
-        h: "Three ways to delegate",
-        say: "Delegation differs in *who* is given the pen.",
+        h: "The forms of delegation",
+        say: "Delegated underwriting takes three principal forms. They are distinguished by the identity of the party to whom authority is given.",
         scene: (v) => flow({
           h: 190,
           nodes: [
@@ -53,8 +60,8 @@
         live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][1]}`
       },
       {
-        h: "Tell them apart",
-        say: "The distinction that matters is whether the decision leaves the insurers’ own hands.",
+        h: "Distinguishing the forms",
+        say: "The essential distinction is whether the underwriting decision remains with an insurer or passes to a party outside the insuring market.",
         scene: () => bars([
           { label: "Binding authority", right: "outside the market", segs: [[100, "c2", "Coverholder decides"]] },
           { label: "Line slip", right: "inside the market", segs: [[100, "c1", "Lead insurers decide"]] },
@@ -73,8 +80,8 @@
         }
       },
       {
-        h: "Becoming a Lloyd’s coverholder",
-        say: "Nobody simply starts binding risks for Lloyd’s syndicates. A would-be coverholder needs a **Lloyd’s broker** to sponsor it, a **managing agent** willing to back it, and approval from **Lloyd’s** after due diligence on its people, finances, systems and local licences.",
+        h: "Approval as a coverholder",
+        say: "A firm may not bind risks on behalf of Lloyd’s syndicates until it has been approved as a **coverholder**. The application must be sponsored by a **Lloyd’s broker**, supported by a **managing agent** willing to grant the authority, and approved by **Lloyd’s**, which examines the applicant’s management, financial standing, systems and local licences.",
         scene: () => flow({
           h: 150,
           nodes: [
@@ -90,7 +97,7 @@
           opts: [
           ["Lloyd’s, which approved it.", "Approval is a gate, not a guarantee."],
           "The managing agent whose syndicate gave the authority.",
-          ["The sponsoring broker.", "The broker introduced the coverholder. It didn’t lend it capital."],
+          ["The sponsoring broker.", "The broker introduced the coverholder. It did not lend it capital."],
           ["The coverholder alone.", "It is accountable to the syndicate. But to the policyholder and regulator, its acts are the syndicate’s."]
         ],
           a: 1,
@@ -98,8 +105,8 @@
         }
       },
       {
-        h: "How much pen?",
-        say: "A binding authority agreement spells out the limits: classes of business, territories, maximum sum insured, premium income limit, the wordings and rates to use, and who handles claims.\n\nWith **full authority** the coverholder decides which risks to accept and at what price. With **limited authority**, sometimes called prior submit, it must refer each risk, or risks outside a tight box, back to the insurer.",
+        h: "The scope of the authority",
+        say: "The **binding authority agreement** defines the limits of the authority: the classes and territories in which risks may be bound, the maximum sum insured, the total premium that may be written, the wordings and rates to be used, and the arrangements for handling claims.\n\nA coverholder with **full authority** decides which risks to accept and at what premium, within those limits. One with **limited authority**, also known as prior submit, must refer each risk, or each risk outside narrow criteria, to the insurer for decision.",
         scene: () => bars([
           { label: "Full authority", right: "", segs: [[80, "c2", "Coverholder decides"], [20, "c1", "Refer"]] },
           { label: "Limited authority", right: "", segs: [[20, "c2", ""], [80, "c1", "Insurer decides each risk"]] }
@@ -107,9 +114,9 @@
         ask: {
           q: "A coverholder with a £2m limit per risk is asked to insure a £3m building for an excellent client. What can it do?",
           opts: [
-          ["Bind it: the client is a good one.", "The quality of the client doesn’t create authority."],
+          ["Bind it: the client is a good one.", "The quality of the client does not create authority."],
           "Refer it to the insurer before binding anything.",
-          ["Bind it and report it on the next bordereau.", "Telling the insurer afterwards doesn’t cure acting without authority."],
+          ["Bind it and report it on the next bordereau.", "Telling the insurer afterwards does not cure acting without authority."],
           ["Bind it as two policies of £1.5m.", "Splitting a risk to dodge a limit is still exceeding the limit, and now looks deliberate."]
         ],
           a: 1,
@@ -117,24 +124,24 @@
         }
       },
       {
-        h: "Seeing what you can’t see",
-        say: "The insurer learns what has been written from **bordereaux**: regular lists of every risk bound, premium due and claim paid. It backs these with **audits** of the coverholder’s files.\n\nWatch what happens to the insurer’s view when reporting slips.",
+        h: "Monitoring the coverholder",
+        say: "The insurer’s knowledge of what has been written on its behalf comes from **bordereaux**: periodic schedules of the risks bound, the premiums due and the claims paid. It tests their accuracy, and the coverholder’s compliance with the agreement, by **audit**.\n\nObserve the effect on the insurer’s information when bordereaux are submitted late.",
         scene: (v) => {
           const known = Math.max(0, 100 - v.late * 16);
           return stats([["Reported", pct(known)], ["Unseen exposure", pct(100 - known), v.late >= 2 ? "bad" : ""]]) +
             bars([{ label: "Risks the insurer is carrying", segs: [[known, "c1", "On a bordereau"], [100 - known, "hole", "Not yet reported"]] }], { max: 100 });
         },
         ctl: [{ k: "late", label: "Bordereaux running late by", min: 0, max: 5, step: 1, fmt: (x) => (x ? `${x} month${x > 1 ? "s" : ""}` : "nothing") }],
-        live: (v) => (v.late < 2 ? "With timely reporting the insurer can track its aggregates, premium income limits and claims trends." : "The insurer is on risk for policies it doesn’t know exist. It can’t manage aggregates, buy the right reinsurance or spot a deteriorating book. Late or patchy bordereaux are the first warning sign of a delegation going wrong.")
+        live: (v) => (v.late < 2 ? "With timely reporting the insurer can track its aggregates, premium income limits and claims trends." : "The insurer is on risk for policies it does not know exist. It cannot manage aggregates, buy the right reinsurance or spot a deteriorating book. Late or patchy bordereaux are the first warning sign of a delegation going wrong.")
       },
       {
-        h: "In five lines",
-        say: "Last in LM2: the moment the policy is tested.",
+        h: "Summary",
+        say: "The final chapter of LM2 considers claims.",
         scene: () => recap([
           "Delegation makes small or distant risks economic to write.",
           "Binding authority: an outside coverholder binds. Line slip and consortium: insurers bind for each other.",
           "Lloyd’s coverholders need a sponsoring broker, a managing agent and Lloyd’s approval.",
-          "Authority can be delegated; responsibility can’t.",
+          "Authority can be delegated; responsibility cannot.",
           "Bordereaux and audits are how the insurer keeps sight of the book."
         ])
       }

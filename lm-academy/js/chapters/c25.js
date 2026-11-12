@@ -1,145 +1,191 @@
-/* LM3 · 9 — Writing and distributing business */
+/* LM3 · 9 — Exposure and accumulation */
 (() => {
-  const { bars, flow, stats, recap, money, pct, num } = window.SLIP.kit;
-  const ROUTE = [
-    ["Overseas office", "The insurer opens its own office near the clients, for example on Lloyd’s platforms in **Singapore** or **Dubai**. Local knowledge and relationships, at the cost of premises and staff."],
-    ["Affinity", "Cover is offered to members of a group with something in common: a profession, a club, customers of a retailer. One relationship reaches thousands of similar risks."],
-    ["Partnering", "The insurer shares risks with another insurer that already has the access: by co-insuring, or by reinsuring a local company that fronts the business."],
-    ["Delegation", "Authority to accept risks is given to a coverholder or MGA who already has the clients."]
+  const { bars, flow, stats, recap, plot, money, pct, num } = window.SLIP.kit;
+  const RP = [5, 10, 25, 50, 100, 200, 500];
+  const loss = (T) => 6 * Math.pow(Math.log(T), 1.8);
+  const MOD = [
+    ["Hazard", "A catalogue of thousands of simulated events: where each storm or earthquake strikes and how strong it is at every point."],
+    ["Exposure", "Your data: where each insured property is, what it is built of, what it is worth. The only part the insurer supplies, and the part most often wrong."],
+    ["Vulnerability", "How much damage a building of that type suffers at that wind speed or ground movement."],
+    ["Financial", "Applies policy terms, deductibles, limits and reinsurance to turn damage into the insurer’s own loss."]
   ];
 
   window.SLIP.chapters.push({
-    id: "distribution", part: "LM3",
-    title: "Writing and distributing business",
-    blurb: "The ways an insurer can write a risk, how its underwriters are controlled, and the bargain behind delegated authority.",
-    minutes: 8,
-    init: { att: 0, route: 0, comm: 27, n: 2000 },
+    id: "exposure", part: "LM3",
+    title: "Exposure and accumulation",
+    blurb: "Accumulation, catastrophe modelling, the effect of reinsurance on net exposure, and the limits of models.",
+    minutes: 10,
+    lead: "A portfolio of well-priced risks may still expose an insurer to ruin, if a single event can affect many of them together.",
+    aims: [
+      "Define accumulation and explain why it cannot be controlled at the level of the individual risk.",
+      "Describe the components of a catastrophe model and interpret an exceedance probability curve.",
+      "Explain how reinsurance alters the net exposure, and the residual risks it introduces.",
+      "Explain clash, non-modelled perils and the dependence of model output on exposure data."
+    ],
+    init: { n: 12, mod: 0, rp: 2, lim: 50 },
     steps: [
       {
-        h: "Three ways in",
-        say: "An insurer can meet the same risk in three ways. As a **subscription** insurer, taking a share directly. As a **reinsurer**, where local law keeps the direct policy with a domestic insurer. Or through **delegated authority**, where someone else binds it.\n\nThe business plan should say which routes are used, for what, and with what line sizes.",
-        scene: () => flow({
-          h: 170,
-          nodes: [
-            { id: "r", x: 95, y: 4, label: "The risk", tone: "ink" },
-            { id: "s", x: 4, y: 100, w: 104, label: "Subscribe", sub: "A direct line" }, { id: "re", x: 118, y: 100, w: 104, label: "Reinsure", sub: "A local insurer" }, { id: "d", x: 232, y: 100, w: 104, label: "Delegate", sub: "A coverholder binds" }
-          ],
-          edges: [["r", "s"], ["r", "re"], ["r", "d"]]
-        }),
+        h: "Accumulation",
+        say: "Pricing addresses the question whether an individual risk is worth writing. **Exposure management** addresses a different one: what the insurer would lose if a single event affected many of its risks at once.\n\nThe total amount exposed to a single event is an **accumulation**.",
+        scene: () => bars([
+          { label: "Book A: 40 risks across 40 cities", right: "worst event: 1 risk", segs: [[5, "c1"]] },
+          { label: "Book B: 40 risks along one coast", right: "worst event: all 40", segs: [[200, "bad", "One hurricane"]] }
+        ], { max: 200 }),
         ask: {
-          q: "A country requires every local risk to be insured by a locally licensed insurer. How can London take part?",
+          q: "Two books each hold 40 identical, well-priced £5m lines. Book A is spread over 40 cities; Book B sits along one coast. Which is the better portfolio?",
           opts: [
-          ["It can’t.", "Not directly. But the local insurer can pass the risk on."],
-          "By reinsuring the local insurer.",
-          ["By writing it directly and paying a fine.", "Unlicensed insurance isn’t a fee-paying option. Policies can be void and people prosecuted."],
-          ["Through a UK coverholder.", "A coverholder binds for London insurers, who still aren’t licensed there."]
+          ["The same: identical risks at identical prices.", "Identical one by one. Very different when a single storm arrives."],
+          "Book A. Book B can lose £200m in an afternoon.",
+          ["Book B: the underwriter knows that coast best.", "Expertise improves selection. It does not stop one hurricane hitting everything selected."]
         ],
           a: 1,
-          why: "The local company issues the policy, often keeping very little, and cedes most of the risk to London. This is **fronting**. London carries the risk, plus the credit risk of the front."
+          why: "The difference exists only at portfolio level, which is why an underwriter can do everything right risk by risk and still build something dangerous."
         }
       },
       {
-        h: "Where on the programme?",
-        say: "Large risks are placed in **layers**. Appetite includes *where* an insurer likes to sit. Low layers are hit often: more premium, more claims handling. High layers are hit rarely but then in full.\n\nA £100m programme. Move your £25m layer.",
+        h: "Aggregate limits",
+        say: "The most basic control is to total the limits exposed in each defined zone and to compare the total with a maximum set for that zone.\n\nThe underwriter writes lines of £5m. The aggregate limit for the Miami zone is £100m. Accept successive Miami risks, each individually sound.",
         scene: (v) => {
-          const rol = [8, 3, 1.2, 0.5][v.att], hit = ["about 1 year in 12", "about 1 year in 35", "about 1 year in 85", "about 1 year in 200"][v.att];
-          return stats([["Your layer", `£25m xs £${v.att * 25}m`], ["Rate on line", pct(rol, 1), "c1"], ["Premium", money(25 * rol / 100)]]) +
-            bars([3, 2, 1, 0].map((i) => ({ label: `£25m xs £${i * 25}m`, right: i === v.att ? hit : "", segs: [[100, i === v.att ? "c1" : "idle", i === v.att ? "Your line" : ""]] })), { max: 100 });
-        },
-        ctl: [{ k: "att", label: "Attachment point", min: 0, max: 3, step: 1, fmt: (i) => (i ? `excess of £${i * 25}m` : "primary") }],
-        live: (v) => (v.att === 0 ? "The **primary** layer: you pay on almost every loss. High premium, and you need a strong claims team because you are first to every claim." : v.att === 3 ? "The top layer: tiny premium for a full £25m limit. It looks like free money for years. Then it isn’t." : "A middle layer: fewer claims than the primary, more premium than the top. **Rate on line** is premium as a percentage of the limit."),
-        goal: {
-          say: "Find the layer where one full loss wipes out two hundred years of premium.",
-          test: (v) => v.att === 3,
-          done: "The top layer: £125k a year for a £25m limit. It will almost certainly be profitable every year of your career. The question is whether 0.5% is the right price for the year it isn’t, and you will never have enough data to know."
-        }
-      },
-      {
-        h: "Controlling the pen",
-        say: "Each underwriter has a written **authority**: classes, territories, maximum line, what must be referred upward. Outside it, they must ask.\n\n**Peer review** has a second underwriter examine a risk after it is written: was it within authority, priced on the agreed basis, properly recorded?",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "a", x: 4, y: 40, w: 104, label: "Authority", sub: "Before" },
-            { id: "w", x: 118, y: 40, w: 104, label: "Risk written", tone: "c1" },
-            { id: "p", x: 232, y: 40, w: 104, label: "Peer review", sub: "After" }
-          ],
-          edges: [["a", "w"], ["w", "p"]]
-        }),
-        ask: {
-          q: "An underwriter with a £5m line limit is offered an excellent risk needing £8m, with an hour to decide. What should she do?",
-          opts: [
-          ["Write £8m. It is a good risk.", "The limit isn’t a view on the risk. Reinsurance, aggregates and capital are all built around it."],
-          "Write £5m, or get approval for more first.",
-          ["Write £8m and report it to her manager afterwards.", "Authority has to exist before the stamp goes down."],
-          ["Decline: a risk needing £8m is outside her authority.", "She can write up to £5m of it. The broker can find the rest elsewhere."]
-        ],
-          a: 1,
-          why: "Exceeding authority is a disciplinary matter even when the risk runs clean. The limit exists because nobody can judge, in an hour, what else the firm already has exposed."
-        }
-      },
-      {
-        h: "Reaching the client",
-        say: "Planning what to write is half the job. The other half is **distribution**: how the business will reach you.",
-        scene: (v) => `<ol class="k-recap">${ROUTE.map((m, i) => `<li${i === v.route ? ' style="font-weight:600"' : ' style="opacity:.55"'}>${m[0]}</li>`).join("")}</ol>`,
-        ctl: [{ k: "route", label: "Route", opts: ["Office", "Affinity", "Partner", "Delegate"] }],
-        live: (v) => `**${ROUTE[v.route][0]}.** ${ROUTE[v.route][1]}`
-      },
-      {
-        h: "The delegated bargain",
-        say: "Delegation swaps one cost for another. The insurer’s own **operating cost** falls: no underwriter sees each risk. Its **acquisition cost** rises: the coverholder is paid commission for doing the work.\n\nA book of small risks at £1,500 premium each.",
-        scene: (v) => {
-          const prem = v.n * 1.5, own = v.n * 0.3 + 150, da = prem * v.comm / 100 + 60;
-          return stats([["Premium", `£${num(prem / 1000, 1)}m`], ["Write it yourself", `£${num(own, 0)}k`, own > da ? "bad" : "good"], ["Delegate", `£${num(da, 0)}k`, da > own ? "bad" : "good"]]) +
+          const agg = v.n * 5;
+          return stats([["Miami risks", `${v.n}`], ["Aggregate", money(agg), agg > 100 ? "bad" : ""], ["Room left", money(Math.max(100 - agg, 0)), agg >= 90 ? "bad" : "good"]]) +
             bars([
-              { label: "In-house", right: pct(own / prem * 100), segs: [[150, "c1", "Team"], [v.n * 0.3, "c1", "Per-risk handling"]] },
-              { label: "Delegated", right: pct(da / prem * 100), segs: [[60, "c1", "Oversight"], [prem * v.comm / 100, "c2", "Commission"]] }
-            ], { max: Math.max(own, da) * 1.05 });
+              { label: "Miami", right: money(agg), segs: [[Math.min(agg, 100), "c1"], [Math.max(agg - 100, 0), "bad", "Over"]] },
+              { label: "Houston", right: "£45m", segs: [[45, "c1"]] },
+              { label: "New Orleans", right: "£30m", segs: [[30, "c1"]] }
+            ], { max: 160, marks: [[100, "Zone limit"]] });
         },
-        ctl: [{ k: "n", label: "Number of risks", min: 200, max: 6000, step: 200, fmt: (x) => num(x, 0) }, { k: "comm", label: "Coverholder’s commission", min: 15, max: 40, step: 1, fmt: pct }],
+        ctl: [{ k: "n", label: "Miami risks written", min: 4, max: 30, step: 1, fmt: (x) => `${x}` }],
+        live: (v) => (v.n * 5 > 100 ? "Over the limit, and every single risk was within the £5m line authority. Nobody broke a rule on any one risk; the breach exists only in the total." : v.n * 5 >= 90 ? "Nearly full. From here every new Miami risk should prompt a question: a smaller line, facultative reinsurance, or letting a weaker Miami risk go at renewal to make room." : "Room to write. Aggregates are tracked by zone and peril, in real time where possible, so the answer is known before the stamp goes down."),
+        goal: {
+          say: "Find the largest number of Miami risks the zone limit allows.",
+          test: (v) => v.n === 20,
+          done: "Twenty lines of £5m. The twenty-first is no worse a risk than the first, which is exactly why a limit is needed: nothing about the individual risk tells you to stop."
+        }
+      },
+      {
+        h: "The catastrophe model",
+        say: "A total of limits assumes that every risk in a zone is wholly destroyed. A **catastrophe model** is more discriminating. It simulates many thousands of possible events and calculates the loss each would cause to the insurer’s actual portfolio.\n\nSuch a model has four components.",
+        scene: (v) => flow({
+          h: 250,
+          on: [["h", "e", "v", "f"][v.mod]],
+          nodes: [
+            { id: "h", x: 95, y: 4, label: "Hazard", sub: "The events" },
+            { id: "e", x: 95, y: 68, label: "Exposure", sub: "Your data", tone: "c2" },
+            { id: "v", x: 95, y: 132, label: "Vulnerability", sub: "Damage" },
+            { id: "f", x: 95, y: 196, label: "Financial", sub: "Your loss", tone: "c1" }
+          ],
+          edges: [["h", "e"], ["e", "v"], ["v", "f"]]
+        }),
+        ctl: [{ k: "mod", label: "Module", opts: ["Hazard", "Exposure", "Damage", "Financial"] }],
+        live: (v) => `**${MOD[v.mod][0]}.** ${MOD[v.mod][1]}`
+      },
+      {
+        h: "The exceedance probability curve",
+        say: "The principal output of a catastrophe model is the **exceedance probability curve**, which gives, for each return period, the loss that is expected to be equalled or exceeded with that frequency. The mean of all simulated years is the **average annual loss**, which the catastrophe element of the premium must be sufficient to meet.\n\nThe insurer in the example has capital of £110m.",
+        scene: (v) => {
+          const T = RP[v.rp], L = loss(T);
+          const pts = [2, 3, 5, 10, 25, 50, 100, 200, 500].map((t) => [t, loss(t)]);
+          return stats([["Return period", `1 in ${T}`], ["Loss at that level", money(L), L > 110 ? "bad" : "c1"], ["Chance each year", pct(100 / T, T > 100 ? 1 : 0)]]) +
+            plot({ h: 170, x: { min: 2, max: 500, log: true, ticks: [5, 10, 50, 200, 500], title: "Return period, years" }, y: { min: 0, max: 180, ticks: [0, 60, 120, 180], fmt: (x) => `£${x}m` },
+              series: [{ tone: "c1", pts }], dots: [{ x: T, y: L, tone: L > 110 ? "bad" : "c1" }], refs: [{ y: 110, label: "Capital £110m", left: true }] });
+        },
+        ctl: [{ k: "rp", label: "Return period", min: 0, max: RP.length - 1, step: 1, fmt: (i) => `1 in ${RP[i]} years` }],
         live: (v) => {
-          const prem = v.n * 1.5, own = v.n * 0.3 + 150, da = prem * v.comm / 100 + 60;
-          return da < own ? "Delegation is cheaper here. The other price is **control**: the insurer no longer chooses each risk, and must rely on the agreement, the bordereaux and audits." : "At this commission, delegating costs more than doing it yourself. That can still be worth it if the coverholder brings business the insurer could never reach.";
+          const T = RP[v.rp], L = loss(T);
+          return L > 110 ? `At 1 in ${T} the modelled loss of ${money(L)} is **more than the capital**. If the board’s appetite is to survive a 1-in-200 year, this book is outside it, and something must change: less exposure, more reinsurance, or more capital.` : `At 1 in ${T} the loss is ${money(L)}: painful, survivable. Appetite is usually set at several points on this curve, such as “no more than a quarter of capital at 1 in 50”.`;
         },
         goal: {
-          say: "With 2,000 risks, find the commission at which delegating costs exactly the same as doing it yourself.",
-          test: (v) => v.n === 2000 && v.comm === 23,
-          done: "23%. Now shrink the book to 400 risks: delegation wins at almost any commission, because your own team’s fixed cost has nothing to spread over. Delegation is cheapest for books too small to deserve a team of their own."
+          say: "Find the return period at which the modelled loss first exceeds the insurer’s capital.",
+          test: (v) => RP[v.rp] === 200,
+          done: "1 in 200: a loss of £121m against £110m of capital. Regulatory capital is calibrated to exactly this point, so on its own figures this insurer does not have enough. It needs less exposure, more reinsurance or more capital."
         }
       },
       {
-        h: "Choosing and watching a partner",
-        say: "Before delegating: **due diligence** on the partner’s people, track record, finances, systems and licences. Then a clear agreement, usually built on a **model wording**, setting out exactly what may be bound.\n\nAfter: monitoring. Bordereaux, audits, premium against limits, claims trends, complaints. The **FCA** expects the insurer to oversee the customer outcomes its delegates produce; **Lloyd’s** adds its own approval and standards.",
+        h: "Gross and net exposure",
+        say: "The modelled gross loss at the 1-in-200 level is £121m, which exceeds the insurer’s capital of £110m. The board has set a tolerance of £50m for the **net** loss at that level.\n\nThe insurer retains the first £20m of any event and purchases catastrophe excess of loss reinsurance above it.",
+        scene: (v) => {
+          const rec = Math.min(v.lim, 101), net = 121 - rec;
+          return stats([["Gross", "£121m"], ["Recovered", money(rec), "c2"], ["Net", money(net), net > 50 ? "bad" : "good"]]) +
+            bars([{ label: "The 1-in-200 loss", segs: [[20, "c1", "Kept"], [101 - rec, "bad", "Also kept"], [rec, "c2", "Reinsurers"]] }], { max: 125, marks: [[50, "Net appetite"]] });
+        },
+        ctl: [{ k: "lim", label: "Cover bought above £20m", min: 0, max: 120, step: 10, fmt: (x) => (x ? `${money(x)} xs £20m` : "none") }],
+        live: (v) => {
+          const net = 121 - Math.min(v.lim, 101);
+          return v.lim > 101 ? "Cover above the modelled loss. Not wasted: it protects against the model being wrong, which it will be. But it costs premium." : net > 50 ? `Net ${money(net)}: still outside appetite. Buy more, or write less.` : `Net ${money(net)}: inside appetite. Two cautions. The recovery depends on the **reinsurers paying**, so their security is part of the exposure. And after a big event, cover must be **reinstated** at extra cost, or the next event is unprotected.`;
+        },
+        goal: {
+          say: "Find the least cover that brings the net 1-in-200 loss inside the board’s £50m appetite.",
+          test: (v) => v.lim === 80,
+          done: "£80m excess of £20m, leaving £41m net. The first £20m and the top £21m both stay with the insurer: reinsurance removes the middle of the loss. Each extra £10m of cover costs premium every year to save money once in two centuries, which is what the board is deciding."
+        }
+      },
+      {
+        h: "Clash and non-modelled perils",
+        say: "**Realistic disaster scenarios** supplement the model. A single defined event is assumed, and its cost to every part of the insurer is totalled. Scenarios reveal two things that models tend to miss.\n\n**Clash** is the accumulation of losses from one event across several classes of business. **Non-modelled perils** are those for which no reliable model yet exists, and for which exposure must be monitored by simpler methods.",
         scene: () => flow({
-          h: 130,
+          h: 190,
           nodes: [
-            { id: "c", x: 4, y: 40, w: 104, label: "Choose", sub: "Due diligence" },
-            { id: "a", x: 118, y: 40, w: 104, label: "Agree", sub: "Clear authority" },
-            { id: "m", x: 232, y: 40, w: 104, label: "Monitor", sub: "Reports, audits", tone: "c1" }
+            { id: "e", x: 95, y: 4, label: "One port explosion", tone: "bad" },
+            { id: "a", x: 4, y: 76, w: 104, label: "Property" }, { id: "b", x: 118, y: 76, w: 104, label: "Marine cargo" }, { id: "c", x: 232, y: 76, w: 104, label: "Liability" },
+            { id: "d", x: 60, y: 136, w: 104, label: "Business interr." }, { id: "f", x: 176, y: 136, w: 104, label: "Marine hull" }
           ],
-          edges: [["c", "a"], ["a", "m"], ["m", "c", "", { dy: 30 }]]
+          edges: [["e", "a"], ["e", "b"], ["e", "c"]]
         }),
         ask: {
-          q: "A coverholder mis-sells policies to consumers. Whom will the regulator hold responsible?",
+          q: "Each class underwriter is inside their own aggregate limit for the port. Is the insurer safe?",
           opts: [
-          ["Only the coverholder: it made the sales.", "It will be held responsible. It won’t be alone."],
-          "The insurer as well: it delegated the authority.",
-          ["Nobody, if the binder forbade mis-selling.", "A clause in a contract isn’t oversight."],
-          ["The broker that introduced the coverholder.", "The broker may have duties of its own, but the product belongs to the insurer."]
+          ["Yes. Every limit is respected.", "Every limit was set class by class. The explosion does not respect classes."],
+          "Not necessarily. Nobody has added the classes together.",
+          ["Yes, provided each class has its own reinsurance.", "Five separate programmes mean five separate retentions from one event, all at once."]
         ],
           a: 1,
-          why: "Authority can be delegated; responsibility can’t. The insurer is the product’s manufacturer and must show it actually oversaw how the product was sold."
+          why: "Five teams, each within limits, can share one loss. **Clash** is found only by someone looking across classes, which is the job of a central exposure management function and the reason Lloyd’s prescribes cross-class scenarios."
         }
       },
       {
-        h: "In five lines",
-        say: "That completes the three syllabuses. The last part applies them to one business: an MGA managing a portfolio for several carriers.",
+        h: "Data quality",
+        say: "The output of a model can be no more reliable than the exposure data supplied to it. The location, construction, occupancy and value of each risk all affect the result, in some cases very greatly.",
+        scene: () => bars([
+          { label: "Coded to the street address", right: "in the flood plain", segs: [[90, "bad", "High modelled loss"]] },
+          { label: "Coded only to the postcode centre", right: "on the hill", segs: [[15, "c1"]] }
+        ], { max: 100 }),
+        ask: {
+          q: "A coverholder’s bordereau gives only a town name for each property. What does the catastrophe model do with it?",
+          opts: [
+          ["Refuses to run.", "It would be safer if it did."],
+          "Assumes an average location, which may be badly wrong.",
+          ["Assumes the worst location in the town.", "Models default to the centre or an average, not the worst case."]
+        ],
+          a: 1,
+          why: "The model runs and produces a confident number. Nothing on the output says the inputs were guesses. Asking for better data, and loading the price for poor data, is part of underwriting delegated business."
+        }
+      },
+      {
+        h: "The means of control",
+        say: "Exposure is controlled by a small number of measures, which are used in combination.",
         scene: () => recap([
-          "An insurer can subscribe, reinsure a local front, or delegate.",
-          "Low layers pay often; high layers pay rarely and in full.",
-          "Written authorities and peer review control the individual underwriter.",
-          "Distribution: own offices, affinity groups, partners, delegation.",
-          "Delegation trades operating cost for acquisition cost, and control for reach."
+          "Line size: how much of each risk",
+          "Aggregate limits: how much per zone and peril",
+          "Reinsurance: facultative on one risk, treaty on the book",
+          "Price: charge for the capital the accumulation uses",
+          "Mix: write less where you are full, more where you are empty"
+        ]),
+        ask: {
+          q: "The Miami zone is at 95% of its limit. An excellent new Miami risk is offered. What is the best response?",
+          opts: ["Decline. The zone is nearly full.", "Write it anyway. It is excellent.", "Find room: a smaller line, facultative cover, or drop a weaker Miami risk."],
+          a: 2,
+          why: "A limit is a budget, not a wall. The skilled move is to spend scarce capacity on the best risks in the zone, improving the quality of the accumulation without growing it."
+        }
+      },
+      {
+        h: "Summary",
+        say: "The final chapter of LM3 considers how an insurer obtains the business it has planned to write.",
+        scene: () => recap([
+          "An accumulation is everything one event can hit.",
+          "Line limits control a risk; aggregate limits control a portfolio.",
+          "Cat models give a loss for each return period, and are only as good as the data.",
+          "Reinsurance brings the net curve inside appetite, if the reinsurers pay.",
+          "Clash and unmodelled perils need scenarios and someone looking across classes."
         ])
       }
     ]
