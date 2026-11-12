@@ -1,5 +1,5 @@
 /* The Slip — offline support. Bump VERSION whenever app files change. */
-const VERSION = "the-slip-v11";
+const VERSION = "the-slip-v12";
 const SHELL = [
   "./",
   "index.html",
@@ -44,7 +44,7 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
@@ -68,15 +68,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // App files: serve from cache, refresh in the background.
+  // App files: always prefer the network, so an update never mixes old and new files. Fall back to the cache offline.
   event.respondWith(
     caches.open(VERSION).then((cache) =>
-      cache.match(req).then((hit) => {
-        const fresh = fetch(req)
-          .then((res) => { if (res.ok) cache.put(req, res.clone()); return res; })
-          .catch(() => hit);
-        return hit || fresh;
-      })
+      fetch(req, { cache: "no-cache" })
+        .then((res) => { if (res.ok) cache.put(req, res.clone()); return res; })
+        .catch(() => cache.match(req))
     )
   );
 });
