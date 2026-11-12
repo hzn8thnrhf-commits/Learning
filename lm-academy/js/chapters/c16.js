@@ -25,7 +25,12 @@
         }),
         ask: {
           q: "On a subscription risk with twelve insurers, who agrees the claim?",
-          opts: ["All twelve, one by one.", "The leader, sometimes with a second insurer, for everyone."],
+          opts: [
+          ["All twelve, one by one.", "That was the old way. It could take months."],
+          "The leader, with a second insurer on larger claims, for everyone.",
+          ["The broker.", "The broker presents and negotiates for the client. It can’t agree on the insurers’ behalf."],
+          ["The loss adjuster.", "The adjuster investigates and recommends. Insurers decide."]
+        ],
           a: 1,
           why: "Market claims schemes let the leader, plus a second **agreement party** for larger or complex claims, bind the followers. The client deals with one decision, not twelve."
         }
@@ -43,10 +48,15 @@
           edges: [["i", "a"], ["i", "s"], ["i", "l"]]
         }),
         ask: {
-          q: "A container ship jettisons cargo to save the vessel. Who works out how the loss is shared among everyone with an interest?",
-          opts: ["A loss assessor.", "An average adjuster."],
+          q: "A container ship jettisons cargo to save the vessel. Who works out how that loss is shared among everyone with property on board?",
+          opts: [
+          ["A loss assessor.", "An assessor argues one claimant’s case. This is a sharing calculation across all of them."],
+          "An average adjuster.",
+          ["A loss adjuster.", "Loss adjusters handle property and liability claims ashore."],
+          ["A marine surveyor.", "The surveyor establishes what was damaged, not who contributes what."]
+        ],
           a: 1,
-          why: "That sacrifice is **general average**: everyone whose property was saved contributes. Calculating it is the average adjuster’s speciality."
+          why: "That sacrifice is **general average**: everyone whose property was saved contributes to the loss of those whose property was sacrificed. Calculating it is the average adjuster’s speciality."
         }
       },
       {
@@ -59,7 +69,12 @@
         },
         ctl: [{ k: "loss", label: "Size of the loss", min: 0.2, max: 10, step: 0.2, fmt: money }, { k: "exc", label: "Excess", min: 0, max: 2, step: 0.1, fmt: money }, { k: "lim", label: "Limit", min: 1, max: 8, step: 0.5, fmt: money }],
         live: (v) => (v.loss <= v.exc ? "The loss is inside the excess: no claim at all. That is the point. An excess removes small claims that cost more to handle than they are worth, and keeps the insured careful."
-          : v.loss - v.exc > v.lim ? "The loss has gone through the top of the cover. The insured bears both the excess and everything above the limit." : "An ordinary claim: the insured bears the excess, insurers pay the rest.")
+          : v.loss - v.exc > v.lim ? "The loss has gone through the top of the cover. The insured bears both the excess and everything above the limit." : "An ordinary claim: the insured bears the excess, insurers pay the rest."),
+        goal: {
+          say: "A £9m loss. Arrange an excess and a limit so the insured bears £3m in total: part at the bottom and part at the top.",
+          test: (v) => v.loss === 9 && v.lim === 6 && v.exc > 0 && v.exc < 3,
+          done: "With a £6m limit, the insured always bears £3m of a £9m loss, however it is split between excess and overspill. An insured chooses its excess. It often discovers its limit."
+        }
       },
       {
         h: "Which year’s policy?",
@@ -80,6 +95,11 @@
           const cmY = Math.floor((14 + v.delay) / 12);
           if (v.retro && cmY >= 2) return "**The gap.** The claim is made in a year whose policy only covers work done since 2026, and the old policy has expired. Nobody pays. Good brokers never let a retroactive date reset.";
           return cmY === 1 ? "Event and claim fall in the same year, so both triggers agree." : "Property is written **losses occurring**: the fire is obvious on the day. Professional liability is usually **claims made**, so the insurer can close its books on old years.";
+        },
+        goal: {
+          say: "Reset the retroactive date. Then find the shortest delay at which nobody pays the claim.",
+          test: (v) => v.retro === 1 && v.delay === 10,
+          done: "Ten months: the claim lands in January 2026, under a policy that only covers work done since 2026, for something done in 2025. Losses occurring cover would still have responded. On claims-made business, continuity of the retroactive date is everything."
         }
       },
       {
@@ -87,10 +107,15 @@
         say: "The FCA’s insurance conduct rules (ICOBS) require insurers to handle claims **promptly and fairly**, give reasonable guidance to help the policyholder claim, not **unreasonably reject** a claim, and settle promptly once terms are agreed.\n\nFor consumers, rejecting a claim over a breach that had nothing to do with the loss is generally unreasonable.",
         scene: () => recap(["Handle claims promptly and fairly", "Help the policyholder make the claim", "Don’t unreasonably reject", "Settle promptly once agreed"]),
         ask: {
-          q: "A consumer’s home policy requires window locks. A burglar comes in through an unlocked front door the policy says nothing about. May the insurer refuse over missing window locks?",
-          opts: ["Yes. A condition was breached.", "Generally no. The breach was unconnected to the loss."],
+          q: "A consumer’s home policy requires window locks. A burglar walks in through an unlocked front door. The windows had no locks. May the insurer refuse the claim over the windows?",
+          opts: [
+          ["Yes. A condition was breached.", "It was, but it had nothing to do with how the burglar got in."],
+          "Generally no. The breach was unconnected to the loss.",
+          ["Yes, but it must refund the premium.", "A refund doesn’t make an unreasonable rejection reasonable."],
+          ["No. Conditions never apply to consumers.", "They do. An unlocked window used by the burglar would have been a different story."]
+        ],
           a: 1,
-          why: "The Insurance Act 2015 points the same way for all insureds: a term aimed at one kind of loss can’t be used to defeat a claim for a different kind."
+          why: "ICOBS forbids unreasonable rejection, and the Insurance Act 2015 points the same way for all insureds: a term aimed at one kind of loss can’t be used to defeat a claim for a different kind."
         }
       },
       {
@@ -106,29 +131,42 @@
           edges: [["c", "f"], ["f", "o", "still unhappy"]]
         }),
         ask: {
-          q: "The Ombudsman decides for the customer. Who is bound by that decision?",
-          opts: ["Both sides.", "The insurer. The customer can still reject it and go to court."],
+          q: "The Ombudsman decides in the customer’s favour. Who is bound?",
+          opts: [
+          ["Both sides.", "The customer never gives up the right to go to court."],
+          "The insurer, if the customer accepts the decision.",
+          ["Neither: it is a recommendation.", "For the firm it is binding, up to the award limit."],
+          ["The customer only.", "It is the other way round."]
+        ],
           a: 1,
-          why: "If the customer accepts, the insurer must comply. If the customer rejects it, they keep the right to sue. The insurer has no such choice."
+          why: "If the customer accepts, the insurer must comply. If the customer rejects the decision, they can still sue. The insurer has no such choice."
         }
       },
       {
         h: "Last checks before paying",
         say: "Two things happen before money leaves. **Sanctions:** the payee, and everyone the money passes through, is screened again, because lists change between inception and claim. **Recoveries:** having paid, the insurer considers subrogation against whoever caused the loss, and its own reinsurance.\n\nAnd if the *insurer* fails, eligible policyholders look to the **FSCS**.",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "s", x: 4, y: 40, w: 104, label: "Sanctions", sub: "Screen the payee", tone: "bad" },
-            { id: "p", x: 118, y: 40, w: 104, label: "Pay", tone: "c1" },
-            { id: "r", x: 232, y: 40, w: 104, label: "Recover", sub: "Subrogation, RI" }
-          ],
-          edges: [["s", "p"], ["p", "r"]]
-        }),
+        scene: (v) => (v.$done ? bars([
+  { label: "The £2m claim", right: "paid 50:50", segs: [[1, "c1", "Insurer £1m"], [1, "c2", "Reinsurer £1m"]] },
+  { label: "The £1m recovery", right: "shared 50:50", segs: [[0.5, "c1", "£500k"], [0.5, "c2", "£500k"]] }
+], { max: 2 }) : flow({
+  h: 130,
+  nodes: [
+    { id: "s", x: 4, y: 40, w: 104, label: "Sanctions", sub: "Screen the payee", tone: "bad" },
+    { id: "p", x: 118, y: 40, w: 104, label: "Pay", tone: "c1" },
+    { id: "r", x: 232, y: 40, w: 104, label: "Recover", sub: "Subrogation, RI" }
+  ],
+  edges: [["s", "p"], ["p", "r"]]
+})),
         ask: {
-          q: "A valid cargo claim is agreed. Screening shows the cargo owner was added to the UK sanctions list last month. Pay?",
-          opts: ["Yes. The claim is valid and the policy predates the listing.", "No. Paying could itself breach sanctions."],
+          q: "An insurer pays a £2m fire claim. It has a 50% quota share. It then recovers £1m from the contractor who caused the fire. Who benefits from the recovery?",
+          opts: [
+          ["The insurer keeps all £1m.", "The reinsurer paid half the claim. It is entitled to half of what comes back."],
+          "The insurer and its reinsurer, £500,000 each.",
+          ["The insured.", "The insured has been indemnified. Keeping the recovery too would be double payment."],
+          ["The reinsurer takes all £1m, as it paid first.", "It paid its share, not first. Recoveries follow the same proportions as the claim."]
+        ],
           a: 1,
-          why: "A valid claim doesn’t override the law. The payment is frozen and the matter reported; a licence would be needed to pay."
+          why: "Subrogation recoveries reduce the claim, so they are shared with reinsurers in the proportions the claim was. One more check comes before any payment: **sanctions**, screened again because lists change between inception and claim."
         }
       },
       {

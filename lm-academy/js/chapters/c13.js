@@ -28,10 +28,15 @@
           edges: [["c", "l"], ["a", "l"], ["g", "l"]]
         }),
         ask: {
-          q: "An underwriter loves a Florida hotel risk and has plenty of capacity. Why might she still write only 2%?",
-          opts: ["The broker asked for 2%.", "Her book is already full of Florida windstorm exposure."],
+          q: "An underwriter loves a Florida hotel risk, has plenty of capacity, and it fits the plan. Why might she still write only 2%?",
+          opts: [
+          ["The broker only offered 2%.", "Possible, but that isn’t one of her own three ceilings."],
+          "Her book is already full of Florida windstorm.",
+          ["Good risks should be shared round the market.", "Underwriters aren’t that generous. She would take more if she could."],
+          ["Small lines sign down less.", "Signing down is proportional. Line size doesn’t change the proportion."]
+        ],
           a: 1,
-          why: "One hurricane would hit every Florida risk she holds at once. Aggregates are tracked by peril and region precisely so that a good individual risk doesn’t become a bad accumulation."
+          why: "One hurricane would hit every Florida risk she holds at once. **Aggregates** are tracked by peril and region precisely so that a good individual risk doesn’t become part of a bad accumulation."
         }
       },
       {
@@ -46,7 +51,12 @@
             ], { max: 80 });
         },
         ctl: [{ k: "wages", label: "Actual wage roll at year end", min: 5, max: 16, step: 1, fmt: (x) => `£${x}m` }],
-        live: (v) => (v.wages > 8 ? "The firm grew, so there was more risk than estimated and more premium is due. The insurer was on risk for the larger workforce all along." : v.wages < 8 ? "The firm shrank. Part of the deposit comes back, usually subject to a **minimum** premium the insurer keeps regardless." : "The estimate was exact: no adjustment.")
+        live: (v) => (v.wages > 8 ? "The firm grew, so there was more risk than estimated and more premium is due. The insurer was on risk for the larger workforce all along." : v.wages < 8 ? "The firm shrank. Part of the deposit comes back, usually subject to a **minimum** premium the insurer keeps regardless." : "The estimate was exact: no adjustment."),
+        goal: {
+          say: "The firm’s wage roll turned out to be £13m. Find the extra premium it owes.",
+          test: (v) => v.wages === 13,
+          done: "£25,000. The deposit was priced on £8m of wages; the insurer was actually on risk for £13m all year. The adjustment isn’t a penalty, it is the price of the cover the firm really had."
+        }
       },
       {
         h: "How bad could it get?",
@@ -60,7 +70,12 @@
             ], { max: 200 });
         },
         ctl: [{ k: "pml", label: "PML as a share of sum insured", min: 10, max: 100, step: 10, fmt: pct }],
-        live: (v) => (v.pml >= 100 ? "Treating the whole sum insured as at risk, she can write only 3%. Safe, but she earns little premium." : `Writing on a ${v.pml}% PML lets her take a bigger line. But PML is an opinion: if the “impossible” total loss happens, she pays **${money(200 * Math.min(100, 6 / (200 * v.pml / 100) * 100) / 100)}**, not £6m. PML errors are a classic source of nasty surprises.`)
+        live: (v) => (v.pml >= 100 ? "Treating the whole sum insured as at risk, she can write only 3%. Safe, but she earns little premium." : `Writing on a ${v.pml}% PML lets her take a bigger line. But PML is an opinion: if the “impossible” total loss happens, she pays **${money(200 * Math.min(100, 6 / (200 * v.pml / 100) * 100) / 100)}**, not £6m. PML errors are a classic source of nasty surprises.`),
+        goal: {
+          say: "She wants a 15% line. Find the PML assumption that allows it, and see what she loses if the whole site burns.",
+          test: (v) => v.pml === 20,
+          done: "A 20% PML. She now holds £30m of the sum insured against the £6m she can afford: if the PML is wrong, she is wrong five times over. The more optimistic the PML, the bigger the line and the bigger the bet on being right."
+        }
       },
       {
         h: "Planning for the worst",
@@ -71,10 +86,15 @@
           { label: "Two-aircraft collision", right: "£50m gross", segs: [[20, "c1", "Net"], [30, "c2", ""]] }
         ], { max: 150, marks: [[75, "Board’s net limit"]], legend: [["c1", "Kept"], ["c2", "Recovered from reinsurers"]] }),
         ask: {
-          q: "The Florida scenario would cost this insurer £60m net against a limit of £75m. What should a new Florida risk prompt?",
-          opts: ["Nothing: it is under the limit.", "A check on how much of the remaining £15m it uses up."],
+          q: "The Florida scenario would cost this insurer £60m net against a board limit of £75m. A good new Florida risk is offered. What should happen?",
+          opts: [
+          ["Write it freely: there is £15m of room.", "There is room, but nobody yet knows how much of it this one risk uses."],
+          "Work out how much of the remaining £15m it would use, then decide the line.",
+          ["Decline: the scenario is nearly full.", "£15m of headroom is real capacity. Declining wastes it."],
+          ["Write it and buy more reinsurance afterwards.", "Cover bought after the commitment may not be available, or affordable."]
+        ],
           a: 1,
-          why: "That is aggregate management in practice. The scenario numbers also depend on the reinsurers actually paying, which is why their security is monitored too."
+          why: "That is aggregate management in practice: the scenario is a budget. The net figure also depends on reinsurers actually paying, which is why their security is monitored too."
         }
       },
       {
@@ -94,6 +114,11 @@
           return v.tail
             ? `**${pct((ib / 60) * 100)} of the final bill is still unreported.** Liability claims, like an illness diagnosed years after exposure, arrive slowly. This is **long-tail** business.`
             : `Property claims are obvious and fast: only ${pct((ib / 60) * 100)} is unreported. **Short-tail** business tells you the truth quickly.`;
+        },
+        goal: {
+          say: "On the liability book, find how long it takes for half of the final bill even to be **reported**.",
+          test: (v) => v.tail === 1 && v.t === 2.5,
+          done: "About two and a half years, and at that point only a third has been *paid*. Now switch to property at the same date: it is almost all in. That difference is what “long tail” means."
         }
       },
       {
@@ -106,10 +131,15 @@
           { label: "Reserved too much", right: "capital trapped", segs: [[60, "c1", "Reserve"], [20, "c2", "Idle"]] }
         ], { max: 90, marks: [[60, "True cost"]] }),
         ask: {
-          q: "A new liability underwriter’s first-year reported claims are only 25% of premium. Is the account profitable?",
-          opts: ["Yes. A 25% loss ratio is superb.", "Unknown. Most of the year’s claims haven’t been reported."],
-          a: 1,
-          why: "On long-tail business only about a quarter of claims have surfaced after one year. The honest figure is the **ultimate**: paid + outstanding + IBNR."
+          q: "A new liability account has reported claims of 25% of premium after its first year. On this kind of business about a quarter of claims are reported by then. What is the best estimate of its final claims ratio?",
+          fix: true,
+          opts: [
+          ["25%", "That is only what has been reported so far."],
+          ["50%", "If a quarter is reported, the whole is four times it, not twice."],
+          "About 100%"
+        ],
+          a: 2,
+          why: "25% ÷ ¼ = 100%. An account that looks superb at twelve months is on course to lose money once expenses are added. The honest figure is always the **ultimate**: paid + outstanding + IBNR."
         }
       },
       {
@@ -123,7 +153,12 @@
         ctl: [{ k: "err", label: "The old claims turn out", min: -40, max: 40, step: 10, fmt: (x) => (x === 0 ? "as estimated" : `${Math.abs(x)}% ${x > 0 ? "worse" : "better"}`) }],
         live: (v) => (v.err === 0 ? "The estimate was right, so the handover is fair to both groups of members."
           : v.err > 0 ? `The 2025 members inherit **${money(25 * v.err / 100)}** of losses on business they never wrote. If the uncertainty is too great to price fairly, the year is left **open** instead, and its members stay on the hook.`
-            : `The 2025 members pocket **${money(-25 * v.err / 100)}** at the expense of 2024’s. The price of closing is a judgement between two groups of people.`)
+            : `The 2025 members pocket **${money(-25 * v.err / 100)}** at the expense of 2024’s. The price of closing is a judgement between two groups of people.`),
+        goal: {
+          say: "The 2024 members walked away with £5m. Find how wrong the estimate must be for the 2025 members to lose the same amount on claims they never underwrote.",
+          test: (v) => v.err === 20,
+          done: "A 20% error on £25m. One group’s whole profit turns out to have been another group’s loss. This is why RITC is priced with such care, and why a year is left open when the uncertainty is too great."
+        }
       },
       {
         h: "In five lines",

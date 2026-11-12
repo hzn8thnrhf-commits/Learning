@@ -23,10 +23,15 @@
         say: "An insurer earns £100m of premium a year and spends £30m running the business. That leaves **£70m** to pay claims. Here are its claims for twelve years.",
         scene: () => cols({ h: 190, max: 150, bars: ATT.map((a, i) => ({ label: i + 1, hot: i === 6, segs: [[a + EVT[i], a + EVT[i] > 70 ? "bad" : "c1"]] })), lines: [{ v: 70, label: "£70m available for claims" }] }),
         ask: {
-          q: "What threatens this insurer?",
-          opts: ["Its average year.", "Year 7."],
+          q: "Over the twelve years its claims average about £65m, against £70m available. Is this insurer safe?",
+          opts: [
+          ["Yes. On average it makes £5m a year.", "It has to survive each year to collect the average."],
+          "No. Year 7 costs twice what it has, and insurers fail in single years.",
+          ["No. A £5m average margin is too thin.", "The margin isn’t the danger. Eleven of the twelve years are comfortably affordable."],
+          ["Yes, if it saves the profits from the good years.", "Six good years would save about £60m. Year 7 overshoots by £70m, and it could have come in year 1."]
+        ],
           a: 1,
-          why: "On average it does well. But one year costs twice what it can afford, and insurers fail in single years, not on averages. Reinsurance exists to **even out the peaks**, and to release capacity so the insurer can write more."
+          why: "Reinsurance exists to **even out the peaks**: to swap an occasional ruinous year for a steady, known cost. It also releases capacity, so the insurer can write more than its own capital allows."
         }
       },
       {
@@ -42,10 +47,15 @@
           edges: [["b", "f", "the odd one"], ["b", "t", "the rest"]]
         }),
         ask: {
-          q: "An insurer of small factories is offered one giant chemical plant. How does it reinsure the plant?",
-          opts: ["Under its treaty, automatically.", "Facultatively, as a one-off."],
+          q: "An insurer of small factories is offered one giant chemical plant. How should it reinsure the plant?",
+          opts: [
+          ["Under its treaty, automatically.", "The treaty was priced on small factories. One chemical plant could wreck its results, and may be outside its terms."],
+          "Facultatively, as a one-off.",
+          ["It can’t: anything outside the treaty must be declined.", "That is what facultative cover is for."],
+          ["By raising the treaty’s retention.", "A higher retention means keeping *more* of the plant, not less."]
+        ],
           a: 1,
-          why: "The plant is too large and too different for a treaty priced on small factories. Facultative cover deals with it alone, and protects the treaty from being distorted by it."
+          why: "Facultative reinsurance handles the risk that doesn’t fit: too large or too unusual. Each side chooses whether to offer and accept, and the treaty is protected from being distorted."
         }
       },
       {
@@ -87,6 +97,11 @@
           if (v.size <= 2) return "The risk is within the retention, so the insurer keeps all of it. Small risks never touch a surplus treaty.";
           if (v.size > 2 + cap) return `The treaty’s capacity is ${v.lines} lines × £2m = ${money(cap)}. The remaining **${money(v.size - 2 - cap)}** needs facultative cover, or the insurer must write a smaller share.`;
           return `The insurer keeps ${pct((2 / v.size) * 100)} of this risk, so it keeps ${pct((2 / v.size) * 100)} of its premium and pays ${pct((2 / v.size) * 100)} of any claim on it. The share changes with every risk; only the £2m is fixed.`;
+        },
+        goal: {
+          say: "Find the fewest lines that place a £24m risk with nothing left over.",
+          test: (v) => v.size === 24 && v.lines === 11,
+          done: "Eleven lines: £2m kept, £22m ceded. The insurer holds one twelfth of this risk, so it keeps one twelfth of the premium and pays one twelfth of every claim on it, however small."
         }
       },
       {
@@ -115,7 +130,12 @@
         ctl: [{ k: "loss", label: "Size of the loss", min: 1, max: 40, step: 1, fmt: money }, { k: "r", label: "Retention", min: 1, max: 15, step: 1, fmt: money }, { k: "l", label: "Limit", min: 2, max: 25, step: 1, fmt: money }],
         live: (v) => (v.loss <= v.r ? "Inside the retention: the reinsurer pays nothing. Most losses never reach an excess layer."
           : v.loss > v.r + v.l ? `The layer is exhausted. Everything above ${money(v.r + v.l)} falls back on the insurer unless it bought another layer on top.`
-            : `Loss minus retention: ${money(v.loss)} − ${money(v.r)} = **${money(v.loss - v.r)}** recovered.`)
+            : `Loss minus retention: ${money(v.loss)} − ${money(v.r)} = **${money(v.loss - v.r)}** recovered.`),
+        goal: {
+          say: "Make the loss £30m. Then arrange a layer so that the reinsurer pays exactly £22m.",
+          test: (v) => v.loss === 30 && Math.min(Math.max(v.loss - v.r, 0), v.l) === 22,
+          done: "There are two ways to get there: a retention of £8m with enough limit above it, or a lower retention whose £22m limit runs out, leaving the insurer paying at both ends. The top of a layer matters as much as the bottom."
+        }
       },
       {
         h: "An excess of loss sum",
@@ -139,17 +159,27 @@
         },
         ctl: [{ k: "ret", label: "Retention for any one event", min: 5, max: 80, step: 5, fmt: money }],
         live: (v) => (v.ret <= 10 ? "Year 7 now looks like any other year. Eleven bars are untouched: excess of loss changes the **shape** of the results, where quota share only changed their size."
-          : "Raise the retention and the insurer keeps more of year 7, in exchange for a cheaper treaty. A **stop loss** works the same way on the whole year’s loss ratio instead of one event.")
+          : "Raise the retention and the insurer keeps more of year 7, in exchange for a cheaper treaty. A **stop loss** works the same way on the whole year’s loss ratio instead of one event."),
+        goal: {
+          say: "Find the highest retention at which year 7 is still affordable.",
+          test: (v) => v.ret === 10,
+          done: "£10m. Year 7 then costs exactly the £70m available, and the other eleven years haven’t changed at all. No quota share, at any percentage, could do that."
+        }
       },
       {
         h: "Which pays first?",
         say: "A real programme stacks all three. When one loss could claim on several, they respond in a set order: **facultative first, then proportional, then non-proportional.** Each works on what the one before left behind.\n\nA £10m claim on a risk with 20% facultative cover, a 50% quota share, and excess of loss above £3m:",
         scene: () => wfall([{ label: "Gross claim", v: 10, total: true }, { label: "1. Facultative, 20%", v: -2 }, { label: "2. Quota share, 50%", v: -4 }, { label: "3. Excess above £3m", v: -1 }, { label: "Insurer’s net", total: true }], { fmt: (x) => `£${num(x, 0)}m` }),
         ask: {
-          q: "Why does the order matter?",
-          opts: ["It doesn’t; the total is the same.", "Each cover applies to what is left after the previous one, so changing the order changes the answer."],
-          a: 1,
-          why: "Apply the excess of loss first and it would see a £10m loss, not £4m, and pay far more. The order is written into the contracts so that nobody recovers the same pound twice."
+          q: "Suppose the excess of loss above £3m were wrongly applied **first**, to the full £10m claim. How much would it pay?",
+          fix: true,
+          opts: [
+          ["£1m, as before.", "It only paid £1m because the earlier covers had already cut the claim to £4m."],
+          ["£4m", "That is what the quota share paid."],
+          "£7m"
+        ],
+          a: 2,
+          why: "£10m less the £3m retention is £7m, seven times what it owes when applied in the right order. Each cover works on what the one before left behind, and the order (facultative, proportional, non-proportional) is written into the contracts so nobody recovers the same pound twice."
         }
       },
       {

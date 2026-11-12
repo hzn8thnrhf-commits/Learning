@@ -28,7 +28,18 @@
   const VALS = {};
   const vals = (c) => VALS[c.id] || (VALS[c.id] = Object.assign({}, c.init || {}));
   const ansKey = (c, i) => `${c.id}:${i}`;
-  const view = (c, i) => Object.assign({}, vals(c), { $ans: S.ans[ansKey(c, i)], $done: S.ans[ansKey(c, i)] !== undefined });
+  const view = (c, i) => Object.assign({}, vals(c), { $ans: S.ans[ansKey(c, i)], $done: S.ans[ansKey(c, i)] !== undefined, $goal: !!S.ans[ansKey(c, i) + "g"] });
+  /* answer options are shown in a shuffled order that is stable for each step, so position never gives the answer away */
+  const optText = (o) => (Array.isArray(o) ? o[0] : o);
+  const optNote = (o) => (Array.isArray(o) ? o[1] : "");
+  function order(c, i, st) {
+    const n = st.ask.opts.length, idx = st.ask.opts.map((_, j) => j);
+    if (st.ask.fix) return idx;
+    let h = 2166136261;
+    for (const ch of `${c.id}:${i}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+    for (let k = n - 1; k > 0; k--) { h = (Math.imul(h, 1664525) + 1013904223) >>> 0; const r = h % (k + 1); [idx[k], idx[r]] = [idx[r], idx[k]]; }
+    return idx;
+  }
 
   /* ---- contents ---- */
   function nextUp() { return CH.find((c) => !S.done[c.id]) || CH[0]; }
@@ -86,8 +97,13 @@
     const a = S.ans[ansKey(c, i)];
     const done = a !== undefined;
     return `<div class="ask${done ? " answered" : ""}"><p class="ask-q">${fmt(st.ask.q)}</p>
-      <div class="ask-opts">${st.ask.opts.map((o, j) => `<button type="button" data-act="answer" data-j="${j}"${done ? " disabled" : ""} class="${done && j === st.ask.a ? "right" : ""}${done && j === a && j !== st.ask.a ? "wrong" : ""}">${fmt(o)}</button>`).join("")}</div>
-      ${done ? `<div class="ask-why"><b>${a === st.ask.a ? "Yes." : "Not quite."}</b> ${fmt(st.ask.why)}</div>` : ""}</div>`;
+      <div class="ask-opts">${order(c, i, st).map((j) => `<button type="button" data-act="answer" data-j="${j}"${done ? " disabled" : ""} class="${done && j === st.ask.a ? "right" : ""}${done && j === a && j !== st.ask.a ? "wrong" : ""}">${fmt(optText(st.ask.opts[j]))}</button>`).join("")}</div>
+      ${done ? `<div class="ask-why">${a !== st.ask.a && optNote(st.ask.opts[a]) ? `<p class="ask-miss">${fmt(optNote(st.ask.opts[a]))}</p>` : ""}<p><b>${a === st.ask.a ? "Yes." : "Not quite."}</b> ${fmt(st.ask.why)}</p></div>` : ""}</div>`;
+  }
+  /* a challenge for a step with controls: something to achieve, ticked once the reader gets there */
+  function goalHTML(st, v) {
+    if (!st.goal) return "";
+    return `<div class="goal${v.$goal ? " met" : ""}" data-goal><span class="goal-k">${v.$goal ? "Done" : "Try this"}</span><p>${fmt(v.$goal ? st.goal.done : st.goal.say)}</p></div>`;
   }
   const liveHTML = (st, v, where) => (st.live ? `<div class="live live-${where}" data-live>${paras(st.live(v))}</div>` : "");
   const stageHTML = (st, v) => (st.scene ? st.scene(v) : "");
@@ -98,7 +114,7 @@
     const st = c.steps[i];
     const v = view(c, i);
     const last = i === c.steps.length - 1;
-    const waiting = st.ask && !v.$done;
+    const waiting = (st.ask && !v.$done) || (st.goal && !v.$goal);
     const hideSay = false;
     return `<div class="spread lesson">
       <section class="page stage-page"><div class="stage-top"><span class="eyebrow">${c.part} · ${esc(c.title)}</span></div>
@@ -109,6 +125,7 @@
           ${st.h ? `<h2>${fmt(st.h)}</h2>` : ""}
           ${hideSay ? "" : `<div class="say">${paras(call(st.say, v))}</div>`}
           ${askHTML(c, i, st)}
+          ${goalHTML(st, v)}
           ${controlsHTML(c, st, v)}
           ${liveHTML(st, v, "talk")}
           ${st.after && v.$done ? `<div class="say">${paras(call(st.after, v))}</div>` : ""}
@@ -120,7 +137,15 @@
   }
 
   function refreshStage() {
-    const { c, i } = cur, st = c.steps[i], v = view(c, i);
+    const { c, i } = cur, st = c.steps[i];
+    let v = view(c, i);
+    if (st.goal && !v.$goal && st.goal.test(v)) {
+      S.ans[ansKey(c, i) + "g"] = 1; save(); v = view(c, i);
+      const g = document.querySelector("[data-goal]");
+      if (g) g.outerHTML = goalHTML(st, v);
+      const n = document.querySelector(".nav-n");
+      if (n && !(st.ask && !v.$done)) { n.classList.remove("quiet"); n.firstChild.textContent = i === c.steps.length - 1 ? "Finish chapter" : "Next"; }
+    }
     const stage = document.getElementById("stage");
     if (stage) stage.innerHTML = stageHTML(st, v);
     if (st.live) document.querySelectorAll("[data-live]").forEach((el) => { el.innerHTML = paras(st.live(v)); });

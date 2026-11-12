@@ -37,9 +37,13 @@
         }),
         ask: {
           q: "A yacht owner’s proposal form doesn’t ask about a recent grounding. He says nothing. Has he met his duty?",
-          opts: ["Yes. He answered every question asked.", "It depends on whether he is a consumer or a business."],
-          a: 1,
-          why: "A **consumer** must take reasonable care not to misrepresent, which in practice means answering the questions honestly. A **commercial** insured must volunteer every material circumstance, asked or not. Same silence, different result."
+          opts: [
+          ["Yes. He answered every question asked.", "True for a consumer. Not for a business."],
+          ["No. A grounding is plainly material.", "True for a business. A consumer isn’t expected to volunteer what he wasn’t asked."],
+          "It depends whether he is a consumer or a business."
+        ],
+          a: 2,
+          why: "A **consumer** must take reasonable care not to misrepresent, which in practice means answering honestly. A **commercial** insured, such as a charter company, must volunteer every material circumstance, asked or not. Same silence, different result."
         }
       },
       {
@@ -54,7 +58,12 @@
             ], { max: 100 });
         },
         ctl: [{ k: "would", label: "Premium the insurer would have charged", min: 100, max: 300, step: 10, fmt: (x) => `£${x}k` }],
-        live: (v) => `The insurer received ${pct(10000 / v.would)} of the right premium, so it pays ${pct(10000 / v.would)} of the claim: a **proportionate remedy**. Had it refused the risk altogether, it may avoid the policy and return the premium. Only a **deliberate or reckless** breach lets it avoid and keep the premium.`
+        live: (v) => `The insurer received ${pct(10000 / v.would)} of the right premium, so it pays ${pct(10000 / v.would)} of the claim: a **proportionate remedy**. Had it refused the risk altogether, it may avoid the policy and return the premium. Only a **deliberate or reckless** breach lets it avoid and keep the premium.`,
+        goal: {
+          say: "The insurer has paid only 40% of the £1m claim. Find the premium it says it would have charged.",
+          test: (v) => v.would === 250,
+          done: "£250k. The client paid £100k, which is 40% of the proper premium, so it receives 40% of the claim. The remedy mirrors the size of the gap, where the old law gave nothing at all."
+        }
       },
       {
         h: "The Market Reform Contract",
@@ -69,9 +78,14 @@
         scene: () => `<ol class="k-recap">${MRC.map((m) => `<li>${m[0]}</li>`).join("")}</ol>`,
         ask: {
           q: "Which section answers that?",
-          opts: ["Risk details.", "Security details.", "Subscription agreement."],
+          opts: [
+          ["Risk details.", "This describes what is insured, not how the insurers work together."],
+          ["Security details.", "This lists who is on risk and for how much, not who may agree what."],
+          "Subscription agreement.",
+          ["Fiscal and regulatory.", "Tax and regulatory classification. Nothing about the leader’s powers."]
+        ],
           a: 2,
-          why: "The subscription agreement sets out the leader’s authority. Many slips adopt the **General Underwriters’ Agreement** (GUA), a standard scheme sorting changes into those the leader agrees alone, those needing the agreement parties, and those needing every insurer."
+          why: "The subscription agreement sets out the leader’s authority. Many slips adopt the **General Underwriters’ Agreement** (GUA), which sorts changes into those the leader agrees alone, those needing the agreement parties, and those needing every insurer."
         }
       },
       {
@@ -82,10 +96,15 @@
           { label: "Contract certainty", right: "", segs: [[30, "c2", "Terms agreed"], [70, "c1", "Bound, wording known"]] }
         ], { max: 100 }),
         ask: {
-          q: "A risk is bound on the 1st with wording “to be agreed”. A loss happens on the 5th. What is the problem?",
-          opts: ["There is no cover until the wording is agreed.", "There is cover, but nobody can say for certain on what terms."],
+          q: "A risk is bound on the 1st with its wording “to be agreed”. A loss happens on the 5th. Where do the parties stand?",
+          opts: [
+          ["There is no cover until the wording is agreed.", "The insurers put their lines down. They are on risk."],
+          "There is cover, but nobody can say for certain on what terms.",
+          ["The contract is void for uncertainty.", "Courts strive to uphold a bargain both sides clearly meant to make. But they must then decide its terms, which is the problem."],
+          ["The leader’s usual wording applies automatically.", "Nothing applies automatically. That is exactly what will now be argued."]
+        ],
           a: 1,
-          why: "The insurers are on risk. But each side will now argue for the wording that suits it. Contract certainty exists to stop exactly this."
+          why: "After a loss, each side argues for the wording that suits it. **Contract certainty** exists to stop exactly this: full terms agreed before the insurer commits."
         }
       },
       {
@@ -106,7 +125,12 @@
         ctl: [{ k: "day", label: "Day of the theft", min: 10, max: 360, step: 10, fmt: (x) => `day ${x}` }],
         live: (v) => (v.day >= 100 && v.day < 130 ? "The loss fell while the warranty was breached, so cover was **suspended** and the insurer need not pay."
           : v.day >= 130 ? "The alarm had been fixed, so cover was back. Before the Insurance Act 2015 a breach ended cover for good, even after repair."
-            : "No breach yet: an ordinary claim.")
+            : "No breach yet: an ordinary claim."),
+        goal: {
+          say: "The alarm fails on day 100. Find the first day on which a theft would be paid again.",
+          test: (v) => v.day === 130,
+          done: "Day 130, the day the alarm was repaired. Cover is **suspended** during the breach and returns when it is remedied. Before the Insurance Act 2015, the day-100 breach would have discharged the insurer for the rest of the year."
+        }
       },
       {
         h: "How a contract ends",
@@ -120,10 +144,15 @@
           ]
         }),
         ask: {
-          q: "A ship insured for £20m sinks in month three and the insurers pay £20m. What has happened to the policy?",
-          opts: ["It runs on for nine more months.", "It has ended by fulfilment."],
+          q: "A ship insured for £20m sinks in month three. The insurers pay £20m. What has happened to the policy?",
+          opts: [
+          ["It runs on for nine more months.", "There is nothing left to insure, and nothing left for insurers to pay."],
+          "It has ended by fulfilment.",
+          ["It has been cancelled, so nine months’ premium is refunded.", "Cancellation is a notice given under the policy. Nobody gave one, and normally no premium comes back."],
+          ["It has expired.", "Expiry is the period running out. It had nine months left."]
+        ],
           a: 1,
-          why: "The insurers have paid everything the contract could ever require. Nothing is left to insure, and normally none of the premium comes back."
+          why: "The insurers have done everything the contract could ever require of them. That is **fulfilment**."
         }
       },
       {

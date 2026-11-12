@@ -21,7 +21,12 @@
             bars([{ label: "Frequency: claims per 100 vans", right: `${v.freq}`, segs: [[v.freq, "c2"]] }, { label: "Severity: average claim", right: `£${v.sev}k`, segs: [[v.sev / 20, "c1"]] }], { max: 10 });
         },
         ctl: [{ k: "freq", label: "Frequency", min: 1, max: 10, step: 1, fmt: (x) => `${x} per 100` }, { k: "sev", label: "Severity", min: 5, max: 200, step: 5, fmt: (x) => `£${x}k` }],
-        live: (v) => (v.freq >= 6 && v.sev <= 40 ? "**High frequency, low severity:** motor, small property. Many small claims, statistically predictable. The past is a good guide." : v.freq <= 2 && v.sev >= 100 ? "**Low frequency, high severity:** catastrophe, aviation, energy. Few data points, huge swings. The past tells you little, so models and judgement take over." : "The same expected cost can come from many small claims or a few large ones. They are very different risks to hold.")
+        live: (v) => (v.freq >= 6 && v.sev <= 40 ? "**High frequency, low severity:** motor, small property. Many small claims, statistically predictable. The past is a good guide." : v.freq <= 2 && v.sev >= 100 ? "**Low frequency, high severity:** catastrophe, aviation, energy. Few data points, huge swings. The past tells you little, so models and judgement take over." : "The same expected cost can come from many small claims or a few large ones. They are very different risks to hold."),
+        goal: {
+          say: "The fleet’s expected cost is £2m. Find another way to reach exactly £2m, with twice as many claims.",
+          test: (v) => v.freq === 8 && v.sev === 25,
+          done: "Eighty claims of £25k, where before there were forty of £50k. The expected cost is identical, but the second fleet’s result will sit closer to £2m year after year: more, smaller claims are more predictable."
+        }
       },
       {
         h: "Three averages",
@@ -32,7 +37,12 @@
             cols({ h: 170, max: Math.max(120, v.big), bars: all.map((x, i) => ({ label: `${i + 1}`, hot: i === 6, segs: [[x, i === 6 ? "bad" : "c1"]] })), lines: [{ v: mean, label: "Mean" }] });
         },
         ctl: [{ k: "big", label: "The seventh claim", min: 60, max: 900, step: 20, fmt: (x) => `£${x}k` }],
-        live: (v) => (v.big > 300 ? "One large claim has dragged the **mean** far above what a typical claim looks like, while the **median** hasn’t moved. Insurance losses are skewed like this. Always ask which average you are being shown." : "With no outlier, the three averages sit close together and any of them describes the book.")
+        live: (v) => (v.big > 300 ? "One large claim has dragged the **mean** far above what a typical claim looks like, while the **median** hasn’t moved. Insurance losses are skewed like this. Always ask which average you are being shown." : "With no outlier, the three averages sit close together and any of them describes the book."),
+        goal: {
+          say: "Find the smallest seventh claim that pulls the mean above twice the median.",
+          test: (v) => v.big === 340,
+          done: "£340k. One claim in seven has made the “average” twice as large as a typical claim. Quote the mean and you alarm the client; quote the median and you understate the cost. The honest answer shows both, and the big one separately."
+        }
       },
       {
         h: "The same average, a different risk",
@@ -71,9 +81,14 @@
         ], { max: 100 }),
         ask: {
           q: "A town had its “1-in-100-year” flood last year. What is the chance of another this year?",
-          opts: ["Almost nil. It isn’t due for 99 years.", "Still about 1%.", "Higher: it has started happening."],
+          opts: [
+          ["Almost nil. It isn’t due for 99 years.", "A return period is a probability, not a timetable."],
+          "Still about 1%.",
+          ["Much higher: these things come in runs.", "The river has no memory. Though a recent event is a fair reason to ask whether 1% was ever right."],
+          ["Exactly 0.01%: 1% × 1%.", "That is the chance of floods in two *specified* years, judged in advance. Last year has already happened."]
+        ],
           a: 1,
-          why: "The river doesn’t know last year happened. Each year is an independent draw at 1%. If anything, a recent event should make you ask whether the 1% estimate was too low, which is the one sense in which the third answer has a point."
+          why: "Each year is an independent draw at 1%. The useful doubt is a different one: a town that has just flooded may have been mis-rated, and the true figure may be nearer 1 in 30."
         }
       },
       {
@@ -90,6 +105,11 @@
         live: (v) => {
           const clean = Math.pow(0.95, v.yrs) * 100;
           return `A risk with a real 1-in-20 chance of a large loss still has a **${pct(clean)}** chance of showing ${v.yrs} clean year${v.yrs > 1 ? "s" : ""}. For rare, severe losses, a short clean record is weak evidence. This is why experience is given little weight on small or low-frequency risks: statisticians call the weight **credibility**.`;
+        },
+        goal: {
+          say: "Find how many clean years it takes before a risk like this has less than an even chance of still looking clean.",
+          test: (v) => v.yrs === 14,
+          done: "Fourteen years. A five-year loss record, the usual submission, would look spotless more than three times in four. For rare losses, the absence of claims in a short history is close to no evidence at all."
         }
       },
       {
@@ -100,10 +120,15 @@
           { label: "This year: no excess", right: "140 claims, average £10k", segs: [[40, "c1", "Large"], [100, "c2", "Small claims now reported"]] }
         ], { max: 150 }),
         ask: {
-          q: "A fleet’s average claim fell from £30k to £10k after its excess was removed. Has it become safer?",
-          opts: ["Yes. Severity has fallen by two thirds.", "No. Small claims that were always happening are now being counted."],
+          q: "A fleet’s average claim fell from £30k to £10k after its excess was removed. What has happened?",
+          opts: [
+          ["It has become safer: severity fell by two thirds.", "The same accidents are happening. More of them are now being counted."],
+          "Small claims that were always happening are now being reported.",
+          ["Its drivers are more careful without an excess.", "If anything, removing an excess removes a reason to be careful."],
+          ["The insurer’s costs have fallen.", "Total cost has gone **up**: 140 claims at £10k is £1.4m against £1.2m before."]
+        ],
           a: 1,
-          why: "The same accidents occur. Before, the small ones stayed under the excess and never appeared. The average fell because the mix changed; the total cost to the insurer has gone **up**. Always ask what changed in the data before believing a trend."
+          why: "Before, small accidents stayed under the excess and never appeared in the data. The average fell because the mix changed. Always ask what changed in the data before believing a trend."
         }
       },
       {

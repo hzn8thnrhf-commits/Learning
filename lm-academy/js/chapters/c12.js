@@ -24,9 +24,14 @@
         }),
         ask: {
           q: "The Ohio risk can only be written in London as non-admitted business. Which specialist must be in the chain?",
-          opts: ["A tied agent.", "A surplus lines broker.", "A members’ agent."],
+          opts: [
+          ["A tied agent.", "A tied agent sells for particular insurers. It has no role in accessing non-admitted markets."],
+          "A surplus lines broker.",
+          ["A members’ agent.", "Members’ agents advise Names on which syndicates to back."],
+          ["An open market correspondent.", "It introduces business to Lloyd’s but holds no US state licence to export a risk."]
+        ],
           a: 1,
-          why: "US states license **surplus lines brokers** to place risks with non-admitted insurers once the local market can’t or won’t write them. Another term to know: an **open market correspondent** introduces business to Lloyd’s but, unlike a coverholder, can’t bind it."
+          why: "US states license **surplus lines brokers** to place risks with non-admitted insurers once the local market can’t or won’t write them."
         }
       },
       {
@@ -41,10 +46,15 @@
           edges: [["a", "p", "", { dy: -9 }], ["p", "a", "", { dy: 9 }]]
         }),
         ask: {
-          q: "A broker picks the dearer of two equal quotes because that insurer quietly pays it an extra bonus. Which duty is broken?",
-          opts: ["Skill and care.", "Good faith: it put its own interest above the client’s.", "None, if the cover is the same."],
+          q: "A broker picks the dearer of two identical quotes because that insurer quietly pays it an extra bonus. Which duty is broken?",
+          opts: [
+          ["Skill and care.", "It knew exactly what it was doing. This wasn’t carelessness."],
+          "Good faith.",
+          ["Obedience to instructions.", "The client’s instruction was to arrange cover, and cover was arranged."],
+          ["None, since the cover is the same.", "The client paid more than it needed to, for the broker’s benefit."]
+        ],
           a: 1,
-          why: "An agent must not profit secretly from its position. Rules now require brokers to be transparent about what they earn and about any loyalty to an insurer."
+          why: "An agent must not put its own interest above its principal’s or profit secretly from its position. Rules now require brokers to be open about what they earn and about any ties to an insurer."
         }
       },
       {
@@ -61,9 +71,14 @@
         }),
         ask: {
           q: "A broker binds its own client’s risk under a binding authority it holds from an insurer. What must it do?",
-          opts: ["Nothing special.", "Recognise the conflict of interest, manage it and disclose it."],
+          opts: [
+          ["Nothing special.", "For that moment it is advising the buyer and accepting for the seller."],
+          "Recognise the conflict, manage it and disclose it to the client.",
+          ["Refuse: a broker may never use its own binder for a client.", "It may, and often the binder is the best home for the risk. The duty is to handle the conflict, not to avoid the business."],
+          ["Charge no commission on that risk.", "Pay isn’t the issue. Whose interests it is serving is."]
+        ],
           a: 1,
-          why: "At that moment the broker is advising the buyer *and* accepting for the seller. Conflicts aren’t forbidden, but they must be identified, managed and made clear to the client."
+          why: "Conflicts aren’t forbidden. They must be identified, managed and made clear, so the client knows the broker is wearing two hats and can judge the advice accordingly."
         }
       },
       {
@@ -79,24 +94,36 @@
           edges: [["c", "b", "pays"], ["b", "i", "risk transfer", { dash: true }]]
         }),
         ask: {
-          q: "The client pays its premium to the broker. The broker collapses before passing it on. Risk transfer applies. Is the client covered?",
-          opts: ["No. The insurer never received the money.", "Yes. The loss falls on the insurer."],
+          q: "A client pays its premium to the broker. The broker collapses before passing it on. Is the client still insured?",
+          opts: [
+          ["No. The insurer never received the money.", "True without risk transfer. With it, the broker held the money as the insurer’s agent."],
+          "Only if the TOBA gave the broker risk transfer.",
+          ["Yes, always. Paying your broker is paying your insurer.", "Only where the insurer has agreed that. Otherwise the client may have to pay twice."],
+          ["Yes, but only for half the cover.", "There is no halfway. Either the insurer is treated as paid or it isn’t."]
+        ],
           a: 1,
-          why: "With risk transfer, payment to the broker counts as payment to the insurer. Without it, the client could be asked to pay twice."
+          why: "With **risk transfer**, payment to the broker counts as payment to the insurer, and the broker’s failure is the insurer’s loss. Without it, the unpaid insurer can look to the client again."
         }
       },
       {
         h: "Client money",
         say: "Money a broker holds for others is not its own. FCA rules require it to be kept in **segregated client accounts**, apart from the firm’s own funds, and limit what can be done with it.\n\nIn particular, the rules control when a broker may fund one client’s premium, or pay a claim, before the money has actually arrived.",
-        scene: () => bars([
-          { label: "Client account, held in trust", right: "ring-fenced", segs: [[70, "c1", "Clients’ premiums and claims"]] },
-          { label: "The broker’s own account", right: "at risk if the broker fails", segs: [[30, "ink", "Earned brokerage"]] }
-        ], { max: 100 }),
+        scene: (v) => bars([
+  { label: "Client account, held on trust", right: "£5m", segs: [[5, "c1", "Clients’ and insurers’ money"]] },
+  { label: "The broker’s own account", right: "£1m", segs: [[1, "ink"]] },
+  { label: "Owed to the bank", right: v.$done ? "recovers £1m of £8m" : "£8m", segs: v.$done ? [[1, "ink"], [7, "hole", "Unpaid"]] : [[8, "bad", "£8m"]] }
+], { max: 8 }),
         ask: {
-          q: "A broker fails. Its client account holds £5m. Can the broker’s creditors take it?",
-          opts: ["Yes, like any other asset.", "No. It is held on trust for clients and insurers."],
-          a: 1,
-          why: "Segregation is the whole point: client money survives the broker’s failure. Only brokerage already earned belongs to the firm."
+          q: "A broker fails owing its bank £8m. Its client account holds £5m and its own office account £1m. How much can the bank reach?",
+          fix: true,
+          opts: [
+          ["£6m", "The client account isn’t the broker’s money."],
+          ["£5m", "That is precisely the money the bank can’t touch."],
+          "£1m",
+          ["Nothing", "The office account is the firm’s own, and its creditors can claim it."]
+        ],
+          a: 2,
+          why: "Client money is held on trust in segregated accounts, so it survives the broker’s failure. Only the firm’s own money, including brokerage it has already earned, is available to its creditors."
         }
       },
       {
@@ -108,12 +135,28 @@
             bars([{ label: "Gross premium", right: `£${num(gross, 0)}k`, segs: [[400, "c1", "Insurers"], [b - retail, "c2", "Placing"], [retail, "c3", "Retail"]] }], { max: gross });
         },
         ctl: [{ k: "brk", label: "Total brokerage", min: 5, max: 35, step: 2.5, fmt: (x) => pct(x, 1) }, { k: "share", label: "Retail broker’s share of it", min: 0, max: 80, step: 10, fmt: pct }],
-        live: (v) => "Changing the split between the brokers doesn’t change what the client pays. Raising the total does. Either way it is the client’s money, which is why disclosure of remuneration matters."
+        live: (v) => "Changing the split between the brokers doesn’t change what the client pays. Raising the total does. Either way it is the client’s money, which is why disclosure of remuneration matters.",
+        goal: {
+          say: "The insurers need £400k net. Arrange things so the client pays exactly £500k and the retail broker earns £60k.",
+          test: (v) => v.brk === 20 && v.share === 60,
+          done: "20% brokerage, split 60:40. Notice which of the two sliders the client can feel. It is why regulators ask brokers to disclose the total, not just their own slice."
+        }
       },
       {
         h: "The rulebook for distributors",
         say: "European rules on selling insurance, first the Insurance Mediation Directive and then the **Insurance Distribution Directive**, are written into UK regulation.\n\nThe essentials: brokers must be registered and competent; what they tell customers must be **clear, fair and not misleading**; and they must act **honestly, fairly and professionally in the customer’s best interests**.",
-        scene: () => recap(["Registered and authorised", "Competent, with continuing training", "Clear, fair and not misleading", "In the customer’s best interests", "Transparent about pay and insurer ties"])
+        scene: () => recap(["Registered and authorised", "Competent, with continuing training", "Clear, fair and not misleading", "In the customer’s best interests", "Transparent about pay and insurer ties"]),
+        ask: {
+          q: "A brochure says a policy “covers all flood damage”. The wording excludes coastal flooding. Which standard has been breached?",
+          opts: [
+          ["Competence and training.", "The staff may be well trained. The document is the problem."],
+          "Clear, fair and not misleading.",
+          ["Registration.", "The firm may be properly authorised and still mislead."],
+          ["None: the wording is what counts.", "Legally the wording governs the claim. The regulator still punishes the misleading promotion."]
+        ],
+          a: 1,
+          why: "Everything a distributor tells a customer, including marketing, must be **clear, fair and not misleading**. A true wording doesn’t cure a misleading brochure."
+        }
       },
       {
         h: "In five lines",

@@ -24,9 +24,13 @@
         }),
         ask: {
           q: "A class underwriter wants her loss ratio by broker for the last three months. Where does she look?",
-          opts: ["The financial accounts.", "The management accounts."],
+          opts: [
+          ["The financial accounts.", "They show the whole company, once or twice a year."],
+          "The management accounts.",
+          ["The regulatory returns.", "Detailed, but built for the supervisor’s questions, and not by broker."]
+        ],
           a: 1,
-          why: "Published accounts show the whole company once or twice a year. Running a class needs figures that are current and cut the way decisions are made."
+          why: "Running a class needs figures that are current and cut the way decisions are made. That is what management accounts are for."
         }
       },
       {
@@ -37,10 +41,15 @@
           { label: "Liabilities and equity", right: "£500m", segs: [[300, "c2", "Claims reserves"], [80, "soft2", "Unearned"], [120, "c3", "Equity"]] }
         ], { max: 500 }),
         ask: {
-          q: "“Owed by others” includes £60m due from reinsurers on claims already paid. Why would an analyst look hard at it?",
-          opts: ["It is too small to matter.", "It is only an asset if the reinsurers pay."],
+          q: "“Owed by others” includes £60m due from reinsurers on claims already paid. Equity is £120m. Why would an analyst look hard at that £60m?",
+          opts: [
+          ["It is too small to matter.", "It is half the equity."],
+          "It is only an asset if the reinsurers pay.",
+          ["Because it should be shown as a liability.", "It is money owed *to* the insurer: an asset, if it is good."],
+          ["Because it has already been counted in investments.", "It is a separate item. The worry is its quality."]
+        ],
           a: 1,
-          why: "Reinsurance recoverables are credit risk sitting on the balance sheet. If a reinsurer fails or disputes the claim, the asset shrinks and equity shrinks with it."
+          why: "Reinsurance recoverables are credit risk sitting on the balance sheet. If a reinsurer fails or disputes the claim, the asset shrinks and equity shrinks with it: here, by up to half."
         }
       },
       {
@@ -53,8 +62,12 @@
           { label: "", right: "", segs: [[110, "bad", "Claims and costs incurred"]] }
         ], { max: 115 }),
         ask: {
-          q: "A fast-growing liability insurer has cash pouring in. Is that evidence it is profitable?",
-          opts: ["Yes. Cash is fact.", "No. Its claims simply haven’t been paid yet."],
+          q: "A fast-growing liability insurer has cash pouring in. What does that tell you about its profitability?",
+          opts: [
+          ["It is profitable: cash is fact.", "The cash is real. Whose it will turn out to be isn’t yet known."],
+          "Nothing. Its claims simply haven’t been paid yet.",
+          ["It is unprofitable: growth always loses money.", "Growth is a warning sign, not a verdict."]
+        ],
           a: 1,
           why: "Growth and a long tail make any insurer cash-rich for years, however badly it has priced. Insurers have collapsed with full bank accounts. Profit depends on what the claims will eventually cost."
         }
@@ -68,7 +81,12 @@
             bars([{ label: `Policy starting 1 ${MON[v.m]}`, segs: [[v.m, "none"], [12 - v.m, "c1", "Earned"], [v.m, "c2", "Unearned"]] }], { max: 24, marks: [[12, "Year end"]] });
         },
         ctl: [{ k: "m", label: "Policy starts", min: 0, max: 11, step: 1, fmt: (i) => `1 ${MON[i]}` }],
-        live: (v) => (v.m === 0 ? "A January policy is fully earned by December." : `Only ${12 - v.m} of 12 months of cover have been given. The rest is a liability: if the policy were cancelled, that premium would go back. A fast-growing insurer always looks less profitable on an earned basis than on a written one.`)
+        live: (v) => (v.m === 0 ? "A January policy is fully earned by December." : `Only ${12 - v.m} of 12 months of cover have been given. The rest is a liability: if the policy were cancelled, that premium would go back. A fast-growing insurer always looks less profitable on an earned basis than on a written one.`),
+        goal: {
+          say: "Find the latest date this policy can start if £900k of its premium is to be earned by 31 December.",
+          test: (v) => v.m === 3,
+          done: "1 April: nine months of cover, nine twelfths of the premium. Business written late in the year barely touches this year’s income, which is why a strong fourth quarter shows up in next year’s results."
+        }
       },
       {
         h: "Old years in this year’s profit",
@@ -79,7 +97,12 @@
             wfall([{ label: "This year", v: 10 }, { label: v.pyd > 0 ? "Strengthened" : "Released", v: -v.pyd }, { label: "Reported profit", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
         },
         ctl: [{ k: "pyd", label: "Past years’ reserves", min: -20, max: 20, step: 5, fmt: (x) => (x === 0 ? "unchanged" : x > 0 ? `£${x}m short` : `£${-x}m too high`) }],
-        live: (v) => (v.pyd < 0 ? "A **release**: past years were over-reserved, and the surplus flows into this year’s profit. Pleasant, but it says nothing about current underwriting. A company living on releases is spending its savings." : v.pyd > 0 ? "**Strengthening**: past years were under-reserved, and today’s shareholders pay for yesterday’s optimism. A reader should always separate the current year’s result from prior-year movement." : "No movement: the reported profit is the current year’s own.")
+        live: (v) => (v.pyd < 0 ? "A **release**: past years were over-reserved, and the surplus flows into this year’s profit. Pleasant, but it says nothing about current underwriting. A company living on releases is spending its savings." : v.pyd > 0 ? "**Strengthening**: past years were under-reserved, and today’s shareholders pay for yesterday’s optimism. A reader should always separate the current year’s result from prior-year movement." : "No movement: the reported profit is the current year’s own."),
+        goal: {
+          say: "Find the size of reserve shortfall on past years that wipes out this year’s profit entirely.",
+          test: (v) => v.pyd === 10,
+          done: "£10m. A sound year’s underwriting reports no profit at all, because of estimates made years ago by people who may have moved on. Always split a result into the current year and prior-year movement."
+        }
       },
       {
         h: "The combined ratio",
@@ -93,6 +116,11 @@
         live: (v) => {
           const cr = v.loss + v.exp;
           return cr <= 100 ? "An underwriting profit before any investment income. This is the discipline Lloyd’s asks for." : cr - v.inv <= 100 ? "An underwriting loss rescued by investment income. This is **cash-flow underwriting**: it works until interest rates fall or claims arrive early." : "A loss even after investment income. Capital is being consumed.";
+        },
+        goal: {
+          say: "Claims are running at 70% and expenses at 35%. Find the investment return needed to break even.",
+          test: (v) => v.loss === 70 && v.exp === 35 && v.inv === 5,
+          done: "5% on the premium held. Possible when interest rates are high and claims take years to pay; impossible on short-tail business or when rates are near zero. An insurer in this position is really running an investment fund with an underwriting problem."
         }
       },
       {
@@ -104,7 +132,12 @@
             bars([{ label: "Capital held", right: pct(ratio), segs: [[Math.max(own, 0), ratio < 100 ? "bad" : "c1"]] }], { max: 160, marks: [[100, "Required"]] });
         },
         ctl: [{ k: "hit", label: "Loss for the year", min: 0, max: 80, step: 5, fmt: money }],
-        live: (v) => (150 - v.hit < 100 ? "Below 100%: the insurer no longer meets its capital requirement. The regulator steps in, and the firm must raise capital or cut risk, usually on poor terms because everyone knows it has to." : 150 - v.hit < 120 ? "Still compliant, but the buffer is thin. Rating agencies and brokers’ security committees start asking questions well before 100%." : "A comfortable buffer. Boards usually set their own target well above the regulatory minimum for exactly this reason.")
+        live: (v) => (150 - v.hit < 100 ? "Below 100%: the insurer no longer meets its capital requirement. The regulator steps in, and the firm must raise capital or cut risk, usually on poor terms because everyone knows it has to." : 150 - v.hit < 120 ? "Still compliant, but the buffer is thin. Rating agencies and brokers’ security committees start asking questions well before 100%." : "A comfortable buffer. Boards usually set their own target well above the regulatory minimum for exactly this reason."),
+        goal: {
+          say: "The board’s own target is a solvency ratio of 120%. Find the largest loss it can take and stay there.",
+          test: (v) => v.hit === 30,
+          done: "£30m. The regulatory line is at £50m, but the questions from rating agencies and brokers start well before it. An insurer’s usable capital is the buffer above its own target, not the whole of what it holds."
+        }
       },
       {
         h: "In five lines",

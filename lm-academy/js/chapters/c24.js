@@ -15,7 +15,7 @@
     title: "Exposure and accumulation",
     blurb: "Why a book of well-priced risks can still sink an insurer, how catastrophe models are read, and the levers that control it.",
     minutes: 10,
-    init: { n: 12, mod: 0, rp: 5, lim: 50 },
+    init: { n: 12, mod: 0, rp: 2, lim: 50 },
     steps: [
       {
         h: "Good risks, bad portfolio",
@@ -25,10 +25,14 @@
           { label: "Book B: 40 risks along one coast", right: "worst event: all 40", segs: [[200, "bad", "One hurricane"]] }
         ], { max: 200 }),
         ask: {
-          q: "Both books hold 40 identical, well-priced £5m lines. Which is the better portfolio?",
-          opts: ["The same: identical risks, identical prices.", "Book A. Book B can lose £200m in an afternoon."],
+          q: "Two books each hold 40 identical, well-priced £5m lines. Book A is spread over 40 cities; Book B sits along one coast. Which is the better portfolio?",
+          opts: [
+          ["The same: identical risks at identical prices.", "Identical one by one. Very different when a single storm arrives."],
+          "Book A. Book B can lose £200m in an afternoon.",
+          ["Book B: the underwriter knows that coast best.", "Expertise improves selection. It doesn’t stop one hurricane hitting everything selected."]
+        ],
           a: 1,
-          why: "Individually the risks are indistinguishable. The difference exists only at portfolio level, which is why an underwriter can do everything right risk by risk and still build something dangerous."
+          why: "The difference exists only at portfolio level, which is why an underwriter can do everything right risk by risk and still build something dangerous."
         }
       },
       {
@@ -44,7 +48,12 @@
             ], { max: 160, marks: [[100, "Zone limit"]] });
         },
         ctl: [{ k: "n", label: "Miami risks written", min: 4, max: 30, step: 1, fmt: (x) => `${x}` }],
-        live: (v) => (v.n * 5 > 100 ? "Over the limit, and every single risk was within the £5m line authority. Nobody broke a rule on any one risk; the breach exists only in the total." : v.n * 5 >= 90 ? "Nearly full. From here every new Miami risk should prompt a question: a smaller line, facultative reinsurance, or letting a weaker Miami risk go at renewal to make room." : "Room to write. Aggregates are tracked by zone and peril, in real time where possible, so the answer is known before the stamp goes down.")
+        live: (v) => (v.n * 5 > 100 ? "Over the limit, and every single risk was within the £5m line authority. Nobody broke a rule on any one risk; the breach exists only in the total." : v.n * 5 >= 90 ? "Nearly full. From here every new Miami risk should prompt a question: a smaller line, facultative reinsurance, or letting a weaker Miami risk go at renewal to make room." : "Room to write. Aggregates are tracked by zone and peril, in real time where possible, so the answer is known before the stamp goes down."),
+        goal: {
+          say: "Find the largest number of Miami risks the zone limit allows.",
+          test: (v) => v.n === 20,
+          done: "Twenty lines of £5m. The twenty-first is no worse a risk than the first, which is exactly why a limit is needed: nothing about the individual risk tells you to stop."
+        }
       },
       {
         h: "Inside a catastrophe model",
@@ -77,6 +86,11 @@
         live: (v) => {
           const T = RP[v.rp], L = loss(T);
           return L > 110 ? `At 1 in ${T} the modelled loss of ${money(L)} is **more than the capital**. If the board’s appetite is to survive a 1-in-200 year, this book is outside it, and something must change: less exposure, more reinsurance, or more capital.` : `At 1 in ${T} the loss is ${money(L)}: painful, survivable. Appetite is usually set at several points on this curve, such as “no more than a quarter of capital at 1 in 50”.`;
+        },
+        goal: {
+          say: "Find the return period at which the modelled loss first exceeds the insurer’s capital.",
+          test: (v) => RP[v.rp] === 200,
+          done: "1 in 200: a loss of £121m against £110m of capital. Regulatory capital is calibrated to exactly this point, so on its own figures this insurer doesn’t have enough. It needs less exposure, more reinsurance or more capital."
         }
       },
       {
@@ -91,6 +105,11 @@
         live: (v) => {
           const net = 121 - Math.min(v.lim, 101);
           return v.lim > 101 ? "Cover above the modelled loss. Not wasted: it protects against the model being wrong, which it will be. But it costs premium." : net > 50 ? `Net ${money(net)}: still outside appetite. Buy more, or write less.` : `Net ${money(net)}: inside appetite. Two cautions. The recovery depends on the **reinsurers paying**, so their security is part of the exposure. And after a big event, cover must be **reinstated** at extra cost, or the next event is unprotected.`;
+        },
+        goal: {
+          say: "Find the least cover that brings the net 1-in-200 loss inside the board’s £50m appetite.",
+          test: (v) => v.lim === 80,
+          done: "£80m excess of £20m, leaving £41m net. The first £20m and the top £21m both stay with the insurer: reinsurance removes the middle of the loss. Each extra £10m of cover costs premium every year to save money once in two centuries, which is what the board is deciding."
         }
       },
       {
@@ -107,9 +126,13 @@
         }),
         ask: {
           q: "Each class underwriter is inside their own aggregate limit for the port. Is the insurer safe?",
-          opts: ["Yes. Every limit is respected.", "Not necessarily. Nobody has added the classes together."],
+          opts: [
+          ["Yes. Every limit is respected.", "Every limit was set class by class. The explosion doesn’t respect classes."],
+          "Not necessarily. Nobody has added the classes together.",
+          ["Yes, provided each class has its own reinsurance.", "Five separate programmes mean five separate retentions from one event, all at once."]
+        ],
           a: 1,
-          why: "Five teams, each within limits, can share one loss. Clash is found only by someone looking across classes, which is the job of a central exposure management function, and the reason Lloyd’s prescribes cross-class scenarios."
+          why: "Five teams, each within limits, can share one loss. **Clash** is found only by someone looking across classes, which is the job of a central exposure management function and the reason Lloyd’s prescribes cross-class scenarios."
         }
       },
       {
@@ -120,10 +143,14 @@
           { label: "Coded only to the postcode centre", right: "on the hill", segs: [[15, "c1"]] }
         ], { max: 100 }),
         ask: {
-          q: "A coverholder’s bordereau gives only a town name for each property. What does the cat model do with it?",
-          opts: ["Refuses to run.", "Assumes an average location, which may be badly wrong."],
+          q: "A coverholder’s bordereau gives only a town name for each property. What does the catastrophe model do with it?",
+          opts: [
+          ["Refuses to run.", "It would be safer if it did."],
+          "Assumes an average location, which may be badly wrong.",
+          ["Assumes the worst location in the town.", "Models default to the centre or an average, not the worst case."]
+        ],
           a: 1,
-          why: "The model runs and produces a confident number. Nothing on the output says the inputs were guesses. Asking for better data, and loading for poor data, is part of underwriting delegated business."
+          why: "The model runs and produces a confident number. Nothing on the output says the inputs were guesses. Asking for better data, and loading the price for poor data, is part of underwriting delegated business."
         }
       },
       {

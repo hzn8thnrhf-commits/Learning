@@ -22,8 +22,13 @@
           edges: [["i", "u", "contract"]]
         }),
         ask: {
-          q: "A policy insures “Harbour Foods Ltd”. The fire is at a warehouse owned by its subsidiary, Harbour Cold Stores Ltd. Covered?",
-          opts: ["Yes. Same group.", "Not unless the subsidiary is also an insured."],
+          q: "A policy insures “Harbour Foods Ltd”. Fire destroys a warehouse owned by its subsidiary, Harbour Cold Stores Ltd. Is the loss covered?",
+          opts: [
+          ["Yes. It is the same group.", "A group isn’t a legal person. Each company in it is."],
+          "Not unless the subsidiary is also an insured.",
+          ["Yes, because the parent owns the subsidiary’s shares.", "Owning shares in a company isn’t owning its warehouse."],
+          ["Yes, if the premium was calculated on group values.", "Evidence of what was intended, perhaps. But the policy insures who it says it insures."]
+        ],
           a: 1,
           why: "Each company is a separate legal person with its own insurable interest. Wordings solve this with a wide definition of the insured, such as “and subsidiary companies”, but only if someone remembers to include it."
         }
@@ -45,7 +50,18 @@
             });
         },
         ctl: [{ k: "kind", label: "The policy is", opts: ["Joint", "Composite"] }],
-        live: (v) => (v.kind ? "**Composite.** A’s fraud defeats A’s claim only. B, the innocent bank, can still recover for its own interest." : "**Joint.** One interest, one fate. A’s wrongdoing taints the whole claim, and innocent B recovers nothing.")
+        live: (v) => (v.kind ? "**Composite.** A’s fraud defeats A’s claim only. B, the innocent bank, can still recover for its own interest." : "**Joint.** One interest, one fate. A’s wrongdoing taints the whole claim, and innocent B recovers nothing."),
+        ask: {
+          q: "A bank and a shipowner are both insured under one hull policy. The owner scuttles the ship. For the bank to be paid, the policy must be…",
+          fix: true,
+          opts: [
+          ["Joint.", "Joint insureds stand or fall together. The owner’s fraud would sink the bank’s claim too."],
+          "Composite.",
+          ["Either: the bank is innocent.", "Innocence only helps if the bank’s interest is separate from the wrongdoer’s."]
+        ],
+          a: 1,
+          why: "Owner and lender have **different** interests in the ship, so the policy is composite and each stands alone. This is why lenders insist on being separately insured, not merely noted."
+        }
       },
       {
         h: "Outsiders with rights",
@@ -60,10 +76,15 @@
           edges: [["v", "f", "owed damages", { dash: true }], ["v", "i", "claims directly"]]
         }),
         ask: {
-          q: "Without the 2010 Act, where would the insurance money go when the insured firm collapses?",
-          opts: ["To the injured customer.", "Into the pot for all the firm’s creditors."],
+          q: "A firm injures a customer, then collapses with large debts. Without the 2010 Act, where would its liability insurance money go?",
+          opts: [
+          ["Straight to the injured customer.", "That is what the Act achieves. Without it, the money belongs to the insolvent firm."],
+          "Into the pot for all the firm’s creditors.",
+          ["Back to the insurer.", "The claim is valid, so the insurer must pay it to someone."],
+          ["To the firm’s directors.", "It is the company’s asset, and so its creditors’."]
+        ],
           a: 1,
-          why: "The injured person would be one unsecured creditor among many, getting pennies. The Act steers the insurance proceeds to the person the cover was really for."
+          why: "The injured person would be one unsecured creditor among many, getting pennies. The Act steers the proceeds to the person the cover was really for, and it can’t be excluded."
         }
       },
       {
@@ -91,8 +112,13 @@
           edges: [["c", "l", "service of suit"]]
         }),
         ask: {
-          q: "Why would US regulators insist on a service of suit clause?",
-          opts: ["To increase legal costs.", "So a local policyholder can sue at home, not in London."],
+          q: "Why would a US regulator insist on a service of suit clause?",
+          opts: [
+          ["To raise the cost of London’s paper.", "It adds little cost. Its purpose is access."],
+          "So a local policyholder can sue at home, not in London.",
+          ["To make US law apply to every policy term.", "The clause is about where the insurer can be sued and served, not a wholesale choice of law."],
+          ["To make London insurers admitted.", "They remain non-admitted. The clause compensates for that."]
+        ],
           a: 1,
           why: "A non-admitted insurer has no local presence. The clause removes the practical barrier of having to chase it across the Atlantic."
         }
@@ -111,10 +137,15 @@
           edges: [["1", "2"], ["2", "3"], ["3", "4"]]
         }),
         ask: {
-          q: "An insurer says that, privately, it never meant an exclusion to apply so narrowly. Does that help?",
-          opts: ["Yes. Intention is what counts.", "No. What matters is what the words say."],
+          q: "A policy excludes “flood”. A burst water main fills the insured’s basement. The insurer says that is a flood. Where does a court start?",
+          opts: [
+          ["With what the insurer intended the exclusion to catch.", "One side’s private intention is irrelevant."],
+          "With what “flood” ordinarily means to a reasonable reader.",
+          ["With what the broker understood.", "The broker’s view is no more decisive than the insurer’s."],
+          ["By reading it against the insurer.", "That is the last resort, used only if real ambiguity survives everything else."]
+        ],
           a: 1,
-          why: "Contracts are read objectively. What one side secretly intended is irrelevant; what a reasonable reader would understand is everything."
+          why: "Ordinary meaning first: most people think of a flood as water arriving from outside by natural causes, not a pipe failing. Then any trade meaning, then the contract as a whole. Only then, if still ambiguous, against the party relying on the clause."
         }
       },
       {

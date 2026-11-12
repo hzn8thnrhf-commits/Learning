@@ -39,6 +39,11 @@
         live: (v) => {
           const total = v.ret * (1 + v.rate / 100) * (1 + v.expo / 100) + v.nb;
           return v.rate < 0 && total > 100 ? "The book is **growing while rates fall**: more risk taken on at a lower price. This is the combination reviewers at Lloyd’s look for first." : v.nb >= 30 ? "A lot rests on new business, which is the least certain line in any plan and usually the worst-performing in its first year: you know least about it." : "Each bar is an assumption someone must be able to defend: with broker pipeline for new business, with market evidence for rate.";
+        },
+        goal: {
+          say: "Rates are falling 10%. Build a plan that still reaches £100m. What did you have to assume?",
+          test: (v) => v.rate === -10 && v.ret * (1 + v.rate / 100) * (1 + v.expo / 100) + v.nb >= 100,
+          done: "You needed some mix of clients staying, clients growing and new clients arriving, all while charging them less. Every one of those is more risk for a lower price. This is the plan a reviewer at Lloyd’s reads most carefully."
         }
       },
       {
@@ -50,9 +55,13 @@
         ], { max: 120, marks: [[100, "Last year’s exposure"]] }),
         ask: {
           q: "Two books each grew premium by 10%. In A, rates rose 10%. In B, rates fell 5%. Which is in better shape?",
-          opts: ["They are the same: +10% each.", "A. B is carrying about 16% more risk for only 10% more money."],
+          opts: [
+          ["The same: +10% each.", "Same premium growth, very different amounts of risk taken on to get it."],
+          "A. B is carrying about 16% more risk for 10% more money.",
+          ["B. More clients means a better spread.", "A wider spread doesn’t help if each risk is under-priced. It just loses money more smoothly."]
+        ],
           a: 1,
-          why: "A is paid 10% more for the same risk. B had to take on roughly 16% more exposure to grow premium 10% at lower prices. Rate change must also be measured **like for like**: a “flat” renewal with a halved deductible is a rate cut."
+          why: "A is paid 10% more for the same risk. B had to take on roughly 16% more exposure to grow at lower prices (1.10 ÷ 0.95). Rate change must also be measured **like for like**: a “flat” renewal with a halved deductible is a rate cut."
         }
       },
       {
@@ -67,7 +76,12 @@
             ], { max: 90 });
         },
         ctl: [{ k: "rc", label: "Rate change since", min: -10, max: 15, step: 1, fmt: (x) => `${x > 0 ? "+" : ""}${x}%` }, { k: "inf", label: "Claims inflation since", min: 0, max: 12, step: 1, fmt: pct }],
-        live: (v) => (v.inf > v.rc ? `Claims costs are rising faster than rates. The plan loss ratio must be **worse** than last year’s even if nothing else changes. Planning “60% again” would be optimism.` : v.inf === v.rc ? "Rate is exactly keeping pace with claims inflation: running to stand still." : "Rate is outrunning claims inflation, so the same book should produce a better ratio. Reviewers will ask for the evidence on both numbers.")
+        live: (v) => (v.inf > v.rc ? `Claims costs are rising faster than rates. The plan loss ratio must be **worse** than last year’s even if nothing else changes. Planning “60% again” would be optimism.` : v.inf === v.rc ? "Rate is exactly keeping pace with claims inflation: running to stand still." : "Rate is outrunning claims inflation, so the same book should produce a better ratio. Reviewers will ask for the evidence on both numbers."),
+        goal: {
+          say: "Claims inflation is running at 8%. Find the rate change needed just to hold the claims ratio at 60%.",
+          test: (v) => v.inf === 8 && v.rc === 8,
+          done: "+8%, merely to stand still. A plan that assumes 60% again on rate increases of 3% is quietly assuming claims will get cheaper. Reviewers look for exactly that."
+        }
       },
       {
         h: "Three kinds of loss",
@@ -88,13 +102,23 @@
         say: "The plan then moves from gross premium to net result: acquisition costs, claims, expenses, and the **net cost of reinsurance** (premium ceded, less the recoveries expected back).\n\nReinsurance costs £20m here and, in an average year, returns £12m. See what it does in each kind of year.",
         scene: (v) => {
           const claims = v.cat ? 170 : 126, rec = v.ri ? (v.cat ? 50 : 12) : 0, cost = v.ri ? 20 : 0;
-          return wfall([{ label: "Gross premium", v: 200 }, { label: "Brokerage", v: -40 }, { label: "Gross claims", v: -claims }, { label: "Expenses", v: -24 }, { label: "Reinsurance paid", v: -cost }, { label: "Recoveries", v: rec }, { label: "Net result", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
+          return (v.$done ? stats([["Ten years, unprotected", "£56m"], ["Ten years, reinsured", "£14m", "c2"]]) : "") + wfall([{ label: "Gross premium", v: 200 }, { label: "Brokerage", v: -40 }, { label: "Gross claims", v: -claims }, { label: "Expenses", v: -24 }, { label: "Reinsurance paid", v: -cost }, { label: "Recoveries", v: rec }, { label: "Net result", total: true }], { fmt: (x) => `£${num(x, 0)}m` });
         },
         ctl: [{ k: "ri", label: "Reinsurance", opts: ["None", "Bought"] }, { k: "cat", label: "The year", opts: ["Average", "Catastrophe"] }],
         live: (v) => {
           const res = 200 - 40 - (v.cat ? 170 : 126) - 24 - (v.ri ? 20 : 0) + (v.ri ? (v.cat ? 50 : 12) : 0);
           return v.cat ? (v.ri ? `With reinsurance the catastrophe year loses **${money(-res)}**. Without it, £34m. That £30m of protection is what the premium bought.` : `Unprotected, the catastrophe year loses **${money(-res)}**.`)
             : (v.ri ? `In an average year reinsurance **lowers** the result, to ${money(res)} from £10m. It normally costs more than it returns: you are paying to cut the bad years down, not to make money.` : `Without reinsurance the average year makes ${money(res)}. Better on paper. Switch to the catastrophe year.`);
+        },
+        ask: {
+          q: "Take ten years: nine average, one catastrophe. Which choice earns more in total?",
+          opts: [
+          ["Buying reinsurance: it saves £30m in the bad year.", "It does. It also costs £8m net in each of the nine good ones."],
+          "Not buying it.",
+          ["They come out the same.", "Reinsurers have costs and want a profit too. On average the buyer pays for both."]
+        ],
+          a: 1,
+          why: "Without reinsurance: nine years at +£10m and one at −£34m is **£56m**. With it: nine at +£2m and one at −£4m is **£14m**. Reinsurance is bought despite that, because the insurer may not survive a £34m loss to enjoy the other nine years. You pay to be certain of still being there."
         }
       },
       {
@@ -110,8 +134,13 @@
           edges: [["m", "l"], ["l", "a"], ["l", "r"]]
         }),
         ask: {
-          q: "A syndicate that lost money in cyber for three years plans to grow cyber by 30%. What is the likely response?",
-          opts: ["Approval: growth is good for the market.", "Challenge: show why the future differs from the past, or the growth is cut."],
+          q: "A syndicate that has lost money in cyber for three years plans to grow cyber by 30%. What is the likely response?",
+          opts: [
+          ["Approval: growth is good for the market.", "Lloyd’s wants profitable premium, not premium."],
+          "Challenge: show why the future differs from the past, or the growth is cut.",
+          ["Automatic rejection of the whole plan.", "Review is risk-based and negotiated. One class rarely sinks an entire plan."],
+          ["Approval, but with a higher Central Fund contribution.", "The lever Lloyd’s uses is the plan itself and the syndicate’s capital."]
+        ],
           a: 1,
           why: "A plan is judged against the record of the people making it. Unexplained growth in a loss-making class is the classic sign of an unrealistic plan, and may also attract a capital loading."
         }
@@ -125,7 +154,12 @@
         ], { max: 100, marks: [[50, "Half-year plan"]] }),
         ask: {
           q: "By June the cyber team has written 90% of its annual planned premium. What should happen?",
-          opts: ["Celebrate: they are ahead.", "Ask why, and either stop or get a revised plan approved."],
+          opts: [
+          ["Celebrate: they are ahead.", "Ahead of plan on income means ahead of plan on exposure too."],
+          "Ask why, then either stop or get a revised plan approved.",
+          ["Nothing, as long as the loss ratio is fine.", "Six months into a cyber book, the loss ratio tells you almost nothing yet."],
+          ["Cut the team’s line sizes for the rest of the year.", "That might be the answer. But the first step is finding out why it happened."]
+        ],
           a: 1,
           why: "Writing far ahead of plan can mean prices are too cheap, and it means more exposure than the capital was set for. At Lloyd’s, exceeding an approved plan without agreement is a serious breach."
         }
@@ -139,9 +173,13 @@
         ], { max: 200 }),
         ask: {
           q: "Rates fall 15% in March. The class underwriter proposes simply lowering the plan to match. Reasonable?",
-          opts: ["Yes. The plan was wrong.", "Reforecast, but report against the original plan as well."],
+          opts: [
+          ["Yes. The plan was wrong.", "Then every miss could be erased by rewriting the target."],
+          "Reforecast, but keep reporting against the original plan.",
+          ["No. The plan must be hit regardless.", "Chasing a premium target in a falling market means buying volume with price. That is how the worst years are written."]
+        ],
           a: 1,
-          why: "The reforecast tells the board where the year is heading. The original plan tells it how far reality has moved from what was approved, and whether expenses and capital still fit."
+          why: "The reforecast tells the board where the year is heading. The original plan shows how far reality has moved from what was approved, and whether expenses and capital still fit. The worst response is the third: writing more at lower rates to hit the number."
         }
       },
       {
@@ -153,7 +191,12 @@
             bars([{ label: "Per £100 of premium", segs: [[lr, "c1", "Claims"], [er, "c2", "Expenses"]] }], { max: 110, marks: [[100, "Break-even"]] });
         },
         ctl: [{ k: "cut", label: "Poor business not renewed", min: 0, max: 30, step: 5, fmt: money }],
-        live: (v) => (v.cut === 0 ? "Before any action: the good business is subsidising the bad." : v.cut < 30 ? "The claims ratio improves, but the expense ratio **rises**: the same fixed costs are spread over less premium. Remediation shrinks the top line before it improves the bottom line." : "All the poor business has gone and the class is back in profit, by less than the claims ratio alone suggests. Unless costs come down too, most of the gain is given back. If no version of the class earns its cost of capital over the cycle, the right answer is **exit**.")
+        live: (v) => (v.cut === 0 ? "Before any action: the good business is subsidising the bad." : v.cut < 30 ? "The claims ratio improves, but the expense ratio **rises**: the same fixed costs are spread over less premium. Remediation shrinks the top line before it improves the bottom line." : "All the poor business has gone and the class is back in profit, by less than the claims ratio alone suggests. Unless costs come down too, most of the gain is given back. If no version of the class earns its cost of capital over the cycle, the right answer is **exit**."),
+        goal: {
+          say: "Find the least poor business that must go to bring the combined ratio below 100%.",
+          test: (v) => v.cut === 15,
+          done: "Half of it. And look at the price: premium down 15%, the expense ratio up over two points, and a class barely in profit. Unless costs come down as well, re-underwriting gives back most of what it gains."
+        }
       },
       {
         h: "In five lines",

@@ -32,8 +32,13 @@
           edges: [["c", "b", "TOBA"], ["b", "u", "TOBA"]]
         }),
         ask: {
-          q: "The insurers allow the broker its commission. So whose side is the broker on?",
-          opts: ["The insurers’, since they pay.", "The client’s."],
+          q: "The insurers allow the broker its commission out of the premium. Whose agent is the broker?",
+          opts: [
+          ["The insurers’, since they pay.", "The money comes out of the client’s premium. Who hands it over doesn’t decide who is served."],
+          "The client’s.",
+          ["Both, equally.", "An agent can’t serve two principals with opposite interests in the same deal."],
+          ["Nobody’s: a broker is independent.", "Independent of insurers, yes. But it acts for someone, and can bind them."]
+        ],
           a: 1,
           why: "The broker is the agent of the insured. One exception: a broker holding **delegated authority** from an insurer acts for that insurer when it uses it, and must manage the conflict."
         }
@@ -51,9 +56,14 @@
         }),
         ask: {
           q: "A broker, without asking, extends a client’s cover to a new warehouse. Told later, the client says “Good, keep it.” What has happened?",
-          opts: ["Nothing. The extension is void.", "Ratification: the client has adopted the broker’s act."],
+          opts: [
+          ["Nothing. An unauthorised act is void.", "It was unauthorised when done. But the principal can adopt it."],
+          "Ratification.",
+          ["Agency by necessity.", "Necessity needs an emergency in which the principal couldn’t be reached. Nothing suggests that."],
+          ["Agency by consent.", "Consent comes before the act. Here approval came after."]
+        ],
           a: 1,
-          why: "By approving it afterwards, the client becomes bound as if it had authorised the broker in advance. Had the client refused, the broker would have been left exposed."
+          why: "By approving afterwards, the client is bound as if it had authorised the broker in advance. Had the client refused, the broker would have been left personally exposed."
         }
       },
       {
@@ -68,7 +78,18 @@
             { id: "4", x: 95, y: 196, label: "4. Price it", tone: "c1" }
           ],
           edges: [["1", "2"], ["2", "3"], ["3", "4"]]
-        })
+        }),
+        ask: {
+          q: "An underwriter likes a risk and the price, but already has many similar risks in the same port. Which of the four decisions is really in play?",
+          opts: [
+          ["Is it a fair risk for the pool?", "She has already decided it is."],
+          "How much of it do we want?",
+          ["On what terms?", "Terms change what is covered. Her concern is how much she holds in one place."],
+          ["For what premium?", "She is happy with the price."]
+        ],
+          a: 1,
+          why: "A good risk can still be one you want only a little of. Line size is where an underwriter controls her exposure to any single event."
+        }
       },
       {
         h: "Collect the lines",
@@ -84,6 +105,11 @@
           if (W < 100) return `**${pct(100 - W, 1)} unplaced.** Part of the risk has no insurer. Find more lines.`;
           if (W === 100) return "**Exactly 100%.** Placed, with nothing to spare if someone pulls out.";
           return `**Oversubscribed at ${pct(W, 1)}.** Brokers aim for this. But there is only 100% of a risk to insure, so something has to give.`;
+        },
+        goal: {
+          say: "Complete the slip at exactly 100%, with the leader on at least 30% and no follower above 25%.",
+          test: (v) => v.a + v.b + v.c + v.d === 100 && v.a >= 30 && v.b <= 25 && v.c <= 25 && v.d <= 25,
+          done: "Placed. Clients and followers both like to see a leader with real money on the line: it shows the terms were set by someone who has to live with them."
         }
       },
       {
@@ -93,7 +119,13 @@
         scene: (v) => bars([row("Written lines", written(v), 125)], { max: 130, marks: [[100, "100%"]], legend: NAMES.map((n, i) => [TONES[i], n]) }),
         ask: {
           q: "The leader wrote 40%. What share does the leader end up with?",
-          opts: ["40%. A deal is a deal.", "32%.", "25%. An equal quarter each."],
+          fix: true,
+          opts: [
+          ["40%. A deal is a deal.", "Then the slip would total 125% and the client would be over-insured."],
+          "32%.",
+          ["25%. An equal quarter each.", "Lines are scaled in proportion, not levelled."],
+          ["15%. The leader absorbs the whole excess.", "Everyone shares the reduction in proportion."]
+        ],
           a: 1,
           why: "Every line is scaled by 100 ÷ 125 = **0.8**. What an underwriter agrees is the **written line**; what it finally carries is the **signed line**. Premium and claims follow the signed line."
         }
@@ -112,6 +144,11 @@
           if (W <= 100) return "At or under 100% there is nothing to sign down.";
           return v.stand ? `The leader keeps its full ${pct(v.a, 1)}. The others share what is left: each is multiplied by **${num(f, 3)}**, so B’s ${pct(v.b, 1)} becomes ${pct(s[1], 1)}.`
             : `Everyone is multiplied by 100 ÷ ${num(W, 1)} = **${num(f, 3)}**.`;
+        },
+        goal: {
+          say: "Let the leader’s 40% stand. Then find the written line for D at which every follower signs for exactly three quarters of what it wrote.",
+          test: (v) => v.stand === 1 && v.d === 20,
+          done: "The followers wrote 80% between them and must fit into the 60% the leader has left: 60 ÷ 80 = 0.75. One line standing means everyone else is squeezed harder."
         }
       },
       {
@@ -127,8 +164,13 @@
           edges: [["o", "s"], ["s", "l"], ["s", "c"]]
         }),
         ask: {
-          q: "A follower will only join for 10% more premium than the leader took. Does the leader now get the extra too?",
-          opts: ["Yes. Everyone on a slip gets the same price.", "No. Not automatically."],
+          q: "A follower will only join for 10% more premium than the leader took. What follows?",
+          opts: [
+          ["The leader gets the extra too: one slip, one price.", "Not automatically. Each insurer contracts for its own share on its own terms."],
+          "That follower gets its price; the slip now carries different terms.",
+          ["The follower must accept the leader’s price or leave.", "A follower is free to ask for more. The broker decides whether to pay it."],
+          ["The slip is void until all agree.", "Slips with differing terms exist. They are just harder to manage."]
+        ],
           a: 1,
           why: "A follower isn’t obliged to accept the leader’s terms. But different terms on one slip mean, in effect, several leaders, and the **market agreements** that let a leader agree changes and claims for everyone work less well."
         }
@@ -144,7 +186,18 @@
             { id: "u", x: 240, y: 40, w: 96, label: "Insurers" }
           ],
           edges: [["c", "b", "premium", { dy: -9 }], ["b", "u", "premium", { dy: -9 }], ["u", "b", "claims", { dy: 9 }], ["b", "c", "claims", { dy: 9 }]]
-        })
+        }),
+        ask: {
+          q: "A client’s factory burns. Who presents the claim to the insurers and negotiates it?",
+          opts: [
+          ["The loss adjuster.", "The adjuster investigates for the insurers. It doesn’t argue the client’s case."],
+          "The broker, acting for the client.",
+          ["The leading underwriter.", "The leader agrees the claim for insurers. Someone has to bring it to them."],
+          ["The client must deal with each insurer directly.", "With twenty insurers on a slip, that is exactly what the broker is there to spare them."]
+        ],
+          a: 1,
+          why: "The broker’s agency doesn’t end at placement. It presents the claim, negotiates for the client and passes on the payment."
+        }
       },
       {
         h: "LM1 in five lines",

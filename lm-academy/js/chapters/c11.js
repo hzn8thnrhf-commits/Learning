@@ -24,9 +24,14 @@
         }),
         ask: {
           q: "Which of these must a UK business with staff buy by law?",
-          opts: ["Property insurance on its premises.", "Employers’ liability insurance.", "Business interruption insurance."],
+          opts: [
+          ["Property insurance on its premises.", "Its own building is its own risk to take or insure."],
+          "Employers’ liability insurance.",
+          ["Public liability insurance.", "Almost every business buys it, and contracts often demand it. The law doesn’t."],
+          ["Business interruption insurance.", "Prudent, never compulsory."]
+        ],
           a: 1,
-          why: "Its own building is its own risk. Its duty to employees is everyone’s concern, so the law compels cover for it."
+          why: "Compulsory insurance protects other people: here, employees injured at work. What a firm does about its own property is its own concern."
         }
       },
       {
@@ -42,10 +47,15 @@
           edges: [["i", "w", "must still pay"], ["i", "e", "may recover"]]
         }),
         ask: {
-          q: "An employer ignored a safety condition in its employers’ liability policy. A worker is hurt. Does the insurer pay the worker?",
-          opts: ["No. The condition was broken.", "Yes. It may then seek recovery from the employer."],
+          q: "An employer ignored a safety condition in its employers’ liability policy. A worker is badly hurt. What happens?",
+          opts: [
+          ["The insurer refuses the claim. The condition was broken.", "That would leave an injured worker unpaid because of his employer’s fault."],
+          "The insurer pays the worker, and may then seek recovery from the employer.",
+          ["The insurer pays the worker and the matter ends.", "The worker is protected, but the employer doesn’t escape the consequences of its breach."],
+          ["The worker must sue the employer personally.", "He may, but the point of compulsory cover is that the insurer stands behind the judgment."]
+        ],
           a: 1,
-          why: "The worker is protected regardless. The quarrel about the broken condition is between insurer and employer, afterwards."
+          why: "Against the injured party, the insurer can’t rely on the breach. Between insurer and employer the breach still counts, and the insurer may claim back what it paid."
         }
       },
       {
@@ -56,10 +66,15 @@
           { label: "“Notify within 24 hours or lose all cover”, in small print", right: "not binding", segs: [[100, "hole", "Unfair"]] }
         ], { max: 100 }),
         ask: {
-          q: "A refinery owner says a harsh clause in its policy is “unfair” under the Consumer Rights Act. Will that work?",
-          opts: ["Yes. Unfair is unfair.", "No. The Act protects consumers, not commercial insureds."],
+          q: "A harsh notification clause sits in the small print of four policies. Which insured can challenge it under the Consumer Rights Act?",
+          opts: [
+          ["A refinery owner.", "A commercial buyer with a broker is expected to read and negotiate its contract."],
+          "A family that bought travel cover through a coverholder.",
+          ["A shipping line.", "Commercial."],
+          ["An insurer buying reinsurance.", "About as far from a consumer as it is possible to be."]
+        ],
           a: 1,
-          why: "A commercial buyer with a broker is expected to read and negotiate its contract. Much of London’s business is commercial, so this Act matters most where products reach individuals, often through delegated authority."
+          why: "The Act protects **consumers**. Most London business is commercial, so the Act bites where London’s products reach individuals, which is usually through delegated authority."
         }
       },
       {
@@ -73,10 +88,15 @@
           edges: [["a", "b", "contract"], ["b", "c", "benefit?", { dash: true }]]
         }),
         ask: {
-          q: "A policy contains a clause excluding the 1999 Act. A supplier named in the policy tries to claim directly. Can it?",
-          opts: ["Yes. The Act gives it rights.", "No. The parties have validly excluded the Act."],
+          q: "A policy contains a clause excluding the 1999 Act. A supplier named in the policy as benefiting from it tries to claim directly. Can it?",
+          opts: [
+          ["Yes. The Act gives it rights.", "The Act gives rights only where the parties haven’t excluded it."],
+          "No. The parties have validly excluded the Act.",
+          ["Yes, because it is named in the policy.", "Being named would normally be enough under the Act. The exclusion clause removes that."],
+          ["Only if the insured is insolvent.", "That is a different statute, the Third Parties (Rights against Insurers) Act, which can’t be excluded."]
+        ],
           a: 1,
-          why: "The Act allows contracting out. That is exactly why the exclusion appears in so many London policies."
+          why: "The 1999 Act allows contracting out. That is exactly why the exclusion appears in so many London policies: insurers want to know precisely who can enforce their promise."
         }
       },
       {
@@ -88,21 +108,33 @@
             bars([{ label: "What the client pays", segs: [[v.prem, "c1", "Premium"], [tax, "c2", `IPT ${RATE[v.type]}%`]] }], { max: v.prem * 1.2 });
         },
         ctl: [{ k: "type", label: "Kind of insurance", opts: ["Standard", "Higher", "Exempt"] }, { k: "prem", label: "Premium", min: 1000, max: 50000, step: 1000, fmt: (x) => `£${num(x, 0)}` }],
-        live: (v) => ["**Standard rate, 12%:** most UK commercial and personal general insurance.", "**Higher rate, 20%:** travel insurance, and insurance sold as part of buying a vehicle or an appliance.", "**Exempt:** reinsurance, ships, aircraft, international goods in transit, most long-term insurance, and risks located outside the UK (which may attract another country’s tax instead)."][v.type]
+        live: (v) => ["**Standard rate, 12%:** most UK commercial and personal general insurance.", "**Higher rate, 20%:** travel insurance, and insurance sold as part of buying a vehicle or an appliance.", "**Exempt:** reinsurance, ships, aircraft, international goods in transit, most long-term insurance, and risks located outside the UK (which may attract another country’s tax instead)."][v.type],
+        goal: {
+          say: "A UK firm buys travel insurance for its staff at a premium of £20,000. Find what it actually pays.",
+          test: (v) => v.type === 1 && v.prem === 20000,
+          done: "£24,000. Travel is taxed at the higher rate of 20%. And unlike VAT, a business can’t reclaim IPT, so it is a real cost."
+        }
       },
       {
         h: "An IPT question",
         say: "London writes a great deal of marine, aviation and overseas business.",
-        scene: () => bars([
-          { label: "UK warehouse, property", right: "12%", segs: [[12, "c2"]] },
-          { label: "UK travel policy", right: "20%", segs: [[20, "c2"]] },
-          { label: "Hull insurance on a ship", right: "?", segs: [[0.2, "idle"]] }
-        ], { max: 20 }),
+        scene: (v) => bars([
+  { label: "UK warehouse", right: v.$done ? "£12,000" : "?", segs: [[v.$done ? 12 : 0.2, v.$done ? "c2" : "idle", "12%"]] },
+  { label: "Ship’s hull", right: v.$done ? "exempt" : "?", segs: [[0.2, "idle"]] },
+  { label: "Reinsurance treaty", right: v.$done ? "exempt" : "?", segs: [[0.2, "idle"]] },
+  { label: "Factory in France", right: v.$done ? "not a UK risk" : "?", segs: [[0.2, "idle"]] }
+], { max: 20 }),
         ask: {
-          q: "A shipowner pays £200,000 for hull insurance on its vessel. How much IPT?",
-          opts: ["£24,000", "£40,000", "None."],
-          a: 2,
-          why: "Insurance on ships is exempt, as are aircraft, international cargo and reinsurance. Much of the London Market’s core business therefore carries no UK IPT, though overseas premium taxes may apply."
+          q: "A London broker places four policies at £100,000 each: a UK warehouse, a ship’s hull, a reinsurance treaty and a factory in France. How much UK IPT is due in total?",
+          fix: true,
+          opts: [
+          "£12,000",
+          ["£24,000", "The French factory is a risk located outside the UK. It may attract French tax, but not UK IPT."],
+          ["£48,000", "Only one of the four is taxable. Ships, reinsurance and overseas risks are all exempt."],
+          ["None", "The UK warehouse is an ordinary UK risk at the standard 12%."]
+        ],
+          a: 0,
+          why: "Only the UK warehouse is taxable: 12% of £100,000. Ships, aircraft, international cargo, reinsurance and risks located abroad are exempt, which is why so much of London’s core business carries no UK IPT."
         }
       },
       {
@@ -116,7 +148,17 @@
             { id: "p", x: 186, y: 100, w: 150, label: "Approved individuals", sub: "Personally accountable", tone: "c1" }
           ],
           edges: [["r", "f"], ["r", "p"]]
-        })
+        }),
+        ask: {
+          q: "A broker is fined for mishandling client money. Can the regulator also act against the director responsible?",
+          opts: [
+          ["No. The firm is the regulated entity.", "Individuals in key roles are approved, and accountable, in their own right."],
+          "Yes. Approved individuals are personally accountable.",
+          ["Only if the director stole the money.", "No dishonesty is needed. Failing to take reasonable care in the role is enough."]
+        ],
+          a: 1,
+          why: "The regulator can fine, publicly censure or ban an individual. The aim is that responsibility can’t dissolve into “the firm”."
+        }
       },
       {
         h: "In five lines",

@@ -21,10 +21,15 @@
           edges: [["o", "k"], ["a", "k"], ["c", "k"]]
         }),
         ask: {
-          q: "An underwriter says: “I’ll write it, but with a £50,000 excess instead of £25,000.” Is that acceptance?",
-          opts: ["Yes. They agreed to write it.", "No. It is a new offer."],
-          a: 1,
-          why: "Acceptance must match the offer exactly. Changing a term kills the original offer and replaces it with a **counter-offer**, which the other side may now accept or refuse."
+          q: "A broker offers a risk with a £25,000 excess. The underwriter replies: “I’ll write it, but with a £50,000 excess.” Where do things stand?",
+          opts: [
+          ["A contract exists at £50,000.", "The broker hasn’t agreed to £50,000. Nobody has accepted anything yet."],
+          ["A contract exists at £25,000.", "The underwriter never agreed to £25,000."],
+          "No contract. The underwriter has made a counter-offer.",
+          ["A contract exists; the excess will be settled later.", "With a term this important still open, there is no agreement to enforce."]
+        ],
+          a: 2,
+          why: "Acceptance must match the offer exactly. Changing a term kills the original offer and replaces it with a **counter-offer**, which the broker’s client may now accept or refuse."
         }
       },
       {
@@ -39,10 +44,15 @@
           edges: [["o", "g"], ["b", "g"], ["w", "g"]]
         }),
         ask: {
-          q: "A warehouse keeper stores customers’ goods it doesn’t own. Can it insure them?",
-          opts: ["No. Only the owner can.", "Yes. It is responsible for them, so it stands to lose."],
-          a: 1,
-          why: "Insurable interest does **not** require ownership. Anyone with a legal or financial stake has one: an owner, a lender, a tenant, someone holding goods for others."
+          q: "Which of these has **no** insurable interest in a warehouse?",
+          opts: [
+          ["The bank that lent money against it.", "If it burns, the bank’s security is gone. That is a financial stake."],
+          ["A tenant obliged by its lease to repair it.", "The tenant would have to pay for repairs: a legal liability, so an interest."],
+          ["A firm storing customers’ goods inside.", "It is responsible for those goods, so it stands to lose."],
+          "A rival firm that would win customers if it burned."
+        ],
+          a: 3,
+          why: "Insurable interest means you would **lose** if the thing were damaged. It doesn’t require ownership: lenders, tenants and bailees all have it. Someone who would *gain* from the loss has the opposite, and a policy for them would be a bet with a motive."
         }
       },
       {
@@ -58,10 +68,15 @@
           edges: [["g", "c", "2012 Act"], ["g", "b", "2015 Act"]]
         }),
         ask: {
-          q: "A homeowner isn’t asked about a past subsidence claim and doesn’t mention it. Have they broken their duty?",
-          opts: ["Yes. They should have volunteered it.", "No. A consumer need only take reasonable care answering the questions asked."],
-          a: 1,
-          why: "The **Consumer Insurance (Disclosure and Representations) Act 2012** puts the burden on the insurer to ask. A business is different: under the **Insurance Act 2015** it must volunteer everything material in a *fair presentation*."
+          q: "Neither a homeowner nor a factory owner is asked about a past subsidence claim. Neither mentions it. Who has broken their duty?",
+          opts: [
+          ["Both.", "The homeowner was never asked. A consumer’s duty is to answer honestly, not to guess what matters."],
+          ["Neither.", "A business can’t wait to be asked."],
+          "Only the factory owner.",
+          ["Only the homeowner.", "It is the other way round: the law asks less of consumers, not more."]
+        ],
+          a: 2,
+          why: "A **consumer** need only take reasonable care answering the questions asked (the 2012 Act), so the burden is on the insurer to ask. A **business** must volunteer everything material in a *fair presentation* (the Insurance Act 2015)."
         }
       },
       {
@@ -78,27 +93,34 @@
         }),
         ask: {
           q: "Does the policy pay?",
-          opts: ["Yes. Fire destroyed the ship, and fire is covered.", "Only if fire, not the attack, was the dominant cause."],
-          a: 1,
-          why: "Picture dominoes: the last one hits the table, but the cause is whatever pushed the first. If the attack set an unbroken chain in motion, this is a war loss and the exclusion bites."
+          opts: [
+          ["Yes. Fire destroyed the ship and fire is covered.", "The last thing to happen isn’t automatically the cause."],
+          ["No. The attack came first, so it is the cause.", "First in time isn’t the test either."],
+          "It depends which was the dominant cause.",
+          ["Half, since two causes were at work.", "Proximate cause picks one dominant cause. It doesn’t split the difference."]
+        ],
+          a: 2,
+          why: "Picture dominoes: the cause is whatever started an **unbroken** chain. If the attackers set the fire, the attack is the proximate cause and the war exclusion bites. If a galley fire broke out by coincidence during the attack, fire is the cause and the policy pays."
         }
       },
       {
         h: "Indemnity",
         say: "**Indemnity** means putting the insured back where they were before the loss. No better, no worse. It can be done by **cash, repair, replacement or reinstatement**.\n\nSome policies can’t indemnify, because nobody can price a lost limb. Accident and health policies pay a fixed scale instead: they are **benefit policies**.",
-        scene: () => flow({
-          h: 130,
-          nodes: [
-            { id: "i", x: 95, y: 4, label: "Indemnity", sub: "Back where you were", tone: "ink" },
-            { id: "a", x: 4, y: 84, w: 78, label: "Cash" }, { id: "b", x: 88, y: 84, w: 78, label: "Repair" }, { id: "c", x: 172, y: 84, w: 78, label: "Replace" }, { id: "d", x: 256, y: 84, w: 80, label: "Reinstate" }
-          ],
-          edges: [["i", "a"], ["i", "b"], ["i", "c"], ["i", "d"]]
-        }),
+        scene: (v) => bars([
+  { label: "What it cost, five years ago", right: "£1,200", segs: [[1200, "idle"]] },
+  { label: "The same model, new, today", right: v.$done ? "£1,000 · betterment" : "£1,000", segs: [[1000, "idle"]] },
+  { label: "A five-year-old one, today", right: v.$done ? "£250 · the indemnity" : "£250", segs: [[250, v.$done ? "c1" : "idle"]] }
+], { max: 1200 }),
         ask: {
-          q: "A five-year-old laptop is stolen. Strict indemnity pays for…",
-          opts: ["A brand-new one.", "The value of a five-year-old laptop."],
-          a: 1,
-          why: "A new one would leave the owner better off. Policies often *modify* indemnity by agreement: “new for old” cover gives more, while an excess or a limit gives less."
+          q: "A laptop bought for £1,200 five years ago is stolen. The same model costs £1,000 new today. A five-year-old one sells for £250. What does strict indemnity pay?",
+          fix: true,
+          opts: [
+          ["£1,200", "What it cost is history. Indemnity looks at the loss on the day."],
+          ["£1,000", "A new laptop would leave the owner better off than before the theft."],
+          "£250"
+        ],
+          a: 2,
+          why: "The owner lost a five-year-old laptop, worth £250. Policies often *modify* indemnity by agreement: “new for old” cover would pay £1,000, while an excess or a limit pays less."
         }
       },
       {
@@ -114,7 +136,12 @@
         },
         ctl: [{ k: "si", label: "Sum insured", min: 10, max: 50, step: 5, fmt: money }],
         live: (v) => (v.si >= 50 ? "Insured to full value, so the claim is paid in full."
-          : `The owner paid premium on only ${pct((v.si / 50) * 100)} of the value, so only ${pct((v.si / 50) * 100)} of **any** loss is paid. This is **average**. The pool is only fair if everyone pays in for the risk they really bring.`)
+          : `The owner paid premium on only ${pct((v.si / 50) * 100)} of the value, so only ${pct((v.si / 50) * 100)} of **any** loss is paid. This is **average**. The pool is only fair if everyone pays in for the risk they really bring.`),
+        goal: {
+          say: "The owner needs at least £8m of this £10m claim paid. Find the lowest sum insured that achieves it.",
+          test: (v) => v.si === 40,
+          done: "£40m. Insured for 80% of value, paid 80% of the loss. The saving on premium is repaid, with interest, in every claim."
+        }
       },
       {
         h: "Contribution",
@@ -131,6 +158,11 @@
           return ia + ib >= v.loss
             ? `Alone, A would owe ${money(ia)} and B ${money(ib)}. They share in that ratio, and the insured receives ${money(v.loss)} once, not ${money(ia + ib)}.`
             : "Together the two limits still fall short of the loss, so each pays in full and the insured bears the rest.";
+        },
+        goal: {
+          say: "Set the loss to £12m. Then choose limits so that Insurer A pays exactly three times what Insurer B pays, and the insured is paid in full.",
+          test: (v) => { const ia = Math.min(v.loss, v.a), ib = Math.min(v.loss, v.b); return v.loss === 12 && ia + ib >= 12 && ia === 3 * ib; },
+          done: "Each insurer’s share follows what it would have paid had it been alone: £9m against £3m. Now push both limits above £12m and they share equally, because each alone would have paid everything."
         }
       },
       {
@@ -145,10 +177,15 @@
           edges: [["i", "y", "1. pays"], ["i", "r"], ["r", "c", "2. pursues"]]
         }),
         ask: {
-          q: "Can the insurer chase the contractor before it has paid the claim?",
-          opts: ["Yes, to save time.", "No. It must indemnify the insured first."],
+          q: "A £100,000 loss. The insured bears a £20,000 excess and the insurer pays £80,000. The insurer then recovers the full £100,000 from the contractor. How much may the insurer keep?",
+          fix: true,
+          opts: [
+          ["All £100,000.", "That would be a £20,000 profit on the claim. Subrogation only makes the insurer whole."],
+          "£80,000. The other £20,000 goes to the insured.",
+          ["Nothing. Recoveries belong to the insured.", "Then the insured would be paid twice for the same loss, which is exactly what subrogation prevents."]
+        ],
           a: 1,
-          why: "The right arises from having paid. Indemnify first, then subrogate. And the insurer can only recover what it paid out, not make a profit on the claim."
+          why: "The insurer can recover what it **paid**, no more. The right also only arises once it has paid: indemnify first, then subrogate."
         }
       },
       {

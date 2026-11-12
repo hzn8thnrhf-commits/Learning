@@ -27,8 +27,13 @@
           edges: [["a", "s"], ["a", "p"], ["a", "c"]]
         }),
         ask: {
-          q: "A cautious pension fund backs a syndicate whose plan is 80% US hurricane reinsurance. What is wrong?",
-          opts: ["Nothing, if the rates are good.", "The strategy doesn’t match the investor’s appetite."],
+          q: "A cautious pension fund backs a syndicate whose plan is 80% US hurricane reinsurance at excellent rates. What is wrong?",
+          opts: [
+          ["Nothing. The rates are excellent.", "Good rates raise the expected return. They don’t change how much can be lost in one season."],
+          "The strategy doesn’t match the investor’s appetite.",
+          ["Hurricane reinsurance is always unprofitable.", "Over time it can be very profitable. The issue is how it gets there."],
+          ["The plan is too concentrated to be approved.", "Specialist catastrophe syndicates exist. Concentration is a choice, if the backers want it."]
+        ],
           a: 1,
           why: "Catastrophe business pays well in quiet years and can lose much of the capital in one. A plan can be perfectly sound and still be the wrong plan for its backers."
         }
@@ -46,9 +51,14 @@
         }),
         ask: {
           q: "A syndicate discovers its 2019 liability claims will cost £30m more than it set aside. Nothing new was written. Which risk is this?",
-          opts: ["Underwriting risk.", "Reserving risk.", "Market risk."],
+          opts: [
+          ["Underwriting risk.", "Underwriting risk is about business being written now. This was written years ago."],
+          "Reserving risk.",
+          ["Market risk.", "No investment has moved."],
+          ["Credit risk.", "Nobody has failed to pay the syndicate."]
+        ],
           a: 1,
-          why: "The business was written years ago; what has moved is the estimate of its cost. For long-tail insurers, reserving risk can be larger than the risk in the current year’s underwriting."
+          why: "What has moved is the estimate of an old year’s cost. For long-tail insurers, reserving risk can be larger than the risk in the current year’s underwriting."
         }
       },
       {
@@ -65,7 +75,12 @@
         }),
         ask: {
           q: "Every Florida risk written is within the £5m line limit. Yet the £150m total is breached. Who slipped?",
-          opts: ["Nobody: each risk was within authority.", "Whoever should have been watching the total."],
+          opts: [
+          ["Nobody: each risk was within authority.", "Each underwriter was within authority. The firm was not within its limit."],
+          "Whoever should have been watching the total.",
+          ["The underwriters, for writing too many risks.", "No single underwriter can see the total from one desk. Someone has to add it up for them."],
+          ["The board, for setting the appetite too low.", "The appetite is the board’s to set. The failure was in not policing it."]
+        ],
           a: 1,
           why: "A line limit controls one risk; only an **aggregate** limit, monitored across the book, controls a portfolio. Forty perfectly authorised £5m lines make a £200m accumulation."
         }
@@ -84,6 +99,11 @@
         live: (v) => {
           const T = RP[v.rp], p = (1 - Math.pow(1 - 1 / T, v.yrs)) * 100;
           return `A 1-in-${T} event has a **${pct(p)}** chance of happening at least once in ${v.yrs} years. It can also happen two years running: each year is a fresh draw.`;
+        },
+        goal: {
+          say: "You expect a thirty-year career. Find the rarest event that is still more likely than not to happen during it.",
+          test: (v) => RP[v.rp] === 25 && v.yrs === 30,
+          done: "A 1-in-25-year event: a 71% chance over thirty years. You should expect to live through one. Even the 1-in-50 is close to a coin toss. “Rare” events are a normal part of a working life."
         }
       },
       {
@@ -98,7 +118,12 @@
             ], { max: 140 });
         },
         ctl: [{ k: "rho", label: "How closely the classes move together", min: 0, max: 100, step: 10, fmt: (x) => (x === 0 ? "independent" : x === 100 ? "in lockstep" : `${x}%`) }],
-        live: (v) => (v.rho >= 70 ? "When the classes move together there is almost nothing to save. And correlations **rise in a crisis**: a hurricane hits property, then liability, then investments. Diversification is weakest exactly when it is needed." : v.rho <= 20 ? "Nearly independent classes save a great deal of capital. This is the financial argument for a mixed book, and why a plan’s capital changes when its mix changes." : "A partial benefit. Capital models spend much of their effort on this one assumption.")
+        live: (v) => (v.rho >= 70 ? "When the classes move together there is almost nothing to save. And correlations **rise in a crisis**: a hurricane hits property, then liability, then investments. Diversification is weakest exactly when it is needed." : v.rho <= 20 ? "Nearly independent classes save a great deal of capital. This is the financial argument for a mixed book, and why a plan’s capital changes when its mix changes." : "A partial benefit. Capital models spend much of their effort on this one assumption."),
+        goal: {
+          say: "Find how closely the two classes must move together before mixing them saves less than £10m of capital.",
+          test: (v) => v.rho === 80,
+          done: "At around 80% the benefit has all but gone. That is roughly where correlations go in a real crisis, when a hurricane hits property, then liability, then the investment portfolio. The saving is there in calm years and absent in the year the capital is for."
+        }
       },
       {
         h: "What capital costs",
@@ -109,7 +134,12 @@
             bars([{ label: "Return on capital", right: pct(roc, 1), segs: [[Math.max(roc, 0), roc < 10 ? "bad" : "c1"]] }], { max: 40, marks: [[10, "Hurdle 10%"]] });
         },
         ctl: [{ k: "kind", label: "Class", opts: ["Motor", "Property", "Cat"] }, { k: "cr", label: "Combined ratio", min: 80, max: 104, step: 1, fmt: pct }],
-        live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][2]} Profit here includes £3m of investment income.`
+        live: (v) => `**${KIND[v.kind][0]}.** ${KIND[v.kind][2]} Profit here includes £3m of investment income.`,
+        goal: {
+          say: "Find the worst combined ratio at which catastrophe business still clears the 10% hurdle.",
+          test: (v) => v.kind === 2 && v.cr === 91,
+          done: "91%. Now switch to motor at the same 91%: it returns 40%. A cat underwriter must aim for combined ratios a motor underwriter would be ashamed to boast about, just to stand still."
+        }
       },
       {
         h: "The firm’s own assessment",
@@ -124,9 +154,14 @@
         }),
         ask: {
           q: "A board approves a plan to double premium. Its ORSA still shows last year’s capital need. What has gone wrong?",
-          opts: ["Nothing. The ORSA is an annual document.", "The ORSA should move whenever the plan or the risks do."],
+          opts: [
+          ["Nothing. The ORSA is an annual document.", "It is reviewed at least annually, and whenever the risk profile changes materially. Doubling premium qualifies."],
+          "The ORSA should move whenever the plan or the risks do.",
+          ["The actuaries should have stopped the plan.", "The ORSA belongs to the board. It can’t be left to the actuaries, which is the point of it."],
+          ["Nothing, provided the regulatory minimum is still met.", "The ORSA is the firm’s *own* view of what it needs, which may be well above the minimum."]
+        ],
           a: 1,
-          why: "The point of the ORSA is to connect decisions to capital. A plan that doubles exposure without revisiting capital is precisely the failure it exists to prevent."
+          why: "The ORSA exists to connect decisions to capital. A plan that doubles exposure without revisiting capital is precisely the failure it is meant to prevent."
         }
       },
       {

@@ -31,10 +31,15 @@
           edges: [["r", "a"], ["r", "m"], ["r", "k"], ["r", "t"], ["t", "i"]]
         }),
         ask: {
-          q: "A haulier fits trackers and alarms to every lorry. Which choice is that?",
-          opts: ["Avoid", "Reduce", "Transfer"],
+          q: "A haulier fits trackers and alarms to every lorry, and keeps its insurance. What has it done with the theft risk?",
+          opts: [
+          ["Avoided it.", "Avoiding means not running the risk at all: selling the lorries. They are still on the road."],
+          "Reduced it, then transferred what is left.",
+          ["Transferred it twice.", "A tracker company doesn’t take on the loss. Only the insurer does."],
+          ["Kept it.", "Keeping means paying for thefts itself. It has an insurer for that."]
+        ],
           a: 1,
-          why: "The lorries still run, so the risk isn’t avoided, and nobody else has taken it on. The haulier has made theft less likely and less costly. Most firms do this *and* insure what is left."
+          why: "The four choices aren’t exclusive. Most firms **reduce** what they can and **transfer** the rest, and insurers reward the first with a better price on the second."
         }
       },
       {
@@ -51,6 +56,11 @@
           return p.n < 1000
             ? `With ${p.n} houses, one fire more or less changes everything. A bad year could cost each member **£${num(p.hi, 0)}**, far more than the £1,000 expected. A small pool is still a gamble.`
             : `With ${p.n.toLocaleString("en-GB")} houses, results settle close to the average: the **law of large numbers**. That is what lets an insurer charge each member a fair, predictable premium.`;
+        },
+        goal: {
+          say: "Find the smallest pool in which a bad year costs each member less than £1,500.",
+          test: (v) => POOL[v.n] === 5000,
+          done: "5,000 houses. Below that, a bad year can cost half as much again as the £1,000 expected, and at 50 houses over four times as much. A pool only becomes insurance when it is big enough to be boring."
         }
       },
       {
@@ -66,10 +76,15 @@
           edges: [["h", "p", "feeds"], ["p", "l"]]
         }),
         ask: {
-          q: "A cottage has a thatched roof. Is the thatch a peril or a hazard?",
-          opts: ["A peril", "A hazard"],
+          q: "A cottage has a thatched roof. In underwriting terms, the thatch is…",
+          opts: [
+          ["A peril.", "A peril is the event that does the damage. Thatch doesn’t cause a loss; fire does."],
+          "A physical hazard.",
+          ["A moral hazard.", "Moral hazard is about the owner’s behaviour. Thatch is a feature of the building."],
+          ["Neither: it is simply part of the property insured.", "It is part of the property, but one that changes the risk, which is exactly what a hazard is."]
+        ],
           a: 1,
-          why: "Thatch doesn’t cause a loss by itself. Fire is the peril; thatch makes a fire more likely and far more destructive. Because it is a feature of the thing insured, it is a **physical hazard**."
+          why: "Fire is the peril. Thatch makes a fire more likely and far more destructive, and because it is a feature of the thing insured it is a **physical** hazard."
         }
       },
       {
@@ -80,10 +95,15 @@
           { label: "Shop B: same building, three unexplained fires", segs: [[85, "bad", "High moral hazard"]] }
         ], { max: 100 }),
         ask: {
-          q: "A shipowner cuts crew training to save money, reasoning that “the insurers will pay anyway”. What kind of hazard?",
-          opts: ["Physical", "Moral"],
+          q: "A shipowner cuts crew training to save money, reasoning that “the insurers will pay anyway”. Which response deals with the problem most directly?",
+          opts: [
+          ["Send a surveyor to inspect the hull.", "The ship is unchanged. A survey measures physical hazard; this is an attitude."],
+          "Make the owner bear a large excess on every claim.",
+          ["Reduce the sum insured.", "That cuts the insurer’s maximum loss but leaves the owner just as careless."],
+          ["Nothing: training is the owner’s business.", "Poorly trained crews cause casualties. It is very much the insurer’s business."]
+        ],
           a: 1,
-          why: "The ship is unchanged; the attitude is the problem. Insurers respond to poor moral hazard with higher premiums, tighter terms, an excess the insured must bear, or by declining."
+          why: "This is **moral hazard**: the insurance itself has made the owner careless. An excess puts some of his own money back at risk in every loss, which is the surest way to restore his interest in avoiding one."
         }
       },
       {
@@ -98,10 +118,15 @@
           ]
         }),
         ask: {
-          q: "A chef opens a second restaurant. It might lose money. Can she insure against that?",
-          opts: ["Yes, any risk has its price.", "No. It is a speculative risk."],
+          q: "A chef opens a second restaurant. Which of her risks can she insure?",
+          opts: [
+          ["That it never becomes popular.", "A speculative risk: she took it hoping to profit, and it depends on her own decisions."],
+          "That a kitchen fire closes it for three months.",
+          ["That a recession hits every restaurant in the country.", "A fundamental risk, striking a whole society at once. There is nobody left in the pool to pay."],
+          ["That she comes to regret opening it.", "Regret can’t be measured in money: a non-financial risk."]
+        ],
           a: 1,
-          why: "She took the risk hoping to profit, and whether it pays depends on her own decisions. Insurance covers **pure** risks. She can insure the restaurant against fire; she can’t insure it against being unpopular."
+          why: "A fire is **pure** (loss or no loss), **particular** (her restaurant, not everyone’s) and **financial** (repairs and lost income can be valued). The other three each fail one test."
         }
       },
       {
@@ -110,9 +135,14 @@
         scene: () => tick([[1, "Financial: the loss can be valued"], [1, "Pure, not speculative"], [1, "Particular, not fundamental"], [1, "Fortuitous: accidental as far as the insured is concerned"], [1, "The insured has an insurable interest"], [1, "Not against public policy"], [0, "One-offs with no comparable risks are hard, though Lloyd’s is known for trying"]]),
         ask: {
           q: "A courier wants a policy to pay his speeding fines. Which test does it fail?",
-          opts: ["It isn’t financial.", "It is against public policy.", "It is a fundamental risk."],
+          opts: [
+          ["It isn’t financial.", "A fine is an exact sum of money. It couldn’t be more financial."],
+          "It is against public policy.",
+          ["It is a fundamental risk.", "It strikes one driver, not society. It is a particular risk."],
+          ["He has no insurable interest.", "He would certainly lose money, so the interest is there. The objection lies elsewhere."]
+        ],
           a: 1,
-          why: "A fine is meant to punish. Letting someone insure it away would defeat the law, so the courts won’t enforce such a contract."
+          why: "A fine is meant to punish. Letting someone insure it away would defeat the law, so the courts won’t enforce such a contract. It isn’t fortuitous either: he chooses how fast to drive."
         }
       },
       {
@@ -128,10 +158,15 @@
           edges: [["p", "a"], ["p", "b"], ["p", "c"], ["b", "d"]]
         }),
         ask: {
-          q: "What does a client actually remember about its insurer?",
-          opts: ["The premium.", "How the claim was handled."],
-          a: 1,
-          why: "A policy is a promise. The claim is the moment the promise is tested, which is why claims handling is treated as the heart of the product, not an afterthought."
+          q: "Which of these is a **secondary** function of insurance?",
+          opts: [
+          ["Swapping an uncertain loss for a known premium.", "That is certainty: one of the three primary functions."],
+          ["Spreading the losses of the few across the many.", "That is the pool itself: a primary function."],
+          "Letting a firm invest cash it would otherwise hold back against disaster.",
+          ["Moving a risk from the insured to the insurer.", "That is risk transfer: the first primary function."]
+        ],
+          a: 2,
+          why: "Primary functions are what insurance *does*: transfer, spread, give certainty. Secondary functions are what follows from that: freed capital, enterprise, protected jobs, and premiums invested in the economy."
         }
       },
       {

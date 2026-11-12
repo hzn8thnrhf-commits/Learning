@@ -29,9 +29,14 @@
         }),
         ask: {
           q: "A Brazilian manufacturer wants London to insure its factory. What is the first question?",
-          opts: ["What is the rate?", "May a London insurer legally write that risk in Brazil?"],
+          opts: [
+          ["What rate will the market charge?", "A price for a contract you may not legally make is worth nothing."],
+          "May a London insurer legally write that risk in Brazil?",
+          ["Is the risk large enough for London?", "Size affects whether London is the right market, but not whether it is allowed."],
+          ["Which Lloyd’s broker will place it?", "A practical step, but it comes after knowing the business can be written at all."]
+        ],
           a: 1,
-          why: "Licensing comes before pricing. Depending on the country, London may write it directly, only as reinsurance of a local insurer, or not at all."
+          why: "Licensing comes before pricing. Depending on the country, London may write a risk directly, only as reinsurance of a local insurer, or not at all."
         }
       },
       {
@@ -46,6 +51,11 @@
         live: (v) => {
           const roc = (100 - v.loss - v.exp) * 1.5 + 3;
           return roc < 8 ? "At this return, an investor can do as well elsewhere with less risk. Capital drifts to cheaper markets such as Bermuda or Singapore." : "A healthy return. Note how much of it depends on **expenses**: London’s chain of brokers, bureaux and paper processes is costly, which is why the market keeps trying to modernise.";
+        },
+        goal: {
+          say: "Investors want at least 8%. With a claims ratio of 60%, find the highest expense ratio the market can afford.",
+          test: (v) => v.loss === 60 && v.exp === 36,
+          done: "36%. One more point of expense and the capital has a better home elsewhere. Underwriters can’t control the weather, but the market can control what it spends, which is why expenses are where London’s competitiveness is decided."
         }
       },
       {
@@ -56,10 +66,15 @@
           { label: "The aim", right: "entered once, reused", segs: [[25, "c1", "Data captured"], [75, "soft1", "Flows through"]] }
         ], { max: 100 }),
         ask: {
-          q: "Why does one firm’s inefficiency matter to the rest of a subscription market?",
-          opts: ["It doesn’t.", "Every risk is shared, so everyone must use common processes."],
+          q: "One insurer on a twenty-insurer slip still wants paper documents. Who bears the cost?",
+          opts: [
+          ["Only that insurer.", "The slip can’t be processed digitally for nineteen and on paper for one."],
+          "Everyone on the slip, and the broker.",
+          ["Nobody: the bureau absorbs it.", "The bureau’s costs are charged back to the market."],
+          ["The client, directly.", "Eventually, through the premium. But first it lands on every firm handling the risk."]
+        ],
           a: 1,
-          why: "A slip with twenty insurers can only be processed once if all twenty use the same standards. Modernisation therefore has to be collective, which is also why it is slow."
+          why: "A shared risk can only be handled as fast as its slowest participant. Modernisation therefore has to be collective, which is also why it is slow."
         }
       },
       {
@@ -75,8 +90,13 @@
           edges: [["u", "e", "passport ended", { dash: true }], ["u", "s"], ["s", "e"]]
         }),
         ask: {
-          q: "How does Lloyd’s still write EU business?",
-          opts: ["It can’t.", "Through an insurance company it set up in Brussels."],
+          q: "How does Lloyd’s write EU business now that passporting has ended?",
+          opts: [
+          ["It can’t.", "It can, by a different route."],
+          "Through an insurance company it set up in Brussels.",
+          ["Under a UK–EU agreement that replaced passporting.", "No such agreement exists for insurance."],
+          ["As surplus lines business.", "That is a US concept. The EU has no equivalent open door."]
+        ],
           a: 1,
           why: "Lloyd’s Europe, authorised in Belgium, writes the EU risks and reinsures them back to the syndicates. Company market insurers took similar steps with subsidiaries in Dublin, Luxembourg and elsewhere."
         }
@@ -89,8 +109,13 @@
           { label: "Syndicate B: falls short", right: "plan restricted, capital loaded", segs: [[85, "bad", "Oversight"]] }
         ], { max: 100 }),
         ask: {
-          q: "Why does Lloyd’s care how well one syndicate reserves?",
-          opts: ["It is being thorough.", "Its failures fall on the Central Fund and the market’s shared rating."],
+          q: "Why does Lloyd’s care how well one syndicate sets its reserves?",
+          opts: [
+          ["Because the PRA asks it to.", "The PRA supervises managing agents itself. Lloyd’s has its own reason."],
+          "Because a failure falls on the Central Fund and the market’s shared rating.",
+          ["Because Lloyd’s shares in each syndicate’s profit.", "Lloyd’s takes levies and contributions, not a share of underwriting profit."],
+          ["It doesn’t: reserving is the managing agent’s business.", "It is the agent’s job. But everyone else pays if it is done badly."]
+        ],
           a: 1,
           why: "The chain of security makes every syndicate’s standards everyone’s business."
         }
@@ -106,7 +131,18 @@
             { id: "r", x: 95, y: 144, label: "Almost everyone", sub: "Conduct rules" }
           ],
           edges: [["s", "c"], ["c", "r"]]
-        })
+        }),
+        ask: {
+          q: "Claims handling at an insurer has failed badly. The regulator asks who was responsible. Under the regime, the answer should be…",
+          opts: [
+          ["The board, collectively.", "Collective responsibility was the old problem: when everyone is responsible, nobody is."],
+          "The senior manager whose statement of responsibilities covers claims.",
+          ["The junior handlers who made the errors.", "They are bound by conduct rules, but the regime looks for whoever was accountable for the function."],
+          ["The firm, not any individual.", "The firm can be sanctioned too. The regime exists so that an individual is identifiable as well."]
+        ],
+          a: 1,
+          why: "Each senior manager has a written **statement of responsibilities**. After a failure, the question “who was responsible?” already has an answer on file."
+        }
       },
       {
         h: "Governance",

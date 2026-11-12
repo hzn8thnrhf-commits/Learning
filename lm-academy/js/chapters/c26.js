@@ -35,7 +35,12 @@
         }),
         ask: {
           q: "An MGA binds a policy that later produces a £2m claim. Whose money pays it?",
-          opts: ["The MGA’s.", "The carriers’."],
+          opts: [
+          ["The MGA’s.", "The MGA has no capital at risk on the policy. That is the definition of the model."],
+          "The carriers’.",
+          ["The broker’s.", "The broker arranged the cover. It doesn’t fund it."],
+          ["It is shared between the MGA and the carriers.", "Only if the MGA has agreed to take a share of risk, which is unusual and needs capital and licences of its own."]
+        ],
           a: 1,
           why: "The MGA decided to write the risk; the carriers bear the result. Everything else in this part follows from that separation between the decision and its consequences."
         }
@@ -49,7 +54,12 @@
             bars([{ label: "Income", right: money(inc), segs: [[inc, "c1", "15% of premium"]] }, { label: "Costs", right: "£2.2m", segs: [[2.2, "c2", "Fixed"]] }], { max: 6 });
         },
         ctl: [{ k: "vol", label: "Premium written", min: 6, max: 40, step: 1, fmt: money }],
-        live: (v) => (v.vol * 0.15 < 2.2 ? "Below about £14.7m of premium the MGA loses money, however good its underwriting. Income moves with volume; costs don’t." : `Every extra £1m of premium now adds £150k straight to profit. Notice what this picture does **not** contain: the loss ratio. On commission alone, the MGA is paid for volume.`)
+        live: (v) => (v.vol * 0.15 < 2.2 ? "Below about £14.7m of premium the MGA loses money, however good its underwriting. Income moves with volume; costs don’t." : `Every extra £1m of premium now adds £150k straight to profit. Notice what this picture does **not** contain: the loss ratio. On commission alone, the MGA is paid for volume.`),
+        goal: {
+          say: "Find the smallest book on which this MGA makes any profit at all.",
+          test: (v) => v.vol === 15,
+          done: "£15m. Below about £14.7m the commission doesn’t cover the fixed costs, whatever the quality of the underwriting. So a young MGA is under pressure to reach scale quickly, which is the moment its carriers should watch it most closely."
+        }
       },
       {
         h: "Two views of one book",
@@ -63,7 +73,12 @@
             ], { max: 6.5 });
         },
         ctl: [{ k: "lr", label: "Loss ratio on the book", min: 40, max: 85, step: 1, fmt: pct }],
-        live: (v) => (v.lr > 70 ? "The carrier is losing money. The MGA’s profit **hasn’t moved**. This is the central problem of delegated underwriting: the party choosing the risks is insulated from how they turn out." : "The carrier’s profit swings with every point of loss ratio; the MGA’s is flat. An MGA paid only by commission has an incentive to grow premium even when prices are inadequate.")
+        live: (v) => (v.lr > 70 ? "The carrier is losing money. The MGA’s profit **hasn’t moved**. This is the central problem of delegated underwriting: the party choosing the risks is insulated from how they turn out." : "The carrier’s profit swings with every point of loss ratio; the MGA’s is flat. An MGA paid only by commission has an incentive to grow premium even when prices are inadequate."),
+        goal: {
+          say: "Find the loss ratio at which the carrier makes nothing at all. What is the MGA making?",
+          test: (v) => v.lr === 70,
+          done: "At 70% the carrier breaks even, and the MGA still makes its £800k. Push on to 85%: the carrier has lost £3m and the MGA’s figure hasn’t moved by a pound."
+        }
       },
       {
         h: "Aligning the two",
@@ -80,20 +95,30 @@
         live: (v) => {
           const be = 52;
           return v.lr < be ? "At this loss ratio the profit-share deal pays **more** than flat commission. Good underwriting is now worth money to the MGA." : v.lr >= 72 ? "The carrier has no profit to share, so the MGA earns only its 23%: £500k less than the flat deal. Poor results now cost the MGA too, which is the point." : "Around a 52% loss ratio the two deals pay the same. Above it, profit share pays less. The MGA has a reason to care which risks it binds.";
+        },
+        goal: {
+          say: "Take the profit-share deal. Find the loss ratio at which it pays exactly what the flat deal would.",
+          test: (v) => v.deal === 1 && v.lr === 52,
+          done: "52%. An MGA that believes it can beat that should want the profit share; one that prefers the flat 28% is telling its carrier something. Which deal an MGA asks for is itself a piece of underwriting information."
         }
       },
       {
         h: "Losses are remembered",
         say: "Profit commission is worked out year by year, usually after results have had time to mature. A **deficit carried forward** clause stops an MGA collecting on good years while the carrier absorbs the bad ones.",
-        scene: () => bars([
-          { label: "Year 1", right: "loss of £1.0m", segs: [[1, "bad", "Deficit"]] },
-          { label: "Year 2", right: "profit of £1.5m", segs: [[1, "hole", "Repays year 1"], [0.5, "c3", "Counts"]] }
-        ], { max: 1.6 }),
+        scene: (v) => bars([
+  { label: "Year 1", right: "loss of £1.0m", segs: [[1, "bad", "Deficit"]] },
+  { label: "Year 2", right: "profit of £1.5m", segs: v.$done ? [[1, "hole", "Repays year 1"], [0.5, "c3", "Counts"]] : [[1.5, "c3", "Profit"]] }
+], { max: 1.6 }),
         ask: {
           q: "The profit share is 25% with deficit carried forward. Year 1 lost £1.0m; year 2 made £1.5m. What profit commission is due for year 2?",
-          opts: ["£375,000: a quarter of £1.5m.", "£125,000: a quarter of £0.5m.", "Nothing."],
+          fix: true,
+          opts: [
+          ["£375,000", "A quarter of £1.5m, ignoring the loss the carrier took the year before."],
+          "£125,000",
+          ["Nothing", "Year 1’s deficit is fully repaid by year 2’s profit, with £0.5m to spare."]
+        ],
           a: 1,
-          why: "Year 1’s loss must be recovered before any profit counts. £1.5m less £1.0m leaves £0.5m; a quarter is £125,000. Without the clause the MGA would share every profit and no loss."
+          why: "Year 1’s loss must be recovered first. £1.5m less £1.0m leaves £0.5m; a quarter of that is £125,000. Without the clause the MGA would share every profit and no loss."
         }
       },
       {
@@ -111,8 +136,12 @@
           { label: "MGA B: plans 5% growth", right: "policy-level data, rate tracked", segs: [[5, "c1"]] }
         ], { max: 40 }),
         ask: {
-          q: "Both MGAs ask the same carrier for capacity. Which is the easier yes?",
-          opts: ["A. More premium for the carrier.", "B. The carrier can see what it is buying."],
+          q: "Two MGAs ask a carrier for capacity. A plans 35% growth and has no rate monitoring. B plans 5% and has policy-level data with rate tracked. Which is the easier yes?",
+          opts: [
+          ["A. More premium for the carrier.", "More premium of unknown adequacy is more risk of unknown price."],
+          "B. The carrier can see what it is buying.",
+          ["Neither: carriers avoid MGAs.", "Delegated business is a large and growing share of the market."]
+        ],
           a: 1,
           why: "Premium is easy to find; evidence that it is adequately priced is not. Fast growth with no view of rate adequacy is the pattern carriers have learned to fear most."
         }
@@ -138,7 +167,12 @@
             bars([{ label: "The book", segs: [[left, "c1", "Still supported"], [20 - left, "hole", "Capacity gone"]] }], { max: 20, marks: [[14.7, "Break-even"]] });
         },
         ctl: [{ k: "big", label: "Largest carrier’s share", min: 20, max: 100, step: 5, fmt: pct }],
-        live: (v) => (v.big >= 100 ? "A single carrier: when it goes, the business stops. The MGA can’t renew a single policy." : 20 * (1 - v.big / 100) < 14.7 ? "The remaining book no longer covers the fixed costs. The MGA is loss-making until it finds new capacity, and it is negotiating from weakness." : "The MGA stays profitable without its largest carrier. That resilience is worth something to the carriers who remain, and to anyone valuing the business.")
+        live: (v) => (v.big >= 100 ? "A single carrier: when it goes, the business stops. The MGA can’t renew a single policy." : 20 * (1 - v.big / 100) < 14.7 ? "The remaining book no longer covers the fixed costs. The MGA is loss-making until it finds new capacity, and it is negotiating from weakness." : "The MGA stays profitable without its largest carrier. That resilience is worth something to the carriers who remain, and to anyone valuing the business."),
+        goal: {
+          say: "Find the largest share your biggest carrier can hold if the MGA is to stay profitable without it.",
+          test: (v) => v.big === 25,
+          done: "A quarter. That means at least four carriers of similar size, or a book well above break-even. Most MGAs start with one carrier at 100% and spend their first years trying to get to this picture."
+        }
       },
       {
         h: "In five lines",

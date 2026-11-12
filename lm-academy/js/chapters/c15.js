@@ -30,7 +30,12 @@
         ctl: [{ k: "p", label: "Premium for one risk", min: 0, max: PREM.length - 1, step: 1, fmt: (i) => pounds(PREM[i]) }],
         live: (v) => (PREM[v.p] <= 25000
           ? "For a small risk, individual attention would eat the premium. So the insurer decides once, in a contract, and lets someone local apply the rules."
-          : "For a big, unusual risk, individual attention is cheap relative to the premium. This is the open market’s home ground.")
+          : "For a big, unusual risk, individual attention is cheap relative to the premium. This is the open market’s home ground."),
+        goal: {
+          say: "Find the smallest premium at which placing a risk individually becomes cheaper than delegating it.",
+          test: (v) => v.p === 5,
+          done: "Around £25,000. Below that, the fixed cost of a broker and an underwriter looking at one risk swamps the premium. This crossover, not tradition, decides what goes through a binder."
+        }
       },
       {
         h: "Three ways to delegate",
@@ -56,8 +61,13 @@
           { label: "Consortium", right: "inside the market", segs: [[100, "c1", "One member decides"]] }
         ], { max: 100 }),
         ask: {
-          q: "Ten insurers let two leaders accept cargo risks for all ten whenever one broker brings a risk that fits. What is it?",
-          opts: ["A binding authority.", "A line slip."],
+          q: "Ten insurers let two of their number accept cargo risks for all ten whenever one broker brings a risk that fits. What is it?",
+          opts: [
+          ["A binding authority.", "Nobody outside the insurers has been given the pen."],
+          "A line slip.",
+          ["A consortium.", "Close, but a consortium normally has one member underwriting under a shared stamp for a specialist class. This is a facility built around one broker’s flow."],
+          ["Ordinary subscription business.", "Eight of the ten never see the risks."]
+        ],
           a: 1,
           why: "Insurers are still doing the underwriting, just fewer of them. It saves the broker walking every small risk to ten boxes. If the *broker* could accept the risks itself, that would be a binding authority."
         }
@@ -77,9 +87,14 @@
         }),
         ask: {
           q: "After approval, who remains responsible for what the coverholder does with the pen?",
-          opts: ["Lloyd’s.", "The managing agent whose syndicate gave the authority.", "The sponsoring broker."],
+          opts: [
+          ["Lloyd’s, which approved it.", "Approval is a gate, not a guarantee."],
+          "The managing agent whose syndicate gave the authority.",
+          ["The sponsoring broker.", "The broker introduced the coverholder. It didn’t lend it capital."],
+          ["The coverholder alone.", "It is accountable to the syndicate. But to the policyholder and regulator, its acts are the syndicate’s."]
+        ],
           a: 1,
-          why: "You can delegate authority but not responsibility. To the policyholder and the regulator, the coverholder’s acts are the syndicate’s acts."
+          why: "You can delegate authority but not responsibility."
         }
       },
       {
@@ -90,8 +105,13 @@
           { label: "Limited authority", right: "", segs: [[20, "c2", ""], [80, "c1", "Insurer decides each risk"]] }
         ], { max: 100 }),
         ask: {
-          q: "A coverholder with a £2m limit per risk is asked to insure a £3m building. What can it do?",
-          opts: ["Bind it: the client is a good one.", "Refer it to the insurer before binding anything."],
+          q: "A coverholder with a £2m limit per risk is asked to insure a £3m building for an excellent client. What can it do?",
+          opts: [
+          ["Bind it: the client is a good one.", "The quality of the client doesn’t create authority."],
+          "Refer it to the insurer before binding anything.",
+          ["Bind it and report it on the next bordereau.", "Telling the insurer afterwards doesn’t cure acting without authority."],
+          ["Bind it as two policies of £1.5m.", "Splitting a risk to dodge a limit is still exceeding the limit, and now looks deliberate."]
+        ],
           a: 1,
           why: "Outside the agreement it has no authority at all. If it binds anyway, the insurer may still be bound to the innocent policyholder, and will look to the coverholder to make good the damage."
         }

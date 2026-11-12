@@ -28,7 +28,11 @@
         }),
         ask: {
           q: "Every risk the MGA binds is individually well underwritten. Is the portfolio therefore sound?",
-          opts: ["Yes. A book is the sum of its risks.", "No. Concentration and mix exist only at portfolio level."],
+          opts: [
+          ["Yes. A book is the sum of its risks.", "A book also has a shape: where the risks are, and which kind is growing."],
+          "No. Concentration and mix exist only at portfolio level.",
+          ["Yes, provided each carrier audits its own share.", "Each carrier audits a slice. None of them sees the whole."]
+        ],
           a: 1,
           why: "Forty good risks on one flood plain are a bad portfolio. So is a book whose growth all came from its cheapest segment. Risk-by-risk underwriting can’t see either."
         }
@@ -46,7 +50,12 @@
             ], { max: 60 });
         },
         ctl: [{ k: "c", label: "Hospitality’s share of premium", min: 10, max: 60, step: 5, fmt: pct }],
-        live: (v) => (v.c <= 25 ? "At a fifth of the book, hospitality is invisible in the total: the good segments are quietly subsidising it. A carrier looking only at the headline would see nothing wrong." : v.c < 45 ? "No segment’s own loss ratio has changed. The overall figure is deteriorating purely because the **mix** is shifting towards the worst segment." : "The subsidy has run out. The book’s headline result is now poor, and it happened without any single bad underwriting decision. Results must be read by segment, by underwriting year and by type of loss, never only in total.")
+        live: (v) => (v.c <= 25 ? "At a fifth of the book, hospitality is invisible in the total: the good segments are quietly subsidising it. A carrier looking only at the headline would see nothing wrong." : v.c < 45 ? "No segment’s own loss ratio has changed. The overall figure is deteriorating purely because the **mix** is shifting towards the worst segment." : "The subsidy has run out. The book’s headline result is now poor, and it happened without any single bad underwriting decision. Results must be read by segment, by underwriting year and by type of loss, never only in total."),
+        goal: {
+          say: "Find the hospitality share at which the whole book’s loss ratio passes 65%.",
+          test: (v) => v.c === 35,
+          done: "Just over a third. No segment’s loss ratio changed on the way: contractors still 45%, retail 55%, hospitality 95%. The book went from good to poor through mix alone, and at every step the headline moved by only a couple of points."
+        }
       },
       {
         h: "Price adequacy by segment",
@@ -58,9 +67,13 @@
         }),
         ask: {
           q: "Hospitality is at 82% of technical price and is the fastest-growing segment. What does that combination tell you?",
-          opts: ["Brokers love the product.", "It is growing *because* it is cheap."],
+          opts: [
+          ["Brokers love the product.", "They love the price."],
+          "It is growing *because* it is cheap.",
+          ["The technical price must be too high.", "Possible, and worth checking. But a model that is wrong only in the segment that happens to be booming would be a coincidence."]
+        ],
           a: 1,
-          why: "Brokers send business where the price is keenest. Rapid growth in an under-priced segment is not a coincidence; it is the market telling you your rate is wrong."
+          why: "Brokers send business where the price is keenest. Rapid growth in an under-priced segment isn’t luck; it is the market telling you your rate is wrong."
         }
       },
       {
@@ -83,9 +96,13 @@
         scene: () => recap(["Appetite guide: what brokers are told you want", "Rates and rating factors", "Line size and deductibles", "Referral rules inside the MGA", "Which brokers and channels to invest in"]),
         ask: {
           q: "The MGA raises hospitality rates 20% and tightens its appetite. Premium in the segment falls by a third. Has the action failed?",
-          opts: ["Yes. The MGA has lost commission.", "No. Shrinking under-priced business was the aim."],
+          opts: [
+          ["Yes. The MGA has lost commission.", "It has, which is why the decision is hard. But commission wasn’t the aim."],
+          "No. Shrinking under-priced business was the aim.",
+          ["Yes. The rate rise should have increased premium.", "Only if every client stayed. The ones who left were the ones only there for the price."]
+        ],
           a: 1,
-          why: "The MGA’s commission income falls, which is exactly why the decision is hard and why carriers watch for it. An MGA that will give up volume to protect the loss ratio is one that keeps its capacity."
+          why: "The MGA gives up income to protect its carriers’ loss ratio. An MGA willing to do that is one that keeps its capacity."
         }
       },
       {
@@ -102,7 +119,12 @@
         ctl: [{ k: "a", label: "Carrier A’s share of the panel", min: 30, max: 80, step: 5, fmt: pct }],
         live: (v) => {
           const a = v.a / 100, capA = 30 / a, capB = 24 / (1 - a);
-          return Math.abs(capA - capB) < 1 ? "Both carriers fill at the same moment: the panel uses all £54m of available aggregate. The shares match the carriers’ appetites." : capA < capB ? `Carrier A fills first at ${money(capA)} of total aggregate, leaving ${money(24 - capA * (1 - a))} of B’s limit unusable. To write more, renegotiate A’s limit or shift share to B.` : `Carrier B fills first at ${money(capB)}, stranding ${money(30 - capB * a)} of A’s appetite. The panel is only as large as its most cautious member allows.`;
+          return Math.abs(capA - capB) < 2 ? "Both carriers fill at the same moment: the panel uses all £54m of available aggregate. The shares match the carriers’ appetites." : capA < capB ? `Carrier A fills first at ${money(capA)} of total aggregate, leaving ${money(24 - capA * (1 - a))} of B’s limit unusable. To write more, renegotiate A’s limit or shift share to B.` : `Carrier B fills first at ${money(capB)}, stranding ${money(30 - capB * a)} of A’s appetite. The panel is only as large as its most cautious member allows.`;
+        },
+        goal: {
+          say: "Find the split that comes closest to using every pound of both carriers’ flood appetite.",
+          test: (v) => v.a === 55,
+          done: "About 55:45, matching the ratio of their limits (30:24). Shares that mirror appetites waste nothing. Shares set by history or negotiation leave capacity stranded on one side."
         }
       },
       {
@@ -116,7 +138,12 @@
               dots: [{ x: v.m, y: sofar, tone: "c1" }], refs: [{ y: 20, label: "Binder limit £20m", left: true }] });
         },
         ctl: [{ k: "run", label: "Premium written each month", min: 1.2, max: 2.4, step: 0.1, fmt: money }, { k: "m", label: "Month now", min: 1, max: 12, step: 1, fmt: (x) => `${x}` }],
-        live: (v) => (v.run * 12 > 20 ? `At this pace the limit is reached in **month ${Math.ceil(20 / v.run)}**. The time to ask the carriers for an increase is now, with the reasons for the growth, not after the breach. With several carriers, every one of them must agree.` : "On course to finish inside the limit. The same projection should be run for each carrier’s share and each sub-limit in each binder.")
+        live: (v) => (v.run * 12 > 20 ? `At this pace the limit is reached in **month ${Math.ceil(20 / v.run)}**. The time to ask the carriers for an increase is now, with the reasons for the growth, not after the breach. With several carriers, every one of them must agree.` : "On course to finish inside the limit. The same projection should be run for each carrier’s share and each sub-limit in each binder."),
+        goal: {
+          say: "Find the fastest monthly pace that stays inside the £20m limit all year.",
+          test: (v) => v.run === 1.6,
+          done: "£1.6m a month. At the £1.8m the MGA started on, the limit is breached in the last month of the year, and it could have been seen in January. The projection, not the running total, is the control."
+        }
       },
       {
         h: "Whose risk is it?",
@@ -131,9 +158,13 @@
         }),
         ask: {
           q: "The risk fits both facilities. A pays the MGA more. Where should it go?",
-          opts: ["To A. The MGA is entitled to maximise its income.", "Wherever the agreed, written allocation rules send it."],
+          opts: [
+          ["To A. The MGA may maximise its income.", "Not at a carrier’s expense. B was promised a fair share of the good risks."],
+          "Wherever the written allocation rules send it.",
+          ["To B, to avoid any appearance of bias.", "Sending everything to the lower payer is just a different bias. The answer is rules, not gestures."]
+        ],
           a: 1,
-          why: "If good risks drift to the facility that pays best, the other carrier is left with a worse book than it agreed to back. Allocation must follow rules fixed in advance and open to audit. The same applies with extra force where the MGA or its owners take a share of the risk themselves."
+          why: "If good risks drift to the facility that pays best, the other carrier is left with a worse book than it agreed to back. Allocation must follow rules fixed in advance and open to audit, above all where the MGA or its owners take a share of risk themselves."
         }
       },
       {
@@ -145,7 +176,11 @@
         ], { max: 12 }),
         ask: {
           q: "Why might a carrier prefer a 30% share of a panel to 100% of one segment of the same book?",
-          opts: ["It doesn’t: more premium is better.", "It gets the same mix as everyone else, and a share of any event, not all of it."],
+          opts: [
+          ["It wouldn’t: more premium is better.", "More premium from one segment is also more concentration."],
+          "It gets the same mix as everyone else, and only a share of any one event.",
+          ["Panels pay carriers a higher commission.", "Carriers pay commission, and the structure doesn’t set its level."]
+        ],
           a: 1,
           why: "On a panel no carrier can be handed a worse selection, and concentrations are diluted. A segment split gives a carrier the business it wants, with a concentrated exposure and reliance on the MGA’s fairness."
         }

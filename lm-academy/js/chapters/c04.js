@@ -41,17 +41,27 @@
           ], { max: 100 });
         },
         ctl: [{ k: "up", label: "Price increase", min: 0, max: 60, step: 5, fmt: (x) => `+${x}%` }],
-        live: () => "A price rise doesn’t produce an equal fall in demand when the buyer has little choice. So insurance prices are driven mainly from the **supply** side: by how much capital is chasing the business."
+        live: () => "A price rise doesn’t produce an equal fall in demand when the buyer has little choice. So insurance prices are driven mainly from the **supply** side: by how much capital is chasing the business.",
+        goal: {
+          say: "Raise the price until the luxury has lost more than half its buyers. How many has compulsory insurance lost?",
+          test: (v) => v.up >= 40,
+          done: "The luxury has lost most of its market; compulsory cover has lost about one buyer in sixteen. When buyers can’t walk away, price is set by how many sellers are competing."
+        }
       },
       {
         h: "The loop",
         say: "Follow it clockwise. Insurers make **profits**. Others notice and join. More sellers compete, so prices fall: a **soft market**. Eventually premiums no longer cover claims. Insurers lose money and withdraw. With fewer sellers, prices rise: a **hard market**. Profits return, and round it goes.",
         scene: () => loop(),
         ask: {
-          q: "At which point is it most tempting, and most dangerous, to cut prices?",
-          opts: ["In the soft market, to keep clients.", "In the hard market."],
-          a: 0,
-          why: "Each small cut looks harmless and holds on to a client. But the cuts compound across the market until premiums fall below the cost of claims. Holding your price when rivals don’t is called **underwriting discipline**."
+          q: "Premiums have fallen for five years and no longer cover claims. What comes next?",
+          opts: [
+          ["New insurers pile in, attracted by the growth.", "Capital chases profit, and there is none. Entrants arrive after prices rise."],
+          "Insurers lose money, some withdraw, and prices rise.",
+          ["Prices go on falling until cover is nearly free.", "Somebody has to pay the claims. When capital runs short, the selling stops."],
+          ["Regulators set a minimum price.", "UK regulators don’t fix commercial insurance prices. The correction comes from capital leaving."]
+        ],
+          a: 1,
+          why: "Losses are what turn a soft market. Capital leaves, capacity shrinks, and those who remain can charge more. The discipline to hold your price *before* that point is what separates good underwriters from the cycle’s victims."
         }
       },
       {
@@ -65,17 +75,27 @@
               series: [{ tone: "c1", pts: r.rate }, { tone: "bad", dash: true, pts: r.cor }], legend: [["c1", "Price level"], ["bad", "Claims + costs, % of premium"]] });
         },
         ctl: [{ k: "shock", label: "Catastrophe in year 4", min: 0, max: 70, step: 10, fmt: (x) => (x ? `${x}% of capital` : "none") }, { k: "disc", label: "Underwriting discipline", min: 0, max: 90, step: 10, fmt: pct }],
-        live: (v) => (v.shock ? "The catastrophe destroys capital overnight. Capacity shrinks and prices jump: the soft market turns hard in a single season, instead of drifting there." : "Even with no catastrophe the market cycles by itself, slowly. The cycle is built into how capital comes and goes.") + (v.disc >= 50 ? " Discipline flattens the swings: less ground lost in the soft years, less to recover." : "")
+        live: (v) => (v.shock ? "The catastrophe destroys capital overnight. Capacity shrinks and prices jump: the soft market turns hard in a single season, instead of drifting there." : "Even with no catastrophe the market cycles by itself, slowly. The cycle is built into how capital comes and goes.") + (v.disc >= 50 ? " Discipline flattens the swings: less ground lost in the soft years, less to recover." : ""),
+        goal: {
+          say: "Keep a catastrophe of at least 40% of capital. Find a level of discipline at which the market never has a loss-making year.",
+          test: (v) => v.shock >= 40 && Math.max(...run(v).cor.map((p) => p[1])) <= 100,
+          done: "It takes almost total discipline. Underwriters who refuse to chase rates down in the good years don’t have to climb back out of a hole afterwards. Real markets never manage this, which is why the cycle exists."
+        }
       },
       {
         h: "What speeds it up",
         say: "A market can stay soft for years. Three things shorten the cycle: very large **natural catastrophes**, **changes in the law** that suddenly make old policies costlier, and **major events** that shake confidence.",
         scene: () => loop(["l", "x", "h"]),
         ask: {
-          q: "A record hurricane season hits property insurers. Next year, property prices will most likely…",
-          opts: ["Fall, as insurers compete to recover.", "Rise, as capacity shrinks."],
+          q: "A record hurricane season hits property insurers hard. What is the most likely result next year?",
+          opts: [
+          ["Rates rise in every class together.", "Each class has its own cycle. Marine hull didn’t lose money in the hurricanes."],
+          "Property rates rise; other classes may hardly move.",
+          ["Property rates fall as insurers compete to win back income.", "Losses remove capital. With less capacity chasing the business, prices go up, not down."],
+          ["Nothing changes: the claims are already paid.", "The claims are paid out of capital, and less capital means less capacity."]
+        ],
           a: 1,
-          why: "Losses remove capital, and some insurers withdraw. Those who remain can charge more. Each class has its own cycle, though: a hard property market can sit beside a soft marine one."
+          why: "Capital destroyed in one class tightens that class. A hard property market can sit beside a soft marine one, though a big enough loss can drain capital that supports several classes at once."
         }
       },
       {

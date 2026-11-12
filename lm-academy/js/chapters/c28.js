@@ -20,9 +20,14 @@
         ], { max: 100 }),
         ask: {
           q: "The panel changed from 60/40 to 50/50 on 1 July. A claim is made in October on a policy that incepted on 15 June. How is it split?",
-          opts: ["50/50: the shares in force when the claim was made.", "60/40: the shares in force at inception."],
+          fix: true,
+          opts: [
+          ["50/50: the shares when the claim was made.", "The carriers who took the premium bear the claim."],
+          "60/40: the shares at inception.",
+          ["55/45: pro rata over the policy period.", "Shares don’t blend. A policy is written on one set of shares for its whole life."]
+        ],
           a: 1,
-          why: "The carriers who took the premium bear the claim. An MGA that can’t prove, policy by policy, who was on risk can’t collect claims money correctly, and will fail its first audit."
+          why: "An MGA that can’t prove, policy by policy, who was on risk can’t collect claims money correctly, and will fail its first audit."
         }
       },
       {
@@ -61,9 +66,13 @@
         }),
         ask: {
           q: "An audit finds twelve policies bound in a territory the binder excludes. What is their status?",
-          opts: ["Void. There was no authority.", "Probably binding on the carrier, who will look to the MGA for any loss."],
+          opts: [
+          ["Void. There was no authority.", "That would punish policyholders who had no way of knowing."],
+          "Probably binding on the carrier, who will look to the MGA for any loss.",
+          ["Valid, and nothing more need be done.", "The carrier is on risk for business it never agreed to write. Someone will pay for that."]
+        ],
           a: 1,
-          why: "An innocent policyholder is usually protected. But the MGA acted outside its authority, so the carrier can recover its losses from the MGA, whose own professional indemnity insurance may be called on. Authority limits are not guidance."
+          why: "An innocent policyholder is usually protected. But the MGA acted outside its authority, so the carrier can recover its losses from the MGA, whose own professional indemnity insurance may be called on."
         }
       },
       {
@@ -74,9 +83,13 @@
         ], { max: 100 }),
         ask: {
           q: "A product’s commissions add up to 55% of premium and only 20% is ever paid in claims. Its loss ratio is superb. Is the carrier content?",
-          opts: ["Yes. A 20% loss ratio is excellent.", "No. It may not be fair value to the customer."],
+          opts: [
+          ["Yes. A 20% loss ratio is excellent.", "For the carrier’s accounts. Not for the customer who paid £100 for £20 of protection."],
+          "No. It may not be fair value to the customer.",
+          ["Yes, as long as commissions were disclosed.", "Disclosure doesn’t make poor value fair."]
+        ],
           a: 1,
-          why: "A very low claims ratio with very high distribution costs is a regulatory warning sign, not a triumph. Portfolio reviews now cover customer outcomes as well as financial ones, and a carrier will withdraw from a product it can’t defend."
+          why: "A very low claims ratio with very high distribution costs is a regulatory warning sign, not a triumph. Carriers now withdraw from products they can’t defend."
         }
       },
       {
@@ -88,7 +101,12 @@
             bars([{ label: "Commission rate", right: pct(c, 1), segs: [[20, "c1", "Floor 20%"], [c - 20, "c3", "Earned by results"]] }], { max: 30 });
         },
         ctl: [{ k: "lr", label: "Loss ratio", min: 40, max: 80, step: 1, fmt: pct }],
-        live: (v) => (comm(v.lr) <= 20 ? "At the floor: after paying brokers 10 points, the MGA keeps 10% of premium, £2.0m, against £2.2m of costs. A bad book now makes the MGA itself loss-making. That is alignment with teeth." : comm(v.lr) >= 30 ? "Maximum commission. The MGA is being paid for the result, not just the volume." : "Each point of loss ratio costs the MGA £100,000. Unlike profit commission, which arrives years later, a sliding scale is felt quickly.")
+        live: (v) => (comm(v.lr) <= 20 ? "At the floor: after paying brokers 10 points, the MGA keeps 10% of premium, £2.0m, against £2.2m of costs. A bad book now makes the MGA itself loss-making. That is alignment with teeth." : comm(v.lr) >= 30 ? "Maximum commission. The MGA is being paid for the result, not just the volume." : "Each point of loss ratio costs the MGA £100,000. Unlike profit commission, which arrives years later, a sliding scale is felt quickly."),
+        goal: {
+          say: "Find the loss ratio at which the MGA itself only breaks even.",
+          test: (v) => v.lr === 68,
+          done: "68%. Recall that the carrier breaks even at about 70%. The scale has been set so the MGA starts losing money just before its carrier does. That is not an accident; it is the design."
+        }
       },
       {
         h: "Renewing and growing capacity",
@@ -99,9 +117,13 @@
         ], { max: 100 }),
         ask: {
           q: "Why might nine small carriers be weaker support than three large ones?",
-          opts: ["They aren’t: more names means more diversification.", "None has enough at stake to stay through a bad year, and each must be serviced."],
+          opts: [
+          ["They aren’t: more names means more security.", "Against losing any single one, yes. But think about why each would stay."],
+          "None has enough at stake to stay through a bad year, and each must be serviced.",
+          ["Small carriers have worse credit ratings.", "Share of this book says nothing about a carrier’s own strength."]
+        ],
           a: 1,
-          why: "Diversifying capacity protects against losing any one carrier. But a carrier with a token share has little reason to stay when results dip, and every carrier brings its own reporting, audits and limits to satisfy."
+          why: "Diversifying capacity protects against losing any one carrier. But a carrier with a token share has little reason to stay when results dip, and every carrier brings its own reporting, audits and limits."
         }
       },
       {
@@ -114,9 +136,13 @@
         ], { max: 48, marks: [[12, "Binder ends"]] }),
         ask: {
           q: "A binder is cancelled on 31 December. A 12-month policy bound on 1 December has a loss the following October. Is it covered?",
-          opts: ["No. The binder had ended.", "Yes. It was validly bound while the authority existed."],
+          opts: [
+          ["No. The binder had ended.", "Ending the binder stops the MGA binding anything new. It doesn’t reach back."],
+          "Yes. It was validly bound while the authority existed.",
+          ["Only until 31 December.", "The policy is a twelve-month contract with the policyholder, who isn’t party to the binder."]
+        ],
           a: 1,
-          why: "Termination stops **new** business. Everything already bound stays with the carriers who took it. The MGA still has to service it, now with no new commission coming in to pay for the work."
+          why: "Termination stops **new** business. Everything already bound stays with the carriers who took it, and the MGA still has to service it, now with no new commission coming in to pay for the work."
         }
       },
       {
